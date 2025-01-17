@@ -1,0 +1,92 @@
+package com.thfh.service;
+
+import com.thfh.dto.UserDTO;
+import com.thfh.dto.UserQueryDTO;
+import com.thfh.model.User;
+import com.thfh.repository.UserRepository;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class UserService {
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public Page<UserDTO> getUsers(UserQueryDTO queryDTO) {
+        Specification<User> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            if (queryDTO.getUserType() != null) {
+                predicates.add(cb.equal(root.get("userType"), queryDTO.getUserType()));
+            }
+            if (queryDTO.getUsername() != null) {
+                predicates.add(cb.like(root.get("username"), "%" + queryDTO.getUsername() + "%"));
+            }
+            if (queryDTO.getRealName() != null) {
+                predicates.add(cb.like(root.get("realName"), "%" + queryDTO.getRealName() + "%"));
+            }
+            if (queryDTO.getEnabled() != null) {
+                predicates.add(cb.equal(root.get("enabled"), queryDTO.getEnabled()));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<User> userPage = userRepository.findAll(spec, 
+            PageRequest.of(queryDTO.getPageNum() - 1, queryDTO.getPageSize()));
+        
+        return userPage.map(this::convertToDTO);
+    }
+
+    public UserDTO createUser(UserDTO userDTO) {
+        if (userRepository.existsByUsername(userDTO.getUsername())) {
+            throw new RuntimeException("用户名已存在");
+        }
+
+        User user = new User();
+        BeanUtils.copyProperties(userDTO, user);
+        user.setPassword(passwordEncoder.encode("123456")); // 默认密码
+        user = userRepository.save(user);
+        
+        return convertToDTO(user);
+    }
+
+    public UserDTO updateUser(Long id, UserDTO userDTO) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        BeanUtils.copyProperties(userDTO, user, "id", "password", "createTime");
+        user = userRepository.save(user);
+        
+        return convertToDTO(user);
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    public void toggleUserStatus(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        user.setEnabled(!user.getEnabled());
+        userRepository.save(user);
+    }
+
+    private UserDTO convertToDTO(User user) {
+        UserDTO dto = new UserDTO();
+        BeanUtils.copyProperties(user, dto);
+        return dto;
+    }
+} 

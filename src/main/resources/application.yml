@@ -1,0 +1,23 @@
+server:
+  port: 8085
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/thfh_admin?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+jwt:
+  secret: thfh-admin-secret-key
+  expiration: 86400 
+
+# 菜鸟驿站API配置
+cainiao:
+  api:
+    url: https://api.cainiao.com/logistics/track
+    key: your_api_key_here 
