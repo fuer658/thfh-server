@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.thfh</groupId>
-    <artifactId>thfh-admin</artifactId>
+    <artifactId>thfh-server</artifactId>
     <version>1.0.0</version>
 
     <parent>
