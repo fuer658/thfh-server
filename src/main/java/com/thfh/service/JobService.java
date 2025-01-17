@@ -32,7 +32,7 @@ public class JobService {
         Specification<Job> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (queryDTO.getTitle() != null) {
+            if (queryDTO.getTitle() != null && !queryDTO.getTitle().isEmpty()) {
                 predicates.add(cb.like(root.get("title"), "%" + queryDTO.getTitle() + "%"));
             }
             if (queryDTO.getCompanyId() != null) {

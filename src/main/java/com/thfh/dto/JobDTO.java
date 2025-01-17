@@ -3,6 +3,7 @@ package com.thfh.dto;
 import com.thfh.model.JobStatus;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 public class JobDTO {
@@ -24,5 +25,5 @@ public class JobDTO {
     private Integer viewCount;
     private Integer applyCount;
     private Boolean enabled;
-    private String createTime;
+    private LocalDateTime createTime;
 } 
