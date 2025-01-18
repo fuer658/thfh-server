@@ -51,3 +51,4 @@ logs/
 # System Files
 .DS_Store
 Thumbs.db 
+start.bat
