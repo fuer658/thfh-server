@@ -1,12 +1,25 @@
 server:
   port: 8085
+  
+# 文件上传路径配置
+file:
+  upload-dir: ./uploads
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  
+  # 配置文件上传目录
+  web:
+    resources:
+      static-locations: classpath:/static/,file:${file.upload-dir}
   datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/thfh_admin?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true
     username: root
     password: 123456
-    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,4 +33,4 @@ jwt:
 cainiao:
   api:
     url: https://api.cainiao.com/logistics/track
-    key: your_api_key_here 
+    key: your_api_key_here
