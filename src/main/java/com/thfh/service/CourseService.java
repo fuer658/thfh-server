@@ -3,6 +3,7 @@ package com.thfh.service;
 import com.thfh.dto.CourseDTO;
 import com.thfh.dto.CourseQueryDTO;
 import com.thfh.model.Course;
+import com.thfh.model.CourseStatus;
 import com.thfh.model.User;
 import com.thfh.repository.CourseRepository;
 import com.thfh.repository.UserRepository;
@@ -54,6 +55,23 @@ public class CourseService {
 
     @Transactional
     public CourseDTO createCourse(CourseDTO courseDTO) {
+        // 验证必填字段
+        if (courseDTO.getTitle() == null || courseDTO.getTitle().trim().isEmpty()) {
+            throw new RuntimeException("课程标题不能为空");
+        }
+        if (courseDTO.getCoverImage() == null || courseDTO.getCoverImage().trim().isEmpty()) {
+            throw new RuntimeException("课程封面不能为空");
+        }
+        if (courseDTO.getPrice() == null) {
+            throw new RuntimeException("课程价格不能为空");
+        }
+        if (courseDTO.getTotalHours() == null || courseDTO.getTotalHours() <= 0) {
+            throw new RuntimeException("课程总时长必须大于0");
+        }
+        if (courseDTO.getTeacherId() == null) {
+            throw new RuntimeException("教员ID不能为空");
+        }
+
         if (courseRepository.existsByTitleAndTeacherId(courseDTO.getTitle(), courseDTO.getTeacherId())) {
             throw new RuntimeException("该教员已存在同名课程");
         }
@@ -63,7 +81,15 @@ public class CourseService {
 
         Course course = new Course();
         BeanUtils.copyProperties(courseDTO, course);
+        
+        // 设置必要的默认值
+        course.setStatus(CourseStatus.DRAFT); // 新创建的课程默认为草稿状态
         course.setTeacher(teacher);
+        course.setLikeCount(0);
+        course.setFavoriteCount(0);
+        course.setStudentCount(0);
+        course.setEnabled(true);
+        
         course = courseRepository.save(course);
         
         return convertToDTO(course);
@@ -98,4 +124,4 @@ public class CourseService {
         dto.setTeacherName(course.getTeacher().getRealName());
         return dto;
     }
-} 
+}
