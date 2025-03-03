@@ -15,7 +15,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     @Query("SELECT DISTINCT o FROM Order o " +
             "LEFT JOIN FETCH o.user u " +
-            "LEFT JOIN FETCH o.work w " +
+            "LEFT JOIN FETCH o.artwork a " +
             "WHERE (:orderNo is null OR o.orderNo LIKE CONCAT('%', :orderNo, '%')) " +
             "AND (:username is null OR u.username LIKE CONCAT('%', :username, '%')) " +
             "AND (:status is null OR o.status = :status)")

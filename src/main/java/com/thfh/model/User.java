@@ -21,6 +21,9 @@ public class User {
     @Column(length = 100)
     private String realName;
 
+    @Column(length = 100)
+    private String Locate;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private UserType userType; // STUDENT(学员) 或 TEACHER(教员)
@@ -54,4 +57,7 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime updateTime = LocalDateTime.now();
-} 
+
+    @Column
+    private LocalDateTime birthday = LocalDateTime.now();
+}

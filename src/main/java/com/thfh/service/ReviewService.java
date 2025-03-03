@@ -5,10 +5,10 @@ import com.thfh.dto.ReviewQueryDTO;
 import com.thfh.model.Review;
 import com.thfh.model.Course;
 import com.thfh.model.ReviewType;
-import com.thfh.model.Work;
+import com.thfh.model.Artwork;
 import com.thfh.repository.ReviewRepository;
 import com.thfh.repository.CourseRepository;
-import com.thfh.repository.WorkRepository;
+import com.thfh.repository.ArtworkRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,7 +31,7 @@ public class ReviewService {
     private CourseRepository courseRepository;
 
     @Autowired
-    private WorkRepository workRepository;
+    private ArtworkRepository artworkRepository;
 
     public Page<ReviewDTO> getReviews(ReviewQueryDTO queryDTO) {
         Specification<Review> spec = (root, query, cb) -> {
@@ -90,13 +90,13 @@ public class ReviewService {
                 dto.setTargetName(course.getTitle());
             }
         } else if (review.getType() == ReviewType.WORK) {
-            Work work = workRepository.findById(review.getTargetId())
+            Artwork artwork = artworkRepository.findById(review.getTargetId())
                     .orElse(null);
-            if (work != null) {
-                dto.setTargetName(work.getTitle());
+            if (artwork != null) {
+                dto.setTargetName(artwork.getTitle());
             }
         }
 
         return dto;
     }
-} 
+}

@@ -21,8 +21,8 @@ public class Order {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "work_id", nullable = false)
-    private Work work;
+    @JoinColumn(name = "artwork_id", nullable = false)
+    private Artwork artwork;
 
     @Column(nullable = false)
     private BigDecimal amount;
@@ -56,5 +56,5 @@ public class Order {
     private String username;
 
     @Transient
-    private String workTitle;
+    private String artworkTitle;
 }
