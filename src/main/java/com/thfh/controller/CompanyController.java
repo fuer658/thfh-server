@@ -55,6 +55,8 @@ public class CompanyController {
             updatedCompany.setScale(company.getScale());
             updatedCompany.setWebsite(company.getWebsite());
             updatedCompany.setAddress(company.getAddress());
+            updatedCompany.setWorkStartTime(company.getWorkStartTime());
+            updatedCompany.setWorkEndTime(company.getWorkEndTime());
             updatedCompany.setUpdateTime(LocalDateTime.now());
             return R.ok().data(companyRepository.save(updatedCompany));
         }
