@@ -15,7 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.criteria.Predicate;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +66,13 @@ public class UserService {
         }
 
         User user = new User();
-        BeanUtils.copyProperties(userDTO, user);
+        BeanUtils.copyProperties(userDTO, user, "birthday");
+        
+        // 处理生日日期
+        if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
+            user.setBirthday(LocalDate.parse(userDTO.getBirthday()));
+        }
+        
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user = userRepository.save(user);
 
@@ -75,7 +83,14 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
-        BeanUtils.copyProperties(userDTO, user, "id", "password", "createTime");
+        BeanUtils.copyProperties(userDTO, user, "id", "password", "createTime", "updateTime", "birthday");
+        
+        // 处理生日日期
+        if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
+            user.setBirthday(LocalDate.parse(userDTO.getBirthday()));
+        }
+        
+        user.setUpdateTime(LocalDateTime.now());
         user = userRepository.save(user);
 
         return convertToDTO(user);
@@ -95,6 +110,12 @@ public class UserService {
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         BeanUtils.copyProperties(user, dto);
+        
+        // 转换生日日期为字符串格式
+        if (user.getBirthday() != null) {
+            dto.setBirthday(user.getBirthday().toString()); // LocalDate默认格式为yyyy-MM-dd
+        }
+        
         return dto;
     }
 
