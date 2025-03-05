@@ -23,6 +23,7 @@ public class UserDTO {
     private Boolean enabled;
     private String lastLoginTime;
     private String createTime;
+    private String birthday;
     public static UserDTO fromEntity(User user) {
         UserDTO dto = new UserDTO();
         BeanUtils.copyProperties(user, dto);

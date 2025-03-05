@@ -28,6 +28,10 @@ public class Company {
 
     private String address; // 公司地址
 
+    private String workStartTime; // 上班时间
+
+    private String workEndTime; // 下班时间
+
     @Column(nullable = false)
     private Boolean enabled = true;
 

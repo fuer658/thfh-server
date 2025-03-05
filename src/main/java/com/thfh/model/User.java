@@ -2,6 +2,7 @@ package com.thfh.model;
 
 import lombok.Data;
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -59,5 +60,5 @@ public class User {
     private LocalDateTime updateTime = LocalDateTime.now();
 
     @Column
-    private LocalDateTime birthday = LocalDateTime.now();
+    private LocalDate birthday;
 }
