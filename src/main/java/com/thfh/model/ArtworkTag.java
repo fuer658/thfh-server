@@ -1,7 +1,6 @@
 package com.thfh.model;
 
 import lombok.Data;
-
 import javax.persistence.*;
 
 @Data
@@ -19,4 +18,13 @@ public class ArtworkTag {
     private String description;
 
     private Boolean enabled = true;
+
+    // 默认构造函数
+    public ArtworkTag() {}
+
+    // 接收标签名称的构造函数
+    public ArtworkTag(String name) {
+        this.name = name;
+        this.enabled = true;
+    }
 }

@@ -24,8 +24,7 @@ public class FollowController {
     @PostMapping("/follow/{followedId}")
     public Result<?> follow(Authentication authentication, @PathVariable Long followedId) {
         try {
-            Long followerId = userService.getUserInfo(authentication.getName()).getId();
-            followService.follow(followerId, followedId);
+            followService.follow(followedId);
             return Result.success("关注成功");
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
@@ -34,8 +33,7 @@ public class FollowController {
 
     @DeleteMapping("/unfollow/{followedId}")
     public Result<?> unfollow(Authentication authentication, @PathVariable Long followedId) {
-        Long followerId = userService.getUserInfo(authentication.getName()).getId();
-        followService.unfollow(followerId, followedId);
+        followService.unfollow(followedId);
         return Result.success("取消关注成功");
     }
 

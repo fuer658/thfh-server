@@ -46,6 +46,13 @@ public class Artwork {
 
     private Boolean enabled = true;
 
+    private BigDecimal averageScore = BigDecimal.ZERO;
+
+    private Integer scoreCount = 0;
+
+    @Column(precision = 3, scale = 2)
+    private BigDecimal totalScore = BigDecimal.ZERO;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;

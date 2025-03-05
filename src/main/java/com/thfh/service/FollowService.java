@@ -22,30 +22,44 @@ public class FollowService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserService userService;
+
     @Transactional
-    public void follow(Long followerId, Long followedId) {
+    public void follow(Long followedId) {
+        // 获取当前登录用户
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+
         // 检查是否已经关注
-        Optional<Follow> existingFollow = followRepository.findByFollowerIdAndFollowedId(followerId, followedId);
+        Optional<Follow> existingFollow = followRepository.findByFollowerIdAndFollowedId(currentUser.getId(), followedId);
         if (existingFollow.isPresent()) {
             throw new RuntimeException("已经关注过该用户");
         }
 
-        // 检查用户是否存在
-        if (!userRepository.existsById(followerId) || !userRepository.existsById(followedId)) {
+        // 检查被关注用户是否存在
+        if (!userRepository.existsById(followedId)) {
             throw new RuntimeException("用户不存在");
         }
 
         // 创建关注关系
         Follow follow = new Follow();
-        follow.setFollowerId(followerId);
+        follow.setFollowerId(currentUser.getId());
         follow.setFollowedId(followedId);
         follow.setFollowTime(LocalDateTime.now());
         followRepository.save(follow);
     }
 
     @Transactional
-    public void unfollow(Long followerId, Long followedId) {
-        followRepository.deleteByFollowerIdAndFollowedId(followerId, followedId);
+    public void unfollow(Long followedId) {
+        // 获取当前登录用户
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        followRepository.deleteByFollowerIdAndFollowedId(currentUser.getId(), followedId);
     }
 
     public List<FollowDTO> getFollowingList(Long userId) {

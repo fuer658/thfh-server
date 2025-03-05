@@ -128,4 +128,19 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
         return convertToDTO(user);
     }
+
+    /**
+     * 获取当前登录用户信息
+     * @return 当前登录用户
+     */
+    public User getCurrentUser() {
+        org.springframework.security.core.Authentication authentication = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+    }
 }
