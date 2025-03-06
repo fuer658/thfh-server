@@ -63,8 +63,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/uploads/**").permitAll()  // 允许访问上传的文件
-                .antMatchers("/api/upload").permitAll()  // 允许文件上传
-                .antMatchers("/api/**").authenticated()
+                .antMatchers("/api/**").authenticated()  // 所有API接口需要认证，包括上传接口
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

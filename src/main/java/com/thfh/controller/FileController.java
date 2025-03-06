@@ -25,7 +25,12 @@ public class FileController {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    private static final String SERVER_URL = "http://localhost:8085";
+    @Value("${server.port}")
+    private String serverPort;
+
+    private String getServerUrl() {
+        return "http://localhost:" + serverPort;
+    }
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
@@ -46,7 +51,7 @@ public class FileController {
             Files.copy(file.getInputStream(), filePath);
 
             // 返回完整的文件访问URL
-            String fileUrl = SERVER_URL + "/uploads/" + filename;
+            String fileUrl = getServerUrl() + "/uploads/" + filename;
             Map<String, Object> data = new HashMap<>();
             data.put("code", 200);
             data.put("url", fileUrl);
