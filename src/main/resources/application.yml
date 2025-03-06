@@ -1,0 +1,29 @@
+server:
+  port: 8085
+  
+# 文件上传路径配置
+file:
+  upload-dir: ./uploads
+
+spring:
+  profiles:
+    active: database
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  
+  # 配置文件上传目录
+  web:
+    resources:
+      static-locations: classpath:/static/,file:${file.upload-dir}
+
+jwt:
+  secret: thfh-admin-secret-key
+  expiration: 86400 
+
+# 菜鸟驿站API配置
+cainiao:
+  api:
+    url: https://api.cainiao.com/logistics/track
+    key: your_api_key_here
