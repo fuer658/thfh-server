@@ -1,6 +1,5 @@
 package com.thfh.controller;
 
-<<<<<<< HEAD
 import com.thfh.common.Result;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkType;
@@ -85,6 +84,20 @@ public class ArtworkController {
     }
 
     /**
+     * 获取作品列表
+     * @param page 页码
+     * @param size 每页大小
+     * @return 作品分页列表
+     */
+    @GetMapping
+    public ResponseEntity<Page<Artwork>> getArtworks(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        return ResponseEntity.ok(artworkService.getAllArtworks(pageRequest));
+    }
+
+    /**
      * 获取当前用户的作品列表
      * @param user 当前登录用户
      * @param type 作品类型（可选）
@@ -138,79 +151,31 @@ public class ArtworkController {
         
         artworkService.deleteArtwork(artworkId);
         return Result.success(null);
-=======
-import com.thfh.common.R;
-import com.thfh.model.Artwork;
-import com.thfh.repository.ArtworkRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.web.bind.annotation.*;
-
-import javax.annotation.Resource;
-
-@RestController
-@RequestMapping("/api/works")
-public class ArtworkController {
-
-    @Resource
-    private ArtworkRepository artworkRepository;
-
-    @GetMapping
-    public R list(@RequestParam(defaultValue = "1") int pageNum,
-                 @RequestParam(defaultValue = "10") int pageSize) {
-        try {
-            Page<Artwork> page = artworkRepository.findAll(
-                PageRequest.of(pageNum - 1, pageSize)
-            );
-            return R.ok().data("total", page.getTotalElements())
-                    .data("records", page.getContent());
-        } catch (Exception e) {
-            return R.error("获取作品列表失败: " + e.getMessage());
-        }
     }
 
-    @GetMapping("/{id}")
-    public R getById(@PathVariable Long id) {
-        return artworkRepository.findById(id)
-                .map(artwork -> R.ok().data("artwork", artwork))
-                .orElse(R.error("作品不存在"));
+    /**
+     * 添加新标签
+     * @param tagName 标签名称
+     * @return 操作结果
+     */
+    @PostMapping("/tags")
+    public Result<Void> addTag(
+            @RequestParam String tagName,
+            Authentication authentication) {
+        artworkService.addTag(tagName);
+        return Result.success(null);
     }
 
-    @PostMapping
-    public R save(@RequestBody Artwork artwork) {
-        try {
-            Artwork saved = artworkRepository.save(artwork);
-            return R.ok().data("artwork", saved);
-        } catch (Exception e) {
-            return R.error("保存作品失败: " + e.getMessage());
-        }
-    }
-
-    @PutMapping("/{id}")
-    public R update(@PathVariable Long id, @RequestBody Artwork artwork) {
-        try {
-            if (!artworkRepository.existsById(id)) {
-                return R.error("作品不存在");
-            }
-            artwork.setId(id);
-            Artwork updated = artworkRepository.save(artwork);
-            return R.ok().data("artwork", updated);
-        } catch (Exception e) {
-            return R.error("更新作品失败: " + e.getMessage());
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public R delete(@PathVariable Long id) {
-        try {
-            if (!artworkRepository.existsById(id)) {
-                return R.error("作品不存在");
-            }
-            artworkRepository.deleteById(id);
-            return R.ok();
-        } catch (Exception e) {
-            return R.error("删除作品失败: " + e.getMessage());
-        }
->>>>>>> 6472c74f10f442d46f9f829f2fc3f09f89d23212
+    /**
+     * 删除标签
+     * @param tagId 标签ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/tags/{tagId}")
+    public Result<Void> removeTag(
+            @PathVariable Long tagId,
+            Authentication authentication) {
+        artworkService.removeTag(tagId);
+        return Result.success(null);
     }
 }

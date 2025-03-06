@@ -53,6 +53,10 @@ public class Artwork {
     @Column(precision = 3, scale = 2)
     private BigDecimal totalScore = BigDecimal.ZERO;
 
+    private Integer favoriteCount = 0;
+
+    private Integer likeCount = 0;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
