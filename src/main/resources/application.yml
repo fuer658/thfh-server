@@ -6,6 +6,8 @@ file:
   upload-dir: ./uploads
 
 spring:
+  profiles:
+    active: database
   servlet:
     multipart:
       max-file-size: 10MB
@@ -15,15 +17,6 @@ spring:
   web:
     resources:
       static-locations: classpath:/static/,file:${file.upload-dir}
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/thfh_admin?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
 
 jwt:
   secret: thfh-admin-secret-key
