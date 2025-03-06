@@ -7,6 +7,7 @@ import com.thfh.model.User;
 import com.thfh.repository.ArtworkRepository;
 import com.thfh.repository.ArtworkTagRepository;
 import com.thfh.repository.ArtworkScoreRepository;
+import com.thfh.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,51 +29,69 @@ public class ArtworkService {
     @Autowired
     private ArtworkTagRepository artworkTagRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     /**
      * 创建作品
      * @param artwork 作品信息
      * @return 创建的作品
      */
+    @Transactional
     public Artwork createArtwork(Artwork artwork) {
-        // 验证作品必填字段
-        if (artwork.getTitle() == null || artwork.getTitle().trim().isEmpty()) {
-            throw new IllegalArgumentException("作品标题不能为空");
-        }
-        if (artwork.getType() == null) {
-            throw new IllegalArgumentException("作品类型不能为空");
-        }
-        
-        // 设置当前登录用户为作品创建者
-        User currentUser = userService.getCurrentUser();
-        if (currentUser == null) {
-            throw new IllegalStateException("用户未登录");
-        }
-        artwork.setCreator(currentUser);
-        
-        // 保存标签
-        if (artwork.getTags() != null && !artwork.getTags().isEmpty()) {
-            Set<ArtworkTag> processedTags = new HashSet<>();
-            artwork.getTags().forEach(tag -> {
-                if (tag.getId() == null) {
-                    // 检查是否存在相同名称的标签
-                    ArtworkTag existingTag = artworkTagRepository.findByName(tag.getName());
-                    if (existingTag != null) {
-                        // 如果存在，使用已有标签
-                        processedTags.add(existingTag);
+        try {
+            System.out.println("开始创建作品，接收到的数据：" + artwork);
+            
+            // 验证作品必填字段
+            if (artwork.getTitle() == null || artwork.getTitle().trim().isEmpty()) {
+                throw new IllegalArgumentException("作品标题不能为空");
+            }
+            if (artwork.getType() == null) {
+                throw new IllegalArgumentException("作品类型不能为空");
+            }
+            if (artwork.getCreator() == null || artwork.getCreator().getId() == null) {
+                throw new IllegalArgumentException("作品创建者不能为空");
+            }
+
+            // 验证并设置creator
+            if (artwork.getCreator() == null || artwork.getCreator().getId() == null) {
+                throw new IllegalArgumentException("作品创建者不能为空");
+            }
+            
+            // 验证指定的creator是否存在
+            User creator = userRepository.findById(artwork.getCreator().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("指定的创建者用户不存在"));
+            artwork.setCreator(creator);
+            System.out.println("设置后的创建者：" + artwork.getCreator());
+            
+            // 处理标签
+            if (artwork.getTags() != null && !artwork.getTags().isEmpty()) {
+                Set<ArtworkTag> processedTags = new HashSet<>();
+                for (ArtworkTag tag : artwork.getTags()) {
+                    if (tag.getId() == null) {
+                        // 检查是否存在相同名称的标签
+                        ArtworkTag existingTag = artworkTagRepository.findByName(tag.getName());
+                        if (existingTag != null) {
+                            processedTags.add(existingTag);
+                        } else {
+                            artworkTagRepository.save(tag);
+                            processedTags.add(tag);
+                        }
                     } else {
-                        // 如果不存在，保存新标签
-                        artworkTagRepository.save(tag);
                         processedTags.add(tag);
                     }
-                } else {
-                    processedTags.add(tag);
                 }
-            });
-            artwork.setTags(processedTags);
+                artwork.setTags(processedTags);
+            }
+            
+            // 保存作品
+            return artworkRepository.save(artwork);
+            
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("创建作品失败: " + e.getMessage(), e);
         }
-        
-        // 保存作品
-        return artworkRepository.save(artwork);
     }
 
     /**
