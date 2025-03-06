@@ -90,11 +90,11 @@ public class ArtworkController {
      * @return 作品分页列表
      */
     @GetMapping
-    public ResponseEntity<Page<Artwork>> getArtworks(
+    public Result<Page<Artwork>> getArtworks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return ResponseEntity.ok(artworkService.getAllArtworks(pageRequest));
+        return Result.success(artworkService.getAllArtworks(pageRequest));
     }
 
     /**
