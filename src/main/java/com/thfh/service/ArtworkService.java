@@ -129,11 +129,58 @@ public class ArtworkService {
     }
 
     /**
+     * 获取所有作品列表
+     * @param pageable 分页参数
+     * @return 作品分页列表
+     */
+    public Page<Artwork> getAllArtworks(Pageable pageable) {
+        return artworkRepository.findAll(pageable);
+    }
+
+    /**
      * 删除作品
      * @param artworkId 作品ID
      */
     @Transactional
     public void deleteArtwork(Long artworkId) {
         artworkRepository.deleteById(artworkId);
+    }
+
+    /**
+     * 添加新标签
+     * @param tagName 标签名称
+     * @return 创建的标签
+     */
+    @Transactional
+    public ArtworkTag addTag(String tagName) {
+        // 检查标签是否已存在
+        ArtworkTag existingTag = artworkTagRepository.findByName(tagName);
+        if (existingTag != null) {
+            throw new IllegalStateException("标签已存在");
+        }
+
+        // 创建新标签
+        ArtworkTag tag = new ArtworkTag();
+        tag.setName(tagName);
+        return artworkTagRepository.save(tag);
+    }
+
+    /**
+     * 删除标签
+     * @param tagId 标签ID
+     */
+    @Transactional
+    public void removeTag(Long tagId) {
+        ArtworkTag tag = artworkTagRepository.findById(tagId)
+                .orElseThrow(() -> new IllegalArgumentException("标签不存在"));
+
+        // 删除标签与作品的关联关系
+        artworkRepository.findAll().forEach(artwork -> {
+            artwork.getTags().removeIf(t -> t.getId().equals(tagId));
+            artworkRepository.save(artwork);
+        });
+
+        // 删除标签
+        artworkTagRepository.delete(tag);
     }
 }
