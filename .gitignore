@@ -52,4 +52,4 @@ logs/
 .DS_Store
 Thumbs.db 
 start.bat
-src/main/resources/application.yml
+src/main/resources/application-database.yml
