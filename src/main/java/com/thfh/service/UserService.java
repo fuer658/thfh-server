@@ -116,6 +116,24 @@ public class UserService {
             dto.setBirthday(user.getBirthday().toString()); // LocalDate默认格式为yyyy-MM-dd
         }
         
+        // 转换创建时间为字符串格式
+        if (user.getCreateTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dto.setCreateTime(user.getCreateTime().format(formatter));
+        }
+        
+        // 转换最后登录时间为字符串格式
+        if (user.getLastLoginTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dto.setLastLoginTime(user.getLastLoginTime().format(formatter));
+        }
+
+        // 转换更新时间为字符串格式
+        if (user.getUpdateTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dto.setUpdateTime(user.getUpdateTime().format(formatter));
+        }
+        
         return dto;
     }
 
