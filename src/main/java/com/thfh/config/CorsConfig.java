@@ -6,25 +6,37 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+/**
+ * 跨域配置类
+ * 用于配置全局的跨域资源共享(CORS)策略
+ * 通过CorsFilter实现，比WebConfig中的CORS配置优先级更高
+ */
 @Configuration
 public class CorsConfig {
 
+    /**
+     * 创建并配置CORS过滤器
+     * 该过滤器将应用于所有请求，处理跨域资源共享
+     * 
+     * @return 配置好的CorsFilter实例
+     */
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
         // 允许跨域的源
-        config.addAllowedOriginPattern("*");
+        config.addAllowedOriginPattern("*");  // 允许所有来源的跨域请求，生产环境应该限制特定域名
         // 允许跨域的请求头
-        config.addAllowedHeader("*");
+        config.addAllowedHeader("*");  // 允许所有请求头
         // 允许跨域的请求方法
-        config.addAllowedMethod("*");
+        config.addAllowedMethod("*");  // 允许所有HTTP方法（GET, POST, PUT, DELETE等）
         // 允许携带cookie
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(true);  // 允许请求携带认证信息（如cookie）
         // 暴露响应头
-        config.addExposedHeader("Authorization");
+        config.addExposedHeader("Authorization");  // 允许客户端访问Authorization响应头
 
+        // 对所有路径应用这些CORS配置
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
