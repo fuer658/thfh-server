@@ -23,6 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 用户服务类
+ * 提供用户相关的业务逻辑处理，包括用户的创建、查询、修改、删除等操作
+ * 以及用户登录、状态管理等功能
+ */
 @Service
 public class UserService {
     @Autowired
@@ -34,6 +39,11 @@ public class UserService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * 根据查询条件获取用户列表
+     * @param queryDTO 查询条件对象，包含用户类型、用户名、真实姓名、启用状态等过滤条件
+     * @return 分页后的用户DTO列表
+     */
     public Page<UserDTO> getUsers(UserQueryDTO queryDTO) {
         Specification<User> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -60,6 +70,12 @@ public class UserService {
         return userPage.map(this::convertToDTO);
     }
 
+    /**
+     * 创建新用户
+     * @param userDTO 用户信息对象，包含用户的基本信息
+     * @return 创建成功的用户DTO对象
+     * @throws RuntimeException 当用户名已存在时抛出
+     */
     public UserDTO createUser(UserDTO userDTO) {
         if (userRepository.existsByUsername(userDTO.getUsername())) {
             throw new RuntimeException("用户名已存在");
@@ -79,6 +95,13 @@ public class UserService {
         return convertToDTO(user);
     }
 
+    /**
+     * 更新用户信息
+     * @param id 用户ID
+     * @param userDTO 更新后的用户信息对象
+     * @return 更新后的用户DTO对象
+     * @throws RuntimeException 当用户不存在时抛出
+     */
     public UserDTO updateUser(Long id, UserDTO userDTO) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -96,10 +119,20 @@ public class UserService {
         return convertToDTO(user);
     }
 
+    /**
+     * 删除指定ID的用户
+     * @param id 要删除的用户ID
+     */
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
 
+    /**
+     * 切换用户启用状态
+     * 如果用户当前是启用状态，则禁用；如果是禁用状态，则启用
+     * @param id 用户ID
+     * @throws RuntimeException 当用户不存在时抛出
+     */
     public void toggleUserStatus(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -107,6 +140,12 @@ public class UserService {
         userRepository.save(user);
     }
 
+    /**
+     * 将用户实体对象转换为DTO对象
+     * 处理日期和时间格式转换
+     * @param user 用户实体对象
+     * @return 转换后的用户DTO对象
+     */
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         BeanUtils.copyProperties(user, dto);
@@ -137,6 +176,12 @@ public class UserService {
         return dto;
     }
 
+    /**
+     * 用户登录
+     * @param loginDTO 登录信息对象，包含用户名和密码
+     * @return 包含token和用户类型的Map对象
+     * @throws RuntimeException 当用户名或密码错误，或账号被禁用时抛出
+     */
     public Map<String, Object> login(LoginDTO loginDTO) {
         User user = userRepository.findByUsername(loginDTO.getUsername())
                 .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
@@ -162,6 +207,12 @@ public class UserService {
         return result;
     }
 
+    /**
+     * 根据用户名获取用户信息
+     * @param username 用户名
+     * @return 用户DTO对象
+     * @throws RuntimeException 当用户不存在时抛出
+     */
     public UserDTO getUserInfo(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -170,7 +221,8 @@ public class UserService {
 
     /**
      * 获取当前登录用户信息
-     * @return 当前登录用户
+     * @return 当前登录用户实体对象，如果未登录则返回null
+     * @throws RuntimeException 当用户不存在时抛出
      */
     public User getCurrentUser() {
         org.springframework.security.core.Authentication authentication = 

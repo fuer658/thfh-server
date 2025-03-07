@@ -11,6 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 作品点赞服务类
+ * 提供作品点赞相关的业务逻辑处理，包括点赞、取消点赞、查询用户点赞列表等功能
+ */
 @Service
 public class ArtworkLikeService {
 
@@ -25,6 +29,11 @@ public class ArtworkLikeService {
 
     /**
      * 添加点赞
+     * 为指定作品添加点赞，同时更新作品的点赞数量
+     * @param artworkId 作品ID
+     * @param user 用户对象（实际使用当前登录用户）
+     * @throws IllegalStateException 当用户已经点赞过该作品时抛出
+     * @throws IllegalArgumentException 当作品不存在时抛出
      */
     @Transactional
     public void addLike(Long artworkId, User user) {
@@ -54,6 +63,10 @@ public class ArtworkLikeService {
 
     /**
      * 取消点赞
+     * 删除用户对指定作品的点赞记录，同时更新作品的点赞数量
+     * @param artworkId 作品ID
+     * @param user 用户对象（实际使用当前登录用户）
+     * @throws IllegalArgumentException 当作品不存在时抛出
      */
     @Transactional
     public void removeLike(Long artworkId, User user) {
@@ -72,6 +85,9 @@ public class ArtworkLikeService {
 
     /**
      * 获取用户点赞的作品列表
+     * @param userId 用户ID
+     * @param pageable 分页参数对象
+     * @return 分页后的作品列表
      */
     public Page<Artwork> getUserLikes(Long userId, Pageable pageable) {
         return artworkLikeRepository.findArtworksByUserId(userId, pageable);
@@ -79,6 +95,9 @@ public class ArtworkLikeService {
 
     /**
      * 检查用户是否已点赞作品
+     * @param artworkId 作品ID
+     * @param userId 用户ID
+     * @return 如果用户已点赞该作品则返回true，否则返回false
      */
     public boolean isLiked(Long artworkId, Long userId) {
         return artworkLikeRepository.existsByArtworkIdAndUserId(artworkId, userId);

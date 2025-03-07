@@ -17,6 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * 作品服务类
+ * 提供作品相关的业务逻辑处理，包括作品的创建、查询、修改、删除等操作
+ * 以及作品标签的管理功能
+ */
 @Service
 public class ArtworkService {
 
@@ -33,9 +38,11 @@ public class ArtworkService {
     private UserRepository userRepository;
 
     /**
-     * 创建作品
-     * @param artwork 作品信息
-     * @return 创建的作品
+     * 创建新作品
+     * @param artwork 作品信息对象，包含作品的基本信息
+     * @return 创建成功的作品对象
+     * @throws IllegalArgumentException 当作品必填字段为空时抛出
+     * @throws RuntimeException 当创建过程中发生其他错误时抛出
      */
     @Transactional
     public Artwork createArtwork(Artwork artwork) {
@@ -95,70 +102,71 @@ public class ArtworkService {
     }
 
     /**
-     * 获取用户的作品列表
+     * 获取指定用户的作品列表
      * @param userId 用户ID
-     * @param pageable 分页参数
-     * @return 作品分页列表
+     * @param pageable 分页参数对象，包含页码、每页大小等信息
+     * @return 分页后的作品列表
      */
     public Page<Artwork> getUserArtworks(Long userId, Pageable pageable) {
         return artworkRepository.findByCreatorId(userId, pageable);
     }
 
     /**
-     * 根据类型获取用户的作品列表
+     * 根据作品类型获取指定用户的作品列表
      * @param userId 用户ID
-     * @param type 作品类型
-     * @param pageable 分页参数
-     * @return 作品分页列表
+     * @param type 作品类型（如个人作品、商业作品等）
+     * @param pageable 分页参数对象
+     * @return 分页后的作品列表
      */
     public Page<Artwork> getUserArtworksByType(Long userId, ArtworkType type, Pageable pageable) {
         return artworkRepository.findByCreatorIdAndType(userId, type, pageable);
     }
 
     /**
-     * 根据启用状态获取用户的作品列表
+     * 根据启用状态获取指定用户的作品列表
      * @param userId 用户ID
-     * @param enabled 是否启用
-     * @param pageable 分页参数
-     * @return 作品分页列表
+     * @param enabled 作品启用状态（true表示启用，false表示禁用）
+     * @param pageable 分页参数对象
+     * @return 分页后的作品列表
      */
     public Page<Artwork> getUserArtworksByEnabled(Long userId, Boolean enabled, Pageable pageable) {
         return artworkRepository.findByCreatorIdAndEnabled(userId, enabled, pageable);
     }
 
     /**
-     * 根据类型和启用状态获取用户的作品列表
+     * 根据作品类型和启用状态获取指定用户的作品列表
      * @param userId 用户ID
      * @param type 作品类型
-     * @param enabled 是否启用
-     * @param pageable 分页参数
-     * @return 作品分页列表
+     * @param enabled 启用状态
+     * @param pageable 分页参数对象
+     * @return 分页后的作品列表
      */
     public Page<Artwork> getUserArtworksByTypeAndEnabled(Long userId, ArtworkType type, Boolean enabled, Pageable pageable) {
         return artworkRepository.findByCreatorIdAndTypeAndEnabled(userId, type, enabled, pageable);
     }
 
     /**
-     * 根据ID获取作品信息
+     * 根据作品ID获取作品详细信息
      * @param artworkId 作品ID
-     * @return 作品信息
+     * @return Optional包装的作品对象，如果作品不存在则返回空Optional
      */
     public java.util.Optional<Artwork> getArtworkById(Long artworkId) {
         return artworkRepository.findById(artworkId);
     }
 
     /**
-     * 获取所有作品列表
-     * @param pageable 分页参数
-     * @return 作品分页列表
+     * 获取系统中的所有作品列表
+     * @param pageable 分页参数对象
+     * @return 分页后的所有作品列表
      */
     public Page<Artwork> getAllArtworks(Pageable pageable) {
         return artworkRepository.findAll(pageable);
     }
 
     /**
-     * 删除作品
-     * @param artworkId 作品ID
+     * 删除指定ID的作品
+     * @param artworkId 要删除的作品ID
+     * @throws IllegalArgumentException 当作品不存在时抛出
      */
     @Transactional
     public void deleteArtwork(Long artworkId) {
@@ -166,9 +174,10 @@ public class ArtworkService {
     }
 
     /**
-     * 添加新标签
+     * 添加新的作品标签
      * @param tagName 标签名称
-     * @return 创建的标签
+     * @return 创建成功的标签对象
+     * @throws IllegalStateException 当标签已存在时抛出
      */
     @Transactional
     public ArtworkTag addTag(String tagName) {
@@ -185,8 +194,10 @@ public class ArtworkService {
     }
 
     /**
-     * 删除标签
-     * @param tagId 标签ID
+     * 删除指定的作品标签
+     * 会同时删除该标签与所有作品的关联关系
+     * @param tagId 要删除的标签ID
+     * @throws IllegalArgumentException 当标签不存在时抛出
      */
     @Transactional
     public void removeTag(Long tagId) {

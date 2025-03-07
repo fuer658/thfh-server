@@ -21,6 +21,10 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 积分服务类
+ * 提供积分相关的业务逻辑处理，包括积分记录的查询、积分调整等操作
+ */
 @Service
 public class PointsService {
     @Autowired
@@ -29,6 +33,11 @@ public class PointsService {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * 根据查询条件获取积分记录列表
+     * @param queryDTO 查询条件对象，包含学员ID、积分类型等过滤条件
+     * @return 分页后的积分记录DTO列表
+     */
     public Page<PointsRecordDTO> getPointsRecords(PointsQueryDTO queryDTO) {
         Specification<PointsRecord> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -50,6 +59,13 @@ public class PointsService {
         return recordPage.map(this::convertToDTO);
     }
 
+    /**
+     * 调整学员积分
+     * 创建积分调整记录并更新学员总积分
+     * @param adjustDTO 积分调整信息对象，包含学员ID、积分数量、描述等信息
+     * @return 创建成功的积分记录DTO对象
+     * @throws RuntimeException 当学员不存在时抛出
+     */
     @Transactional
     public PointsRecordDTO adjustPoints(PointsAdjustDTO adjustDTO) {
         User student = userRepository.findById(adjustDTO.getStudentId())
@@ -70,6 +86,11 @@ public class PointsService {
         return convertToDTO(record);
     }
 
+    /**
+     * 将积分记录实体对象转换为DTO对象
+     * @param record 积分记录实体对象
+     * @return 转换后的积分记录DTO对象
+     */
     private PointsRecordDTO convertToDTO(PointsRecord record) {
         PointsRecordDTO dto = new PointsRecordDTO();
         BeanUtils.copyProperties(record, dto);

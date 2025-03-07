@@ -20,6 +20,11 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 职位服务类
+ * 提供职位相关的业务逻辑处理，包括职位的创建、查询、修改、删除等操作
+ * 以及职位状态管理、发布、关闭等功能
+ */
 @Service
 public class JobService {
     @Autowired
@@ -28,6 +33,11 @@ public class JobService {
     @Autowired
     private CompanyRepository companyRepository;
 
+    /**
+     * 根据查询条件获取职位列表
+     * @param queryDTO 查询条件对象，包含职位标题、公司ID、地点、状态、启用状态等过滤条件
+     * @return 分页后的职位DTO列表
+     */
     public Page<JobDTO> getJobs(JobQueryDTO queryDTO) {
         Specification<Job> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -58,6 +68,12 @@ public class JobService {
         return jobPage.map(this::convertToDTO);
     }
 
+    /**
+     * 创建新职位
+     * @param jobDTO 职位信息对象，包含职位的基本信息
+     * @return 创建成功的职位DTO对象
+     * @throws RuntimeException 当关联的公司不存在时抛出
+     */
     @Transactional
     public JobDTO createJob(JobDTO jobDTO) {
         Company company = companyRepository.findById(jobDTO.getCompanyId())
@@ -72,6 +88,13 @@ public class JobService {
         return convertToDTO(job);
     }
 
+    /**
+     * 更新职位信息
+     * @param id 职位ID
+     * @param jobDTO 更新后的职位信息对象
+     * @return 更新后的职位DTO对象
+     * @throws RuntimeException 当职位不存在或关联的公司不存在时抛出
+     */
     @Transactional
     public JobDTO updateJob(Long id, JobDTO jobDTO) {
         Job job = jobRepository.findById(id)
@@ -87,6 +110,12 @@ public class JobService {
         return convertToDTO(job);
     }
 
+    /**
+     * 发布职位
+     * 将职位状态从草稿改为已发布状态
+     * @param id 职位ID
+     * @throws RuntimeException 当职位不存在时抛出
+     */
     @Transactional
     public void publishJob(Long id) {
         Job job = jobRepository.findById(id)
@@ -95,6 +124,12 @@ public class JobService {
         jobRepository.save(job);
     }
 
+    /**
+     * 关闭职位
+     * 将职位状态改为已关闭状态
+     * @param id 职位ID
+     * @throws RuntimeException 当职位不存在时抛出
+     */
     @Transactional
     public void closeJob(Long id) {
         Job job = jobRepository.findById(id)
@@ -103,10 +138,20 @@ public class JobService {
         jobRepository.save(job);
     }
 
+    /**
+     * 删除指定ID的职位
+     * @param id 要删除的职位ID
+     */
     public void deleteJob(Long id) {
         jobRepository.deleteById(id);
     }
 
+    /**
+     * 切换职位启用状态
+     * 如果职位当前是启用状态，则禁用；如果是禁用状态，则启用
+     * @param id 职位ID
+     * @throws RuntimeException 当职位不存在时抛出
+     */
     public void toggleJobStatus(Long id) {
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("职位不存在"));
@@ -114,6 +159,11 @@ public class JobService {
         jobRepository.save(job);
     }
 
+    /**
+     * 将职位实体对象转换为DTO对象
+     * @param job 职位实体对象
+     * @return 转换后的职位DTO对象
+     */
     private JobDTO convertToDTO(Job job) {
         JobDTO dto = new JobDTO();
         BeanUtils.copyProperties(job, dto);
