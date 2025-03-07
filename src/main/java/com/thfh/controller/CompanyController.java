@@ -39,11 +39,19 @@ public class CompanyController {
     /**
      * 获取企业列表
      * @param pageable 分页信息
+     * @param name 公司名称(可选)
+     * @param enabled 状态(可选)
      * @return 企业分页列表
      */
     @GetMapping
-    public R list(Pageable pageable) {
-        Page<Company> companies = companyRepository.findAll(pageable);
+    public R list(Pageable pageable,
+                 @RequestParam(required = false) String name,
+                 @RequestParam(required = false) Boolean enabled) {
+        Page<Company> companies = companyRepository.findByCondition(
+            name != null && !name.trim().isEmpty() ? name : null,
+            enabled,
+            pageable
+        );
         return R.ok().data(companies);
     }
 

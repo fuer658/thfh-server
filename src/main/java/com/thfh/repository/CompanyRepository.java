@@ -20,13 +20,16 @@ public interface CompanyRepository extends JpaRepository<Company, Long>, JpaSpec
     
     /**
      * 根据条件分页查询公司信息
-     * 
+     *
      * @param name 公司名称（模糊匹配，可为null）
+     * @param enabled 启用状态（可为null）
      * @param pageable 分页参数
      * @return 分页后的公司列表
      */
-    @Query("SELECT c FROM Company c WHERE (:name is null OR c.name LIKE CONCAT('%', :name, '%'))")
-    Page<Company> findByCondition(@Param("name") String name, Pageable pageable);
+    @Query("SELECT c FROM Company c WHERE " +
+           "(:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+           "AND (:enabled IS NULL OR c.enabled = :enabled)")
+    Page<Company> findByCondition(@Param("name") String name, @Param("enabled") Boolean enabled, Pageable pageable);
 
     /**
      * 更新公司启用状态
