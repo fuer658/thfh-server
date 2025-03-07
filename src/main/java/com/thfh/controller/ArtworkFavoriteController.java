@@ -13,6 +13,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 作品收藏控制器
+ * 提供作品收藏的添加、取消、查询和检查等功能
+ */
 @RestController
 @RequestMapping("/api/artworks")
 public class ArtworkFavoriteController {
@@ -26,7 +30,7 @@ public class ArtworkFavoriteController {
     /**
      * 添加收藏
      * @param artworkId 作品ID
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @return 操作结果
      */
     @PostMapping("/{artworkId}/favorite")
@@ -41,7 +45,7 @@ public class ArtworkFavoriteController {
     /**
      * 取消收藏
      * @param artworkId 作品ID
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @return 操作结果
      */
     @DeleteMapping("/{artworkId}/favorite")
@@ -55,7 +59,7 @@ public class ArtworkFavoriteController {
 
     /**
      * 获取用户收藏的作品列表
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @param page 页码
      * @param size 每页大小
      * @return 收藏的作品分页列表
@@ -73,7 +77,7 @@ public class ArtworkFavoriteController {
     /**
      * 检查作品是否已收藏
      * @param artworkId 作品ID
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @return 是否已收藏
      */
     @GetMapping("/{artworkId}/favorite/check")
