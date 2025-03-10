@@ -19,6 +19,11 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 课程服务类
+ * 提供课程相关的业务逻辑处理，包括课程的创建、查询、修改、删除等操作
+ * 以及课程状态管理等功能
+ */
 @Service
 public class CourseService {
     @Autowired
@@ -27,6 +32,11 @@ public class CourseService {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * 根据查询条件获取课程列表
+     * @param queryDTO 查询条件对象，包含课程标题、教员ID、状态、启用状态等过滤条件
+     * @return 分页后的课程DTO列表
+     */
     public Page<CourseDTO> getCourses(CourseQueryDTO queryDTO) {
         Specification<Course> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -53,6 +63,12 @@ public class CourseService {
         return coursePage.map(this::convertToDTO);
     }
 
+    /**
+     * 创建新课程
+     * @param courseDTO 课程信息对象，包含课程的基本信息
+     * @return 创建成功的课程DTO对象
+     * @throws RuntimeException 当必填字段为空、教员不存在或已存在同名课程时抛出
+     */
     @Transactional
     public CourseDTO createCourse(CourseDTO courseDTO) {
         // 验证必填字段
@@ -95,6 +111,13 @@ public class CourseService {
         return convertToDTO(course);
     }
 
+    /**
+     * 更新课程信息
+     * @param id 课程ID
+     * @param courseDTO 更新后的课程信息对象
+     * @return 更新后的课程DTO对象
+     * @throws RuntimeException 当课程不存在时抛出
+     */
     @Transactional
     public CourseDTO updateCourse(Long id, CourseDTO courseDTO) {
         Course course = courseRepository.findById(id)
@@ -106,10 +129,20 @@ public class CourseService {
         return convertToDTO(course);
     }
 
+    /**
+     * 删除指定ID的课程
+     * @param id 要删除的课程ID
+     */
     public void deleteCourse(Long id) {
         courseRepository.deleteById(id);
     }
 
+    /**
+     * 切换课程启用状态
+     * 如果课程当前是启用状态，则禁用；如果是禁用状态，则启用
+     * @param id 课程ID
+     * @throws RuntimeException 当课程不存在时抛出
+     */
     public void toggleCourseStatus(Long id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("课程不存在"));
@@ -117,6 +150,11 @@ public class CourseService {
         courseRepository.save(course);
     }
 
+    /**
+     * 将课程实体对象转换为DTO对象
+     * @param course 课程实体对象
+     * @return 转换后的课程DTO对象
+     */
     private CourseDTO convertToDTO(Course course) {
         CourseDTO dto = new CourseDTO();
         BeanUtils.copyProperties(course, dto);

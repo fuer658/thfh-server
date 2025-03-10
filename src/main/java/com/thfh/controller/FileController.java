@@ -18,6 +18,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * 文件上传控制器
+ * 提供文件上传功能，支持图片、视频等多种类型文件的上传
+ */
 @RestController
 @RequestMapping("/api")
 public class FileController {
@@ -28,10 +32,21 @@ public class FileController {
     @Value("${server.port}")
     private String serverPort;
 
+    /**
+     * 获取服务器URL
+     * @return 服务器URL地址
+     */
     private String getServerUrl() {
         return "http://localhost:" + serverPort;
     }
 
+    /**
+     * 文件上传接口
+     * 支持各种类型文件的上传，生成唯一文件名并返回访问URL
+     * 
+     * @param file 上传的文件
+     * @return 上传结果，包含文件访问URL
+     */
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
         try {

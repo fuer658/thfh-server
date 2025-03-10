@@ -45,7 +45,10 @@ public class ArtworkController {
     public Result<Void> createArtwork(
             @Valid @RequestBody Artwork artwork,
             @AuthenticationPrincipal User user) {
-        artwork.setCreator(user);
+        // 如果前端没有指定creator，则使用当前登录用户
+        if (artwork.getCreator() == null || artwork.getCreator().getId() == null) {
+            artwork.setCreator(user);
+        }
         artwork.setCreateTime(LocalDateTime.now());
         artwork.setEnabled(true);
         artworkService.createArtwork(artwork);

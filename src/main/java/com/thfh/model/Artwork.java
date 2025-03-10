@@ -24,6 +24,9 @@ public class Artwork {
 
     private String coverUrl;
 
+    @Column(length = 2000)
+    private String materials;
+
     private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
