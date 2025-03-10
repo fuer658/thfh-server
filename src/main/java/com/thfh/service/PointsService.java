@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.Predicate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,6 +97,13 @@ public class PointsService {
         BeanUtils.copyProperties(record, dto);
         dto.setStudentId(record.getStudent().getId());
         dto.setStudentName(record.getStudent().getRealName());
+        
+        // 格式化创建时间
+        if (record.getCreateTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dto.setCreateTime(record.getCreateTime().format(formatter));
+        }
+        
         return dto;
     }
 } 
