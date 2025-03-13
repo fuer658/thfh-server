@@ -5,6 +5,7 @@ import com.thfh.repository.PostRepository;
 import com.thfh.repository.PostCommentRepository;
 import com.thfh.repository.PostLikeRepository;
 import com.thfh.repository.PostShareRepository;
+import com.thfh.repository.AdminRepository;
 import com.thfh.dto.FollowDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,9 @@ public class PostService {
     @Autowired
     private FollowService followService;
 
+    @Autowired
+    private AdminRepository adminRepository;
+
     
     /**
      * 发布动态
@@ -43,6 +47,38 @@ public class PostService {
     public Post createPost(Post post) {
         User currentUser = userService.getCurrentUser();
         post.setUserId(currentUser.getId());
+        return postRepository.save(post);
+    }
+    
+    /**
+     * 管理员发布动态
+     * @param post 动态内容
+     * @param userId 用户ID，表示以哪个用户的身份发布
+     * @return 创建的动态
+     */
+    @Transactional
+    public Post createPostByAdmin(Post post, Long userId) {
+        // 获取当前认证的用户名
+        org.springframework.security.core.Authentication authentication = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("未登录");
+        }
+        
+        String username = authentication.getName();
+        
+        // 验证当前用户是否为管理员
+        Admin admin = adminRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("非管理员账号，无权操作"));
+        
+        // 验证目标用户是否存在
+        User targetUser = userService.getUserById(userId);
+        if (targetUser == null) {
+            throw new IllegalArgumentException("目标用户不存在");
+        }
+        
+        // 设置动态的用户ID为目标用户ID
+        post.setUserId(userId);
         return postRepository.save(post);
     }
     
@@ -201,5 +237,34 @@ public class PostService {
                 .map(FollowDTO::getFollowedId)
                 .collect(Collectors.toList());
         return postRepository.findByUserIdIn(followingIds, pageable);
+    }
+    
+    /**
+     * 管理员删除动态
+     * @param postId 动态ID
+     */
+    @Transactional
+    public void deletePostByAdmin(Long postId) {
+        // 获取当前认证的用户名
+        org.springframework.security.core.Authentication authentication = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("未登录");
+        }
+        
+        String username = authentication.getName();
+        
+        // 验证当前用户是否为管理员
+        Admin admin = adminRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("非管理员账号，无权操作"));
+        
+        // 检查动态是否存在
+        Post post = getPost(postId);
+        if (post == null) {
+            throw new IllegalArgumentException("动态不存在");
+        }
+        
+        // 管理员可以删除任何动态
+        postRepository.deleteById(postId);
     }
 }
