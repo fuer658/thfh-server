@@ -50,6 +50,16 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadDir + "/");
+                
+        // 添加Swagger和Knife4j的静态资源映射
+        registry.addResourceHandler("doc.html")
+                .addResourceLocations("classpath:/META-INF/resources/");
+        registry.addResourceHandler("/webjars/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/");
+        registry.addResourceHandler("/swagger-resources/**")
+                .addResourceLocations("classpath:/META-INF/resources/swagger-resources/");
+        registry.addResourceHandler("/v2/api-docs/**")
+                .addResourceLocations("classpath:/META-INF/resources/v2/api-docs/");
     }
 
     /**

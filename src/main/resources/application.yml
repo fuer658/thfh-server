@@ -17,6 +17,25 @@ spring:
   web:
     resources:
       static-locations: classpath:/static/,file:${file.upload-dir}
+  # 解决Springfox与Spring Boot 2.7.0的兼容性问题
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+# Knife4j配置
+knife4j:
+  enable: true
+  setting:
+    language: zh-CN
+    enableSwaggerModels: true
+    enableDocumentManage: true
+    swaggerModelName: 实体类列表
+    enableSearch: true
+    enableOpenApi: false
+    enableAfterScript: true
+    enableFilterMultipartApiMethodType: POST
+    enableHomeCustom: true
+    homeCustomLocation: classpath:knife4j/home.md
 
 jwt:
   secret: thfh-admin-secret-key

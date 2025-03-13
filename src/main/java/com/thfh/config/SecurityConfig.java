@@ -102,6 +102,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // 允许所有OPTIONS请求
                 .antMatchers("/api/auth/**").permitAll()  // 允许所有认证相关的请求
                 .antMatchers("/uploads/**").permitAll()  // 允许访问上传的文件
+                .antMatchers("/doc.html").permitAll()
+                .antMatchers("/webjars/**").permitAll()
+                .antMatchers("/swagger-resources/**").permitAll()
+                .antMatchers("/v2/api-docs/**").permitAll()
                 .antMatchers("/api/**").authenticated()  // 所有API接口需要认证
                 .anyRequest().authenticated()  // 其他所有请求都需要认证
                 .and()
