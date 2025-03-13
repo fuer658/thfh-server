@@ -17,11 +17,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * 认证服务类
- * 提供用户认证相关的业务逻辑处理，包括管理员和普通用户的登录认证
- * 以及获取用户信息等功能
- */
 @Service
 public class AuthService {
     @Autowired
@@ -36,13 +31,6 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    /**
-     * 用户登录
-     * 先尝试管理员登录，如果失败则尝试普通用户登录
-     * @param loginDTO 登录信息对象，包含用户名和密码
-     * @return 包含token和用户类型的Map对象
-     * @throws RuntimeException 当用户名或密码错误，或账号被禁用时抛出
-     */
     public Map<String, Object> login(LoginDTO loginDTO) {
         // 先尝试管理员登录
         try {
@@ -95,14 +83,7 @@ public class AuthService {
         }
     }
 
-    /**
-     * 获取用户信息
-     * 先尝试获取管理员信息，如果不存在则尝试获取普通用户信息
-     * @param username 用户名
-     * @return 用户信息DTO对象
-     * @throws RuntimeException 当用户不存在时抛出
-     */
-    public AdminDTO getUserInfo(String username) {
+    public Object getUserInfo(String username) {
         try {
             Admin admin = adminRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -115,18 +96,12 @@ public class AuthService {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("用户不存在"));
 
-            AdminDTO adminDTO = new AdminDTO();
-            BeanUtils.copyProperties(user, adminDTO);
-            return adminDTO;
+            UserDTO userDTO = new UserDTO();
+            BeanUtils.copyProperties(user, userDTO);
+            return userDTO;
         }
     }
 
-    /**
-     * 获取用户个人资料
-     * @param username 用户名
-     * @return 用户DTO对象
-     * @throws RuntimeException 当用户不存在时抛出
-     */
     public UserDTO getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));

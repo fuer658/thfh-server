@@ -30,7 +30,7 @@ public class PostComment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
-    @JsonIgnoreProperties("comments")
+    @JsonIgnoreProperties({"comments", "title", "content", "imageUrls", "userId", "user", "likeCount", "commentCount", "shareCount", "createTime", "updateTime"})    
     private Post post;
 
     @Column(name = "like_count")

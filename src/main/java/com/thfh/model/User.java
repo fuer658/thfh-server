@@ -2,7 +2,6 @@ package com.thfh.model;
 
 import lombok.Data;
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -49,6 +48,12 @@ public class User {
     private Integer points = 0; // 积分
 
     @Column(nullable = false)
+    private Integer experience = 0; // 经验值
+
+    @Column(nullable = false)
+    private Integer level = 1; // 用户等级
+
+    @Column(nullable = false)
     private Boolean enabled = true;
 
     private LocalDateTime lastLoginTime;
@@ -60,5 +65,5 @@ public class User {
     private LocalDateTime updateTime = LocalDateTime.now();
 
     @Column
-    private LocalDate birthday;
+    private LocalDateTime birthday = LocalDateTime.now();
 }

@@ -21,7 +21,7 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
         try {
             return objectMapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("无法将数组转化为Json,原因为：", e);
+            throw new IllegalArgumentException("无法将List<String>转换为JSON字符串: " + e.getMessage(), e);
         }
     }
 
@@ -31,9 +31,17 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
             return new ArrayList<>();
         }
         try {
-            return objectMapper.readValue(dbData, new TypeReference<List<String>>() {});
+            String cleanedData = dbData.trim();
+            if (!cleanedData.startsWith("[") || !cleanedData.endsWith("]")) {
+                // 如果不是标准的JSON数组格式，尝试将其作为单个字符串处理
+                List<String> result = new ArrayList<>();
+                result.add(cleanedData);
+                return result;
+            }
+            return objectMapper.readValue(cleanedData, new TypeReference<List<String>>() {});
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("无法将数组转换为JSON,原因为:", e);
+            // 转换失败时返回空列表，避免异常传播
+            return new ArrayList<>();
         }
     }
 }
