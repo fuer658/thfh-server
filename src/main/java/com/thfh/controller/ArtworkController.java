@@ -3,10 +3,12 @@ package com.thfh.controller;
 import com.thfh.common.CustomPage;
 import com.thfh.common.Result;
 import com.thfh.dto.ArtworkScoreDTO;
+import com.thfh.dto.ArtworkUpdateDTO;
 import com.thfh.dto.TagDTO;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkType;
 import com.thfh.model.User;
+import com.thfh.service.AdminService;
 import com.thfh.service.ArtworkService;
 import com.thfh.service.ArtworkScoreService;
 import com.thfh.service.UserService;
@@ -40,6 +42,9 @@ public class ArtworkController {
 
     @Autowired
     private ArtworkScoreService artworkScoreService;
+
+    @Autowired
+    private AdminService adminService;
 
     /**
      * 发布作品
@@ -163,6 +168,31 @@ public class ArtworkController {
     }
 
     /**
+     * 管理员删除作品
+     * @param artworkId 作品ID
+     * @return 删除结果
+     */
+    @DeleteMapping("/admin/{artworkId}")
+    public Result<Void> adminDeleteArtwork(
+            @PathVariable Long artworkId,
+            Authentication authentication) {
+        String username = authentication.getName();
+        
+        // 验证当前用户是否为管理员
+        if (!adminService.isAdmin(username)) {
+            throw new IllegalStateException("您没有管理员权限");
+        }
+        
+        // 检查作品是否存在
+        if (!artworkService.getArtworkById(artworkId).isPresent()) {
+            throw new IllegalArgumentException("作品不存在");
+        }
+        
+        artworkService.deleteArtwork(artworkId);
+        return Result.success(null);
+    }
+
+    /**
      * 添加新标签
      * @param tagName 标签名称
      * @return 操作结果
@@ -185,6 +215,33 @@ public class ArtworkController {
             @PathVariable Long tagId,
             Authentication authentication) {
         artworkService.removeTag(tagId);
+        return Result.success(null);
+    }
+
+    /**
+     * 管理员编辑作品
+     * @param artworkId 作品ID
+     * @param updateDTO 更新的作品信息
+     * @return 更新结果
+     */
+    @PutMapping("/admin/{artworkId}")
+    public Result<Void> adminUpdateArtwork(
+            @PathVariable Long artworkId,
+            @Valid @RequestBody ArtworkUpdateDTO updateDTO,
+            Authentication authentication) {
+        String username = authentication.getName();
+        
+        // 验证当前用户是否为管理员
+        if (!adminService.isAdmin(username)) {
+            throw new IllegalStateException("您没有管理员权限");
+        }
+        
+        // 检查作品是否存在
+        if (!artworkService.getArtworkById(artworkId).isPresent()) {
+            throw new IllegalArgumentException("作品不存在");
+        }
+        
+        artworkService.updateArtwork(artworkId, updateDTO);
         return Result.success(null);
     }
 

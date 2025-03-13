@@ -46,4 +46,11 @@ public interface AdminService {
      * @throws RuntimeException 当管理员不存在时抛出
      */
     void toggleAdminStatus(Long id);
+
+    /**
+     * 检查用户是否为管理员
+     * @param username 用户名
+     * @return 如果是管理员返回true，否则返回false
+     */
+    boolean isAdmin(String username);
 }

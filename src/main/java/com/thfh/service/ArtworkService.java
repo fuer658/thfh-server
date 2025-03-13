@@ -1,5 +1,6 @@
 package com.thfh.service;
 
+import com.thfh.dto.ArtworkUpdateDTO;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkTag;
 import com.thfh.model.ArtworkType;
@@ -7,6 +8,7 @@ import com.thfh.model.User;
 import com.thfh.repository.ArtworkRepository;
 import com.thfh.repository.ArtworkTagRepository;
 import com.thfh.repository.ArtworkScoreRepository;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -215,6 +217,45 @@ public class ArtworkService {
         }
         
         artwork.setPrice(price);
+        return artworkRepository.save(artwork);
+    }
+
+    /**
+     * 管理员更新作品信息
+     * @param artworkId 作品ID
+     * @param updateDTO 更新的作品信息
+     * @return 更新后的作品
+     */
+    @Transactional
+    public Artwork updateArtwork(Long artworkId, ArtworkUpdateDTO updateDTO) {
+        Artwork artwork = artworkRepository.findById(artworkId)
+                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+        
+        // 更新基本信息
+        BeanUtils.copyProperties(updateDTO, artwork, "id", "creator", "createTime", "averageScore", "scoreCount", "totalScore", "favoriteCount", "likeCount");
+        
+        // 处理标签
+        if (updateDTO.getTags() != null) {
+            Set<ArtworkTag> processedTags = new HashSet<>();
+            updateDTO.getTags().forEach(tag -> {
+                if (tag.getId() == null) {
+                    // 检查是否存在相同名称的标签
+                    ArtworkTag existingTag = artworkTagRepository.findByName(tag.getName());
+                    if (existingTag != null) {
+                        // 如果存在，使用已有标签
+                        processedTags.add(existingTag);
+                    } else {
+                        // 如果不存在，保存新标签
+                        artworkTagRepository.save(tag);
+                        processedTags.add(tag);
+                    }
+                } else {
+                    processedTags.add(tag);
+                }
+            });
+            artwork.setTags(processedTags);
+        }
+        
         return artworkRepository.save(artwork);
     }
 }

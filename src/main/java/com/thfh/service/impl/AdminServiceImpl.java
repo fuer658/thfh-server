@@ -106,6 +106,13 @@ public class AdminServiceImpl implements AdminService {
         adminRepository.save(admin);
     }
 
+    @Override
+    public boolean isAdmin(String username) {
+        return adminRepository.findByUsername(username)
+                .map(Admin::getEnabled)
+                .orElse(false);
+    }
+
     private AdminDTO convertToDTO(Admin admin) {
         AdminDTO dto = new AdminDTO();
         BeanUtils.copyProperties(admin, dto);
