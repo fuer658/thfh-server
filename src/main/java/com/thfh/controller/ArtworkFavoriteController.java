@@ -1,6 +1,7 @@
 package com.thfh.controller;
 
 import com.thfh.common.Result;
+import com.thfh.common.CustomPage;
 import com.thfh.model.Artwork;
 import com.thfh.model.User;
 import com.thfh.service.ArtworkFavoriteService;
@@ -13,10 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 作品收藏控制器
- * 提供作品收藏的添加、取消、查询和检查等功能
- */
 @RestController
 @RequestMapping("/api/artworks")
 public class ArtworkFavoriteController {
@@ -30,7 +27,7 @@ public class ArtworkFavoriteController {
     /**
      * 添加收藏
      * @param artworkId 作品ID
-     * @param authentication 认证信息
+     * @param user 当前登录用户
      * @return 操作结果
      */
     @PostMapping("/{artworkId}/favorite")
@@ -45,7 +42,7 @@ public class ArtworkFavoriteController {
     /**
      * 取消收藏
      * @param artworkId 作品ID
-     * @param authentication 认证信息
+     * @param user 当前登录用户
      * @return 操作结果
      */
     @DeleteMapping("/{artworkId}/favorite")
@@ -59,25 +56,26 @@ public class ArtworkFavoriteController {
 
     /**
      * 获取用户收藏的作品列表
-     * @param authentication 认证信息
+     * @param user 当前登录用户
      * @param page 页码
      * @param size 每页大小
      * @return 收藏的作品分页列表
      */
     @GetMapping("/favorites")
-    public Result<Page<Artwork>> getFavorites(
+    public Result<CustomPage<Artwork>> getFavorites(
             Authentication authentication,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         User user = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return Result.success(artworkFavoriteService.getUserFavorites(user.getId(), pageRequest));
+        Page<Artwork> artworkPage = artworkFavoriteService.getUserFavorites(user.getId(), pageRequest);
+        return Result.success(new CustomPage<>(artworkPage));
     }
 
     /**
      * 检查作品是否已收藏
      * @param artworkId 作品ID
-     * @param authentication 认证信息
+     * @param user 当前登录用户
      * @return 是否已收藏
      */
     @GetMapping("/{artworkId}/favorite/check")

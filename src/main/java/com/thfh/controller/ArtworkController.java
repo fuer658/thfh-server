@@ -1,6 +1,9 @@
 package com.thfh.controller;
 
+import com.thfh.common.CustomPage;
 import com.thfh.common.Result;
+import com.thfh.dto.ArtworkScoreDTO;
+import com.thfh.dto.TagDTO;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkType;
 import com.thfh.model.User;
@@ -17,6 +20,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -45,10 +51,7 @@ public class ArtworkController {
     public Result<Void> createArtwork(
             @Valid @RequestBody Artwork artwork,
             @AuthenticationPrincipal User user) {
-        // 如果前端没有指定creator，则使用当前登录用户
-        if (artwork.getCreator() == null || artwork.getCreator().getId() == null) {
-            artwork.setCreator(user);
-        }
+        artwork.setCreator(user);
         artwork.setCreateTime(LocalDateTime.now());
         artwork.setEnabled(true);
         artworkService.createArtwork(artwork);
@@ -65,11 +68,12 @@ public class ArtworkController {
     @PostMapping("/{artworkId}/score")
     public Result<Void> scoreArtwork(
             @PathVariable Long artworkId,
-            @RequestParam BigDecimal score,
-            @AuthenticationPrincipal User user) {
+            @Valid @RequestBody ArtworkScoreDTO scoreDTO,
+            Authentication authentication) {
+        User user = userService.getCurrentUser();
         Artwork artwork = artworkService.getArtworkById(artworkId)
                 .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
-        artworkScoreService.scoreArtwork(artworkId, user.getId(), score, user, artwork);
+        artworkScoreService.scoreArtwork(artworkId, user.getId(), scoreDTO.getScore(), user, artwork);
         return Result.success(null);
     }
 
@@ -93,11 +97,12 @@ public class ArtworkController {
      * @return 作品分页列表
      */
     @GetMapping
-    public Result<Page<Artwork>> getArtworks(
+    public Result<CustomPage<Artwork>> getArtworks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return Result.success(artworkService.getAllArtworks(pageRequest));
+        Page<Artwork> artworkPage = artworkService.getAllArtworks(pageRequest);
+        return Result.success(new CustomPage<>(artworkPage));
     }
 
     /**
@@ -110,13 +115,14 @@ public class ArtworkController {
      * @return 作品分页列表
      */
     @GetMapping("/my")
-    public ResponseEntity<Page<Artwork>> getMyArtworks(
-            @AuthenticationPrincipal User user,
+    public Result<CustomPage<Artwork>> getMyArtworks(
+            Authentication authentication,
             @RequestParam(required = false) ArtworkType type,
             @RequestParam(required = false) Boolean enabled,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
 
+        User user = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
 
         Page<Artwork> artworks;
@@ -130,7 +136,7 @@ public class ArtworkController {
             artworks = artworkService.getUserArtworks(user.getId(), pageRequest);
         }
 
-        return ResponseEntity.ok(artworks);
+        return Result.success(new CustomPage<>(artworks));
     }
 
     /**
@@ -163,9 +169,9 @@ public class ArtworkController {
      */
     @PostMapping("/tags")
     public Result<Void> addTag(
-            @RequestParam String tagName,
+            @Valid @RequestBody TagDTO tagDTO,
             Authentication authentication) {
-        artworkService.addTag(tagName);
+        artworkService.addTag(tagDTO.getTagName());
         return Result.success(null);
     }
 
@@ -179,6 +185,34 @@ public class ArtworkController {
             @PathVariable Long tagId,
             Authentication authentication) {
         artworkService.removeTag(tagId);
+        return Result.success(null);
+    }
+
+    /**
+     * 修改作品推荐状态
+     * @param artworkId 作品ID
+     * @param recommended 是否推荐（0-不推荐，1-推荐）
+     * @return 更新结果
+     */
+    @PutMapping("/{artworkId}/recommend")
+    public Result<Void> updateArtworkRecommendation(
+            @PathVariable Long artworkId,
+            @RequestParam(defaultValue = "0") Integer recommended) {
+        artworkService.updateArtworkRecommendation(artworkId, recommended == 1);
+        return Result.success(null);
+    }
+
+    /**
+     * 修改商业作品价格
+     * @param artworkId 作品ID
+     * @param price 新价格
+     * @return 更新结果
+     */
+    @PutMapping("/{artworkId}/price")
+    public Result<Void> updateArtworkPrice(
+            @PathVariable Long artworkId,
+            @RequestParam BigDecimal price) {
+        artworkService.updateArtworkPrice(artworkId, price);
         return Result.success(null);
     }
 }

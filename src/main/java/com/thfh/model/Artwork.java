@@ -1,5 +1,6 @@
 package com.thfh.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -23,7 +24,7 @@ public class Artwork {
     private String description;
 
     private String coverUrl;
-
+    
     @Column(length = 2000)
     private String materials;
 
@@ -35,6 +36,7 @@ public class Artwork {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "email", "phone", "createTime", "updateTime", "lastLoginTime", "status", "roles","qualification","speciality","disability","points","birthday"})
     private User creator;
 
     @ManyToMany
