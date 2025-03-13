@@ -86,7 +86,7 @@ public class UserService {
         
         // 处理生日日期
         if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
-            user.setBirthday(LocalDate.parse(userDTO.getBirthday()));
+            user.setBirthday(LocalDate.parse(userDTO.getBirthday()).atStartOfDay());
         }
         
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
@@ -110,7 +110,7 @@ public class UserService {
         
         // 处理生日日期
         if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
-            user.setBirthday(LocalDate.parse(userDTO.getBirthday()));
+            user.setBirthday(LocalDate.parse(userDTO.getBirthday()).atStartOfDay());
         }
         
         user.setUpdateTime(LocalDateTime.now());
