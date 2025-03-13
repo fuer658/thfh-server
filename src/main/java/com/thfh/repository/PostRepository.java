@@ -14,6 +14,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     
     Page<Post> findByUserIdIn(List<Long> userIds, Pageable pageable);
     
+    @Query("SELECT p FROM Post p JOIN User u ON p.userId = u.id WHERE " +
+           "(LOWER(p.title) LIKE LOWER(CONCAT('%', :title, '%')) OR :title = '') AND " +
+           "(LOWER(u.realName) LIKE LOWER(CONCAT('%', :userName, '%')) OR :userName = '')")
+    Page<Post> findByTitleContainingAndUserRealNameContaining(String title, String userName, Pageable pageable);
+    
     @Modifying
     @Query("UPDATE Post p SET p.likeCount = p.likeCount + :delta WHERE p.id = :postId")
     void updateLikeCount(Long postId, int delta);

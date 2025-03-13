@@ -132,10 +132,12 @@ public class PostController {
      */
     @GetMapping
     public Result<Page<Post>> getAllPosts(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String userName,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return Result.success(postService.getAllPosts(pageRequest));
+        return Result.success(postService.getAllPosts(title, userName, pageRequest));
     }
 
     /**

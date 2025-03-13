@@ -223,8 +223,19 @@ public class PostService {
     /**
      * 获取所有动态列表
      */
-    public Page<Post> getAllPosts(Pageable pageable) {
-        return postRepository.findAll(pageable);
+    public Page<Post> getAllPosts(String title, String userName, Pageable pageable) {
+        // 如果两个参数都为空，则返回所有动态
+        if ((title == null || title.trim().isEmpty()) && (userName == null || userName.trim().isEmpty())) {
+            return postRepository.findAll(pageable);
+        }
+        
+        // 确保参数不为null，避免SQL错误
+        String titleParam = (title == null) ? "" : title.trim();
+        String userNameParam = (userName == null) ? "" : userName.trim();
+        
+        return postRepository.findByTitleContainingAndUserRealNameContaining(
+            titleParam, userNameParam, pageable
+        );
     }
 
     /**
