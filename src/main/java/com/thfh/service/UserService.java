@@ -234,4 +234,15 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
     }
+
+    /**
+     * 根据用户ID获取用户信息
+     * @param id 用户ID
+     * @return 用户实体对象
+     * @throws RuntimeException 当用户不存在时抛出
+     */
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+    }
 }

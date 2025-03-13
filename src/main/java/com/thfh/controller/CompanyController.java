@@ -7,8 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -21,6 +26,9 @@ public class CompanyController {
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * 创建新企业
@@ -93,21 +101,35 @@ public class CompanyController {
     }
 
     /**
-     * 删除企业（软删除）
+     * 删除企业
      * @param id 企业ID
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @Transactional
     public R delete(@PathVariable Long id) {
-        Optional<Company> company = companyRepository.findById(id);
-        if (company.isPresent()) {
-            Company companyToDelete = company.get();
-            companyToDelete.setEnabled(false);
-            companyToDelete.setUpdateTime(LocalDateTime.now());
-            companyRepository.save(companyToDelete);
-            return R.ok();
+        System.out.println("接收到删除公司请求，ID: " + id);
+        try {
+            Optional<Company> company = companyRepository.findById(id);
+            if (company.isPresent()) {
+                // 先删除关联的职位
+                entityManager.createQuery("DELETE FROM Job j WHERE j.company.id = :companyId")
+                    .setParameter("companyId", id)
+                    .executeUpdate();
+                
+                // 再删除公司
+                companyRepository.deleteById(id);
+                System.out.println("公司删除成功，ID: " + id);
+                return R.ok();
+            } else {
+                System.out.println("公司不存在，ID: " + id);
+                return R.error("公司不存在");
+            }
+        } catch (Exception e) {
+            System.err.println("删除公司时发生错误: " + e.getMessage());
+            e.printStackTrace();
+            return R.error("删除失败: " + e.getMessage());
         }
-        return R.error("公司不存在");
     }
 
     /**
@@ -126,5 +148,36 @@ public class CompanyController {
             return R.ok().data(companyRepository.save(companyToUpdate));
         }
         return R.error("公司不存在");
+    }
+
+    /**
+     * 批量删除企业
+     * @param request 包含企业ID列表的请求
+     * @return 操作结果
+     */
+    @DeleteMapping("/batch")
+    @Transactional
+    public R batchDelete(@RequestBody Map<String, List<Long>> request) {
+        List<Long> ids = request.get("ids");
+        if (ids == null || ids.isEmpty()) {
+            return R.error("未提供要删除的公司ID");
+        }
+        
+        System.out.println("接收到批量删除公司请求，ID列表: " + ids);
+        try {
+            // 先删除关联的职位
+            entityManager.createQuery("DELETE FROM Job j WHERE j.company.id IN :companyIds")
+                .setParameter("companyIds", ids)
+                .executeUpdate();
+            
+            // 再删除公司
+            companyRepository.deleteAllById(ids);
+            System.out.println("批量删除公司成功，ID列表: " + ids);
+            return R.ok();
+        } catch (Exception e) {
+            System.err.println("批量删除公司时发生错误: " + e.getMessage());
+            e.printStackTrace();
+            return R.error("批量删除失败: " + e.getMessage());
+        }
     }
 }

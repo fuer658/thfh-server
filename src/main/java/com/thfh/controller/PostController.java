@@ -148,4 +148,28 @@ public class PostController {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getFollowingPosts(pageRequest));
     }
+
+    /**
+     * 管理员以指定用户身份发布动态
+     * @param userId 用户ID
+     * @param post 动态内容
+     * @return 创建的动态
+     */
+    @PostMapping("/admin/{userId}")
+    public Result<Post> createPostByAdmin(
+            @PathVariable Long userId,
+            @RequestBody Post post) {
+        return Result.success(postService.createPostByAdmin(post, userId));
+    }
+
+    /**
+     * 管理员删除动态
+     * @param postId 动态ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/admin/{postId}")
+    public Result<Void> deletePostByAdmin(@PathVariable Long postId) {
+        postService.deletePostByAdmin(postId);
+        return Result.success(null);
+    }
 }
