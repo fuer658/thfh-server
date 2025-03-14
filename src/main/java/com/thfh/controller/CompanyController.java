@@ -180,4 +180,10 @@ public class CompanyController {
             return R.error("批量删除失败: " + e.getMessage());
         }
     }
+
+    @GetMapping("/enabled")
+    public R listEnabled() {
+        List<Company> companies = companyRepository.findAllEnabled();
+        return R.ok().data(companies);
+    }
 }

@@ -48,6 +48,9 @@ public class JobService {
             if (queryDTO.getCompanyId() != null) {
                 predicates.add(cb.equal(root.get("company").get("id"), queryDTO.getCompanyId()));
             }
+            if (queryDTO.getCompanyName() != null && !queryDTO.getCompanyName().isEmpty()) {
+                predicates.add(cb.like(root.get("company").get("name"), "%" + queryDTO.getCompanyName() + "%"));
+            }
             if (queryDTO.getLocation() != null) {
                 predicates.add(cb.like(root.get("location"), "%" + queryDTO.getLocation() + "%"));
             }
@@ -97,17 +100,47 @@ public class JobService {
      */
     @Transactional
     public JobDTO updateJob(Long id, JobDTO jobDTO) {
+        // 1. 验证职位是否存在
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("职位不存在"));
 
+        // 2. 验证公司是否存在
         Company company = companyRepository.findById(jobDTO.getCompanyId())
                 .orElseThrow(() -> new RuntimeException("公司不存在"));
 
-        BeanUtils.copyProperties(jobDTO, job, "id", "createTime", "viewCount", "applyCount");
-        job.setCompany(company);
-        job = jobRepository.save(job);
+        // 3. 基本数据验证
+        if (jobDTO.getSalaryMin() != null && jobDTO.getSalaryMax() != null 
+            && jobDTO.getSalaryMin().compareTo(jobDTO.getSalaryMax()) > 0) {
+            throw new RuntimeException("最低薪资不能大于最高薪资");
+        }
 
-        return convertToDTO(job);
+        // 4. 验证字段长度
+        if (jobDTO.getDescription() != null && jobDTO.getDescription().length() > 1000) {
+            throw new RuntimeException("职位描述长度不能超过1000个字符");
+        }
+        if (jobDTO.getTitle() != null && jobDTO.getTitle().length() > 50) {
+            throw new RuntimeException("职位标题长度不能超过50个字符");
+        }
+
+        // 5. 复制属性时排除不应更新的字段
+        BeanUtils.copyProperties(jobDTO, job, 
+            "id", "createTime", "viewCount", "applyCount", "applications", "company");
+
+        // 6. 设置关联对象
+        job.setCompany(company);
+
+        // 7. 如果状态为空，设置为草稿状态
+        if (job.getStatus() == null) {
+            job.setStatus(JobStatus.DRAFT);
+        }
+
+        // 8. 保存更新
+        try {
+            job = jobRepository.save(job);
+            return convertToDTO(job);
+        } catch (Exception e) {
+            throw new RuntimeException("保存职位信息失败：" + e.getMessage());
+        }
     }
 
     /**

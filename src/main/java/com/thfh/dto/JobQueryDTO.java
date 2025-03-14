@@ -20,6 +20,11 @@ public class JobQueryDTO {
     private Long companyId;
     
     /**
+     * 公司名称查询条件（模糊匹配）
+     */
+    private String companyName;
+    
+    /**
      * 工作地点查询条件（模糊匹配）
      */
     private String location;
