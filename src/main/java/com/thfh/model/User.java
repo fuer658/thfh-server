@@ -3,6 +3,8 @@ package com.thfh.model;
 import lombok.Data;
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -66,4 +68,16 @@ public class User {
 
     @Column
     private LocalDateTime birthday = LocalDateTime.now();
+    
+    // 添加与JobApplication的一对多关联
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JobApplication> jobApplications = new ArrayList<>();
+    
+    /**
+     * 更新实体的updateTime
+     */
+    @PreUpdate
+    public void preUpdate() {
+        this.updateTime = LocalDateTime.now();
+    }
 }

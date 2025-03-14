@@ -4,6 +4,8 @@ import lombok.Data;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -64,4 +66,16 @@ public class Job {
 
     @Column(nullable = false)
     private LocalDateTime updateTime = LocalDateTime.now();
+    
+    // 添加与JobApplication的一对多关联
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JobApplication> applications = new ArrayList<>();
+    
+    /**
+     * 更新实体的updateTime
+     */
+    @PreUpdate
+    public void preUpdate() {
+        this.updateTime = LocalDateTime.now();
+    }
 } 
