@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
@@ -15,6 +16,7 @@ import java.util.Optional;
  * 继承自JpaRepository，自动提供基本的CRUD操作
  * 实现JpaSpecificationExecutor接口，支持复杂条件查询
  */
+@Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
     
     /**
@@ -41,4 +43,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return 包含用户的Optional对象，如果不存在则为空
      */
     Optional<User> findByUsername(String username);
+
+    long countByUserType(UserType userType);
+
+    long countByUserTypeAndEnabled(UserType userType, Boolean enabled);
 }

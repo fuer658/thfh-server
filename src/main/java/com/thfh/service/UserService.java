@@ -4,6 +4,7 @@ import com.thfh.dto.UserDTO;
 import com.thfh.dto.UserQueryDTO;
 import com.thfh.dto.LoginDTO;
 import com.thfh.model.User;
+import com.thfh.model.UserType;
 import com.thfh.repository.UserRepository;
 import com.thfh.util.JwtUtil;
 import org.springframework.beans.BeanUtils;
@@ -71,27 +72,103 @@ public class UserService {
     }
 
     /**
+     * 检查当前用户是否有权限操作目标用户
+     * @param currentUser 当前用户
+     * @param targetUser 目标用户
+     * @return 是否有权限
+     */
+    private boolean hasPermission(User currentUser, User targetUser) {
+        // 教员可以管理学员账号
+        if (currentUser.getUserType() == UserType.TEACHER && targetUser.getUserType() == UserType.STUDENT) {
+            return true;
+        }
+        // 用户只能操作自己的账号
+        return currentUser.getId().equals(targetUser.getId());
+    }
+
+    /**
+     * 验证用户数据
+     * @param userDTO 用户数据
+     * @throws RuntimeException 当数据验证失败时抛出
+     */
+    private void validateUserData(UserDTO userDTO) {
+        List<String> errors = new ArrayList<>();
+
+        // 验证用户名
+        if (userDTO.getUsername() == null || userDTO.getUsername().trim().isEmpty()) {
+            errors.add("用户名不能为空");
+        } else if (userDTO.getUsername().length() < 3 || userDTO.getUsername().length() > 50) {
+            errors.add("用户名长度必须在3-50个字符之间");
+        }
+
+        // 验证密码（仅在创建用户时）
+        if (userDTO.getId() == null && (userDTO.getPassword() == null || userDTO.getPassword().trim().isEmpty())) {
+            errors.add("密码不能为空");
+        }
+
+        // 验证用户类型
+        if (userDTO.getUserType() == null) {
+            errors.add("用户类型不能为空");
+        }
+
+        // 验证邮箱格式
+        if (userDTO.getEmail() != null && !userDTO.getEmail().trim().isEmpty()) {
+            String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
+            if (!userDTO.getEmail().matches(emailRegex)) {
+                errors.add("邮箱格式不正确");
+            }
+        }
+
+        // 验证手机号格式
+        if (userDTO.getPhone() != null && !userDTO.getPhone().trim().isEmpty()) {
+            String phoneRegex = "^1[3-9]\\d{9}$";
+            if (!userDTO.getPhone().matches(phoneRegex)) {
+                errors.add("手机号格式不正确");
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new RuntimeException(String.join(", ", errors));
+        }
+    }
+
+    /**
      * 创建新用户
      * @param userDTO 用户信息对象，包含用户的基本信息
      * @return 创建成功的用户DTO对象
      * @throws RuntimeException 当用户名已存在时抛出
      */
     public UserDTO createUser(UserDTO userDTO) {
+        // 数据验证
+        validateUserData(userDTO);
+
+        // 检查用户名是否已存在
         if (userRepository.existsByUsername(userDTO.getUsername())) {
             throw new RuntimeException("用户名已存在");
         }
 
         User user = new User();
-        BeanUtils.copyProperties(userDTO, user, "birthday");
+        BeanUtils.copyProperties(userDTO, user, "id", "birthday", "createTime", "updateTime", "lastLoginTime");
         
         // 处理生日日期
         if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
-            user.setBirthday(LocalDate.parse(userDTO.getBirthday()).atStartOfDay());
+            try {
+                user.setBirthday(LocalDate.parse(userDTO.getBirthday()).atStartOfDay());
+            } catch (Exception e) {
+                throw new RuntimeException("生日日期格式不正确，请使用yyyy-MM-dd格式");
+            }
         }
         
+        // 设置默认值
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        user = userRepository.save(user);
+        user.setEnabled(true);
+        user.setExperience(0);
+        user.setLevel(1);
+        user.setPoints(0);
+        user.setCreateTime(LocalDateTime.now());
+        user.setUpdateTime(LocalDateTime.now());
 
+        user = userRepository.save(user);
         return convertToDTO(user);
     }
 
@@ -103,20 +180,45 @@ public class UserService {
      * @throws RuntimeException 当用户不存在时抛出
      */
     public UserDTO updateUser(Long id, UserDTO userDTO) {
-        User user = userRepository.findById(id)
+        // 检查当前用户权限
+        User currentUser = getCurrentUser();
+        User targetUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
-        BeanUtils.copyProperties(userDTO, user, "id", "password", "createTime", "updateTime", "birthday");
+        if (!hasPermission(currentUser, targetUser)) {
+            throw new RuntimeException("没有权限修改该用户信息");
+        }
+
+        // 数据验证
+        validateUserData(userDTO);
+
+        // 如果要修改用户名，检查新用户名是否已存在
+        if (!targetUser.getUsername().equals(userDTO.getUsername()) &&
+            userRepository.existsByUsername(userDTO.getUsername())) {
+            throw new RuntimeException("新用户名已存在");
+        }
+
+        // 复制属性，排除敏感字段
+        BeanUtils.copyProperties(userDTO, targetUser, "id", "password", "createTime", "updateTime", "lastLoginTime", "birthday");
+        
+        // 处理密码更新
+        if (userDTO.getPassword() != null && !userDTO.getPassword().trim().isEmpty()) {
+            targetUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
         
         // 处理生日日期
         if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
-            user.setBirthday(LocalDate.parse(userDTO.getBirthday()).atStartOfDay());
+            try {
+                targetUser.setBirthday(LocalDate.parse(userDTO.getBirthday()).atStartOfDay());
+            } catch (Exception e) {
+                throw new RuntimeException("生日日期格式不正确，请使用yyyy-MM-dd格式");
+            }
         }
         
-        user.setUpdateTime(LocalDateTime.now());
-        user = userRepository.save(user);
+        targetUser.setUpdateTime(LocalDateTime.now());
+        targetUser = userRepository.save(targetUser);
 
-        return convertToDTO(user);
+        return convertToDTO(targetUser);
     }
 
     /**
@@ -124,7 +226,21 @@ public class UserService {
      * @param id 要删除的用户ID
      */
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+        // 检查当前用户权限
+        User currentUser = getCurrentUser();
+        User targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        if (!hasPermission(currentUser, targetUser)) {
+            throw new RuntimeException("没有权限删除该用户");
+        }
+
+        // 教员不能被删除
+        if (targetUser.getUserType() == UserType.TEACHER) {
+            throw new RuntimeException("教员账号不能被删除");
+        }
+
+        userRepository.delete(targetUser);
     }
 
     /**
@@ -134,10 +250,22 @@ public class UserService {
      * @throws RuntimeException 当用户不存在时抛出
      */
     public void toggleUserStatus(Long id) {
-        User user = userRepository.findById(id)
+        // 检查当前用户权限
+        User currentUser = getCurrentUser();
+        User targetUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
-        user.setEnabled(!user.getEnabled());
-        userRepository.save(user);
+
+        if (!hasPermission(currentUser, targetUser)) {
+            throw new RuntimeException("没有权限修改该用户状态");
+        }
+
+        // 教员账号不能被禁用
+        if (targetUser.getUserType() == UserType.TEACHER && targetUser.getEnabled()) {
+            throw new RuntimeException("教员账号不能被禁用");
+        }
+
+        targetUser.setEnabled(!targetUser.getEnabled());
+        userRepository.save(targetUser);
     }
 
     /**
