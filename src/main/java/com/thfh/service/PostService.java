@@ -145,15 +145,35 @@ public class PostService {
      * 评论动态
      */
     @Transactional
-    public PostComment commentPost(Long postId, String content) {
+    public PostComment commentPost(Long postId, String content, Long parentId) {
         User currentUser = userService.getCurrentUser();
         // 确认动态存在
-        getPost(postId);
+        Post post = getPost(postId);
         
         PostComment comment = new PostComment();
         comment.setPostId(postId);
         comment.setUserId(currentUser.getId());
         comment.setContent(content);
+        
+        // 设置评论层级
+        if (parentId != null) {
+            PostComment parentComment = postCommentRepository.findById(parentId)
+                    .orElseThrow(() -> new IllegalArgumentException("父评论不存在"));
+            
+            // 检查父评论是否属于同一个动态
+            if (!parentComment.getPostId().equals(postId)) {
+                throw new IllegalArgumentException("父评论不属于该动态");
+            }
+            
+            // 设置父评论ID和层级
+            comment.setParentId(parentId);
+            comment.setLevel(parentComment.getLevel() + 1);
+            
+            // 检查是否超过最大层级（这里限制最多3层）
+            if (comment.getLevel() > 3) {
+                throw new IllegalArgumentException("评论层级超过限制");
+            }
+        }
         
         PostComment savedComment = postCommentRepository.save(comment);
         postRepository.updateCommentCount(postId, 1);
@@ -162,10 +182,28 @@ public class PostService {
     }
     
     /**
-     * 获取动态评论列表
+     * 获取评论树结构
+     */
+    public Page<PostComment> getPostCommentTree(Long postId, Pageable pageable) {
+        // 获取一级评论
+        Page<PostComment> rootComments = postCommentRepository
+                .findByPostIdAndParentIdIsNullOrderByCreateTimeDesc(postId, pageable);
+        
+        // 获取每个一级评论的子评论
+        rootComments.getContent().forEach(comment -> {
+            List<PostComment> children = postCommentRepository
+                    .findByParentIdOrderByCreateTimeAsc(comment.getId());
+            comment.setChildren(children);
+        });
+        
+        return rootComments;
+    }
+    
+    /**
+     * 获取评论列表（扁平结构，按层级排序）
      */
     public Page<PostComment> getPostComments(Long postId, Pageable pageable) {
-        return postCommentRepository.findByPostIdOrderByCreateTimeDesc(postId, pageable);
+        return postCommentRepository.findByPostIdOrderByLevelAscCreateTimeDesc(postId, pageable);
     }
     
     /**

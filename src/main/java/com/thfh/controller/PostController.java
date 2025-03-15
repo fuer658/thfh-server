@@ -1,6 +1,7 @@
 package com.thfh.controller;
 
 import com.thfh.common.Result;
+import com.thfh.dto.CommentRequest;
 import com.thfh.dto.PostDTO;
 import com.thfh.model.Post;
 import com.thfh.model.PostComment;
@@ -74,12 +75,28 @@ public class PostController {
     @PostMapping("/{postId}/comments")
     public Result<PostComment> commentPost(
             @PathVariable Long postId,
-            @RequestBody String content) {
-        return Result.success(postService.commentPost(postId, content));
+            @RequestBody CommentRequest request) {
+        return Result.success(postService.commentPost(
+            postId, 
+            request.getContent(), 
+            request.getParentId()
+        ));
     }
 
     /**
-     * 获取动态评论列表
+     * 获取动态评论列表（树状结构）
+     */
+    @GetMapping("/{postId}/comments/tree")
+    public Result<Page<PostComment>> getPostCommentTree(
+            @PathVariable Long postId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        return Result.success(postService.getPostCommentTree(postId, pageRequest));
+    }
+
+    /**
+     * 获取动态评论列表（扁平结构）
      */
     @GetMapping("/{postId}/comments")
     public Result<Page<PostComment>> getPostComments(

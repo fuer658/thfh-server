@@ -5,6 +5,8 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -32,6 +34,21 @@ public class PostComment {
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     @JsonIgnoreProperties({"comments", "title", "content", "imageUrls", "userId", "user", "likeCount", "commentCount", "shareCount", "createTime", "updateTime"})    
     private Post post;
+
+    @Column(name = "parent_id")
+    private Long parentId;  // 父评论ID，如果是一级评论则为null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"parent", "children"})
+    private PostComment parent;  // 父评论对象
+
+    @OneToMany(mappedBy = "parent")
+    @JsonIgnoreProperties({"parent"})
+    private List<PostComment> children = new ArrayList<>();  // 子评论列表
+
+    @Column(name = "level")
+    private Integer level = 1;  // 评论层级，1为一级评论，2为二级评论，以此类推
 
     @Column(name = "like_count")
     private Integer likeCount = 0;

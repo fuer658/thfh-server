@@ -13,6 +13,8 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
     Page<Post> findByUserId(Long userId, Pageable pageable);
     
+    Page<Post> findByUserIdOrderByCreateTimeDesc(Long userId, Pageable pageable);
+    
     Page<Post> findByUserIdIn(List<Long> userIds, Pageable pageable);
     
     @Query("SELECT p FROM Post p JOIN User u ON p.userId = u.id WHERE " +
