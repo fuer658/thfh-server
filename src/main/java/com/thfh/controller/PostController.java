@@ -1,6 +1,7 @@
 package com.thfh.controller;
 
 import com.thfh.common.Result;
+import com.thfh.dto.PostDTO;
 import com.thfh.model.Post;
 import com.thfh.model.PostComment;
 import com.thfh.model.User;
@@ -130,7 +131,7 @@ public class PostController {
      * 获取所有动态列表
      */
     @GetMapping
-    public Result<Page<Post>> getAllPosts(
+    public Result<Page<PostDTO>> getAllPosts(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String userName,
             @RequestParam(defaultValue = "1") int page,

@@ -7,12 +7,18 @@ import com.thfh.repository.PostLikeRepository;
 import com.thfh.repository.PostShareRepository;
 import com.thfh.repository.AdminRepository;
 import com.thfh.dto.FollowDTO;
+import com.thfh.dto.PostDTO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -224,22 +230,41 @@ public class PostService {
         return postLikeRepository.existsByUserIdAndPostId(userId, postId);
     }
 
-    /**
-     * 获取所有动态列表
-     */
-    public Page<Post> getAllPosts(String title, String userName, Pageable pageable) {
-        // 如果两个参数都为空，则返回所有动态
-        if ((title == null || title.trim().isEmpty()) && (userName == null || userName.trim().isEmpty())) {
-            return postRepository.findAll(pageable);
+    private PostDTO convertToDTO(Post post) {
+        PostDTO dto = new PostDTO();
+        BeanUtils.copyProperties(post, dto);
+        if (post.getUser() != null) {
+            dto.setUserName(post.getUser().getUsername());
+            dto.setUserRealName(post.getUser().getRealName());
+            dto.setUserAvatar(post.getUser().getAvatar());
         }
-        
-        // 确保参数不为null，避免SQL错误
-        String titleParam = (title == null) ? "" : title.trim();
-        String userNameParam = (userName == null) ? "" : userName.trim();
-        
-        return postRepository.findByTitleContainingAndUserRealNameContaining(
-            titleParam, userNameParam, pageable
-        );
+        return dto;
+    }
+
+    public Page<PostDTO> getAllPosts(String title, String userName, Pageable pageable) {
+        Specification<Post> spec = (root, query, cb) -> {
+            Predicate predicate = cb.conjunction();
+            if (title != null && !title.isEmpty()) {
+                predicate = cb.and(predicate, cb.like(root.get("title"), "%" + title + "%"));
+            }
+            if (userName != null && !userName.isEmpty()) {
+                Join<Post, User> userJoin = root.join("user");
+                predicate = cb.and(predicate, 
+                    cb.or(
+                        cb.like(userJoin.get("username"), "%" + userName + "%"),
+                        cb.like(userJoin.get("realName"), "%" + userName + "%")
+                    )
+                );
+            }
+            return predicate;
+        };
+
+        Page<Post> posts = postRepository.findAll(spec, pageable);
+        List<PostDTO> dtoList = posts.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, posts.getTotalElements());
     }
 
     /**
