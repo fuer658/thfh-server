@@ -6,15 +6,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,11 +26,10 @@ import java.util.Arrays;
 /**
  * Spring Security配置类
  * 用于配置应用的安全策略，包括认证、授权、密码加密等
- * 继承WebSecurityConfigurerAdapter以自定义安全配置
  */
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     /**
      * JWT工具类，用于生成和验证JWT令牌
@@ -53,26 +54,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     /**
-     * 配置认证管理器
-     * 设置用户详情服务和密码编码器
-     * @param auth 认证管理器构建器
-     * @throws Exception 如果配置过程中发生错误
-     */
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-    }
-
-    /**
-     * 暴露认证管理器Bean
+     * 认证管理器Bean
      * 用于在其他组件中进行认证操作
      * @return AuthenticationManager实例
-     * @throws Exception 如果获取过程中发生错误
      */
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return new ProviderManager(authProvider);
     }
 
     /**
@@ -89,27 +80,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      * 配置HTTP安全策略
      * 设置跨域、CSRF、会话管理、请求授权规则等
      * @param http HTTP安全构建器
+     * @return SecurityFilterChain实例
      * @throws Exception 如果配置过程中发生错误
      */
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors().and()  // 启用跨域资源共享
-                .csrf().disable()  // 禁用CSRF保护，因为使用JWT进行认证
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // 使用无状态会话
-                .and()
-                .authorizeRequests()  // 配置请求授权
-                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // 允许所有OPTIONS请求
-                .antMatchers("/api/auth/**").permitAll()  // 允许所有认证相关的请求
-                .antMatchers("/uploads/**").permitAll()  // 允许访问上传的文件
-                .antMatchers("/doc.html").permitAll()
-                .antMatchers("/webjars/**").permitAll()
-                .antMatchers("/swagger-resources/**").permitAll()
-                .antMatchers("/v2/api-docs/**").permitAll()
-                .antMatchers("/api/**").authenticated()  // 所有API接口需要认证
-                .anyRequest().authenticated()  // 其他所有请求都需要认证
-                .and()
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);  // 添加JWT认证过滤器
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(new AntPathRequestMatcher("/**", HttpMethod.OPTIONS.name())).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/uploads/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/doc.html")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/webjars/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/swagger-resources/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/v2/api-docs/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        
+        return http.build();
     }
 
     /**

@@ -68,7 +68,7 @@ public class PostService {
         String username = authentication.getName();
         
         // 验证当前用户是否为管理员
-        Admin admin = adminRepository.findByUsername(username)
+        adminRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("非管理员账号，无权操作"));
         
         // 验证目标用户是否存在
@@ -103,7 +103,8 @@ public class PostService {
     @Transactional
     public void likePost(Long postId) {
         User currentUser = userService.getCurrentUser();
-        Post post = getPost(postId);
+        // 确认动态存在
+        getPost(postId);
         
         if (postLikeRepository.existsByUserIdAndPostId(currentUser.getId(), postId)) {
             throw new IllegalStateException("您已经点赞过该动态");
@@ -123,7 +124,8 @@ public class PostService {
     @Transactional
     public void unlikePost(Long postId) {
         User currentUser = userService.getCurrentUser();
-        Post post = getPost(postId);
+        // 确认动态存在
+        getPost(postId);
         
         if (!postLikeRepository.existsByUserIdAndPostId(currentUser.getId(), postId)) {
             throw new IllegalStateException("您还没有点赞该动态");
@@ -139,7 +141,8 @@ public class PostService {
     @Transactional
     public PostComment commentPost(Long postId, String content) {
         User currentUser = userService.getCurrentUser();
-        Post post = getPost(postId);
+        // 确认动态存在
+        getPost(postId);
         
         PostComment comment = new PostComment();
         comment.setPostId(postId);
@@ -165,7 +168,8 @@ public class PostService {
     @Transactional
     public void sharePost(Long postId) {
         User currentUser = userService.getCurrentUser();
-        Post post = getPost(postId);
+        // 确认动态存在
+        getPost(postId);
         
         if (postShareRepository.existsByUserIdAndPostId(currentUser.getId(), postId)) {
             throw new IllegalStateException("您已经转发过该动态");
@@ -266,7 +270,7 @@ public class PostService {
         String username = authentication.getName();
         
         // 验证当前用户是否为管理员
-        Admin admin = adminRepository.findByUsername(username)
+        adminRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("非管理员账号，无权操作"));
         
         // 检查动态是否存在

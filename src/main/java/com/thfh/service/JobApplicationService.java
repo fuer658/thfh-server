@@ -257,7 +257,8 @@ public class JobApplicationService {
      * @return 未读申请数量
      */
     public long getUnreadApplicationCount(Long jobId) {
-        Job job = jobRepository.findById(jobId)
+        // 验证职位是否存在
+        jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("职位不存在"));
                 
         // 使用Specification查询未读的申请数量

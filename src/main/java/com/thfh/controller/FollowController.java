@@ -2,7 +2,6 @@ package com.thfh.controller;
 
 import com.thfh.common.Result;
 import com.thfh.dto.FollowDTO;
-import com.thfh.model.Follow;
 import com.thfh.service.FollowService;
 import com.thfh.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

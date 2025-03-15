@@ -17,7 +17,7 @@ import springfox.documentation.service.SecurityScheme;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.List;
  * Knife4j 接口文档配置
  */
 @Configuration
-@EnableSwagger2WebMvc
+@EnableSwagger2
 @Import(BeanValidatorPluginsConfiguration.class)
 public class SwaggerConfig {
 
@@ -74,7 +74,8 @@ public class SwaggerConfig {
         securityContexts.add(
                 SecurityContext.builder()
                         .securityReferences(defaultAuth())
-                        .forPaths(PathSelectors.regex("^(?!auth).*$"))
+                        .operationSelector(operationContext -> 
+                            !operationContext.requestMappingPattern().startsWith("/auth"))
                         .build());
         return securityContexts;
     }

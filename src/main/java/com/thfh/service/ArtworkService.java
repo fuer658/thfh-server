@@ -7,7 +7,6 @@ import com.thfh.model.ArtworkType;
 import com.thfh.model.User;
 import com.thfh.repository.ArtworkRepository;
 import com.thfh.repository.ArtworkTagRepository;
-import com.thfh.repository.ArtworkScoreRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

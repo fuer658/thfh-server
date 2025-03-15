@@ -1,7 +1,6 @@
 package com.thfh.controller;
 
 import com.thfh.common.Result;
-import com.thfh.dto.AdminDTO;
 import com.thfh.dto.LoginDTO;
 import com.thfh.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
