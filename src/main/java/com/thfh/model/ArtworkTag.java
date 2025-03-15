@@ -1,11 +1,13 @@
 package com.thfh.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import javax.persistence.*;
 
 @Data
 @Entity
 @Table(name = "artwork_tags")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ArtworkTag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

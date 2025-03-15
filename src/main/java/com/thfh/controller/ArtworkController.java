@@ -2,6 +2,7 @@ package com.thfh.controller;
 
 import com.thfh.common.CustomPage;
 import com.thfh.common.Result;
+import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.ArtworkScoreDTO;
 import com.thfh.dto.ArtworkUpdateDTO;
 import com.thfh.dto.TagDTO;
@@ -12,6 +13,7 @@ import com.thfh.service.AdminService;
 import com.thfh.service.ArtworkService;
 import com.thfh.service.ArtworkScoreService;
 import com.thfh.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +27,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/artworks")
@@ -98,12 +102,41 @@ public class ArtworkController {
      * @return 作品分页列表
      */
     @GetMapping
-    public Result<CustomPage<Artwork>> getArtworks(
+    public Result<CustomPage<ArtworkDTO>> getArtworks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Artwork> artworkPage = artworkService.getAllArtworks(pageRequest);
-        return Result.success(new CustomPage<>(artworkPage));
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = artworkPage.map(artwork -> {
+            ArtworkDTO dto = new ArtworkDTO();
+            BeanUtils.copyProperties(artwork, dto, "creator", "tags");
+            
+            // 设置创建者信息
+            if (artwork.getCreator() != null) {
+                dto.setCreatorId(artwork.getCreator().getId());
+                dto.setCreatorName(artwork.getCreator().getUsername());
+                dto.setCreatorAvatar(artwork.getCreator().getAvatar());
+            }
+            
+            // 转换标签
+            if (artwork.getTags() != null) {
+                Set<TagDTO> tagDTOs = artwork.getTags().stream()
+                    .map(tag -> {
+                        TagDTO tagDTO = new TagDTO();
+                        tagDTO.setId(tag.getId());
+                        tagDTO.setTagName(tag.getName());
+                        return tagDTO;
+                    })
+                    .collect(Collectors.toSet());
+                dto.setTags(tagDTOs);
+            }
+            
+            return dto;
+        });
+        
+        return Result.success(new CustomPage<>(dtoPage));
     }
 
     /**
