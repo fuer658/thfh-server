@@ -53,12 +53,6 @@ public class JobApplicationService {
         Job job = jobRepository.findById(jobApplicationDTO.getJobId())
                 .orElseThrow(() -> new RuntimeException("职位不存在"));
 
-        // 检查用户是否已申请过该职位
-        List<JobApplication> existingApplications = jobApplicationRepository.findByJobIdAndUserId(
-                job.getId(), user.getId());
-        if (!existingApplications.isEmpty()) {
-            throw new RuntimeException("您已申请过该职位");
-        }
 
         // 创建新的职位申请
         JobApplication jobApplication = new JobApplication();

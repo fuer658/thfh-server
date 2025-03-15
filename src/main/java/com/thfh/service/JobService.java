@@ -5,8 +5,10 @@ import com.thfh.dto.JobQueryDTO;
 import com.thfh.model.Job;
 import com.thfh.model.Company;
 import com.thfh.model.JobStatus;
+import com.thfh.model.JobApplicationStatus;
 import com.thfh.repository.JobRepository;
 import com.thfh.repository.CompanyRepository;
+import com.thfh.repository.JobApplicationRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 职位服务类
@@ -32,6 +36,9 @@ public class JobService {
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    @Autowired
+    private JobApplicationRepository jobApplicationRepository;
 
     /**
      * 根据查询条件获取职位列表
@@ -190,6 +197,19 @@ public class JobService {
                 .orElseThrow(() -> new RuntimeException("职位不存在"));
         job.setEnabled(!job.getEnabled());
         jobRepository.save(job);
+    }
+
+    /**
+     * 获取职位的各状态申请数量
+     * @param jobId 职位ID
+     * @return 包含各状态申请数量的DTO对象
+     */
+    public Map<String, Long> getJobApplicationCounts(Long jobId) {
+        Map<String, Long> counts = new HashMap<>();
+        counts.put("pending", jobApplicationRepository.countByJobIdAndStatus(jobId, JobApplicationStatus.PENDING));
+        counts.put("reviewing", jobApplicationRepository.countByJobIdAndStatus(jobId, JobApplicationStatus.REVIEWING));
+        counts.put("interview", jobApplicationRepository.countByJobIdAndStatus(jobId, JobApplicationStatus.INTERVIEW));
+        return counts;
     }
 
     /**

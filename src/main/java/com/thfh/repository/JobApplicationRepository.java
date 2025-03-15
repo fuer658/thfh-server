@@ -88,4 +88,12 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
      */
     @Query("SELECT COUNT(ja) FROM JobApplication ja WHERE ja.job.company.id = :companyId AND ja.isRead = :isRead")
     long countByCompanyIdAndIsRead(@Param("companyId") Long companyId, @Param("isRead") Boolean isRead);
+
+    /**
+     * 统计指定职位的特定状态的申请数量
+     * @param jobId 职位ID
+     * @param status 申请状态
+     * @return 申请数量
+     */
+    long countByJobIdAndStatus(Long jobId, JobApplicationStatus status);
 } 

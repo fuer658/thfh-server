@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * 工作/职位管理控制器
  * 提供工作/职位的增删改查、发布、关闭和状态切换等功能
@@ -91,5 +93,15 @@ public class JobController {
     public Result<Void> toggleJobStatus(@PathVariable Long id) {
         jobService.toggleJobStatus(id);
         return Result.success(null);
+    }
+
+    /**
+     * 获取职位的申请数量统计
+     * @param id 职位ID
+     * @return 包含各状态申请数量的统计数据
+     */
+    @GetMapping("/{id}/application-counts")
+    public Result<Map<String, Long>> getJobApplicationCounts(@PathVariable Long id) {
+        return Result.success(jobService.getJobApplicationCounts(id));
     }
 } 
