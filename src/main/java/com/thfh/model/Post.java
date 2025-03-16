@@ -6,7 +6,9 @@ import lombok.Data;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Entity
@@ -34,6 +36,14 @@ public class Post {
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "email", "phone", "createTime", "updateTime", "lastLoginTime", "status", "roles","qualification","speciality","disability","points","birthday"})
     private User user;
+
+    @ManyToMany
+    @JoinTable(
+        name = "post_tag_relation",
+        joinColumns = @JoinColumn(name = "post_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<PostTag> tags = new HashSet<>();
 
     @Column(name = "like_count")
     private Integer likeCount = 0;

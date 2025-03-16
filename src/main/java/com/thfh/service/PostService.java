@@ -1,11 +1,7 @@
 package com.thfh.service;
 
 import com.thfh.model.*;
-import com.thfh.repository.PostRepository;
-import com.thfh.repository.PostCommentRepository;
-import com.thfh.repository.PostLikeRepository;
-import com.thfh.repository.PostShareRepository;
-import com.thfh.repository.AdminRepository;
+import com.thfh.repository.*;
 import com.thfh.dto.FollowDTO;
 import com.thfh.dto.PostDTO;
 import org.springframework.beans.BeanUtils;
@@ -20,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +42,11 @@ public class PostService {
     @Autowired
     private AdminRepository adminRepository;
 
+    @Autowired
+    private PostTagRepository postTagRepository;
+
+    @Autowired
+    private PostTagService postTagService;
     
     /**
      * 发布动态
@@ -344,5 +346,74 @@ public class PostService {
         
         // 管理员可以删除任何动态
         postRepository.deleteById(postId);
+    }
+
+    /**
+     * 为动态添加标签
+     * @param postId 动态ID
+     * @param tagName 标签名称
+     * @param description 标签描述（可选）
+     * @return 更新后的动态
+     */
+    @Transactional
+    public Post addTag(Long postId, String tagName, String description) {
+        Post post = getPost(postId);
+        User currentUser = userService.getCurrentUser();
+        
+        // 检查权限
+        if (!post.getUserId().equals(currentUser.getId())) {
+            throw new IllegalStateException("您没有权限为该动态添加标签");
+        }
+        
+        // 创建或获取标签
+        PostTag tag = postTagService.createTag(tagName, description);
+        
+        // 添加标签到动态
+        post.getTags().add(tag);
+        return postRepository.save(post);
+    }
+    
+    /**
+     * 从动态中移除标签
+     * @param postId 动态ID
+     * @param tagId 标签ID
+     * @return 更新后的动态
+     */
+    @Transactional
+    public Post removeTag(Long postId, Long tagId) {
+        Post post = getPost(postId);
+        User currentUser = userService.getCurrentUser();
+        
+        // 检查权限
+        if (!post.getUserId().equals(currentUser.getId())) {
+            throw new IllegalStateException("您没有权限从该动态移除标签");
+        }
+        
+        // 移除标签
+        post.setTags(post.getTags().stream()
+                .filter(tag -> !tag.getId().equals(tagId))
+                .collect(Collectors.toSet()));
+        
+        return postRepository.save(post);
+    }
+    
+    /**
+     * 获取动态的所有标签
+     * @param postId 动态ID
+     * @return 标签集合
+     */
+    public Set<PostTag> getPostTags(Long postId) {
+        Post post = getPost(postId);
+        return post.getTags();
+    }
+    
+    /**
+     * 根据标签查找动态
+     * @param tagId 标签ID
+     * @param pageable 分页参数
+     * @return 包含指定标签的动态列表
+     */
+    public Page<Post> findPostsByTag(Long tagId, Pageable pageable) {
+        return postRepository.findByTagsId(tagId, pageable);
     }
 }

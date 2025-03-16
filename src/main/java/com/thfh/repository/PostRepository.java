@@ -33,4 +33,12 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Modifying
     @Query("UPDATE Post p SET p.shareCount = p.shareCount + :delta WHERE p.id = :postId")
     void updateShareCount(Long postId, int delta);
+
+    /**
+     * 根据标签ID查找动态
+     * @param tagId 标签ID
+     * @param pageable 分页参数
+     * @return 包含指定标签的动态列表
+     */
+    Page<Post> findByTagsId(Long tagId, Pageable pageable);
 }
