@@ -4,6 +4,7 @@ import com.thfh.model.Post;
 import com.thfh.model.PostTag;
 import com.thfh.service.PostService;
 import com.thfh.service.PostTagService;
+import com.thfh.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,85 +26,92 @@ public class PostTagController {
     private PostService postService;
     
     /**
-     * 创建新标签
-     */
-    @PostMapping
-    public ResponseEntity<PostTag> createTag(@RequestBody Map<String, String> request) {
-        String name = request.get("name");
-        String description = request.get("description");
-        return ResponseEntity.ok(postTagService.createTag(name, description));
-    }
-    
-    /**
      * 获取所有标签
      */
     @GetMapping
-    public ResponseEntity<List<PostTag>> getAllTags() {
-        return ResponseEntity.ok(postTagService.getAllTags());
+    public Result<List<PostTag>> getAllTags() {
+        return Result.success(postTagService.getAllTags());
     }
     
     /**
-     * 为动态添加标签
+     * 创建新标签
      */
-    @PostMapping("/{postId}/add")
-    public ResponseEntity<Post> addTagToPost(
-            @PathVariable Long postId,
-            @RequestBody Map<String, String> request) {
-        String tagName = request.get("name");
-        String description = request.get("description");
-        return ResponseEntity.ok(postService.addTag(postId, tagName, description));
+    @PostMapping
+    public Result<PostTag> createTag(@RequestBody PostTag tag) {
+        return Result.success(postTagService.createTag(tag.getName(), tag.getDescription()));
     }
     
     /**
-     * 从动态中移除标签
+     * 删除标签
      */
-    @DeleteMapping("/{postId}/remove/{tagId}")
-    public ResponseEntity<Post> removeTagFromPost(
-            @PathVariable Long postId,
-            @PathVariable Long tagId) {
-        return ResponseEntity.ok(postService.removeTag(postId, tagId));
-    }
-    
-    /**
-     * 获取动态的所有标签
-     */
-    @GetMapping("/{postId}")
-    public ResponseEntity<Set<PostTag>> getPostTags(@PathVariable Long postId) {
-        return ResponseEntity.ok(postService.getPostTags(postId));
-    }
-    
-    /**
-     * 根据标签查找动态
-     */
-    @GetMapping("/posts/{tagId}")
-    public ResponseEntity<Page<Post>> getPostsByTag(
-            @PathVariable Long tagId,
-            Pageable pageable) {
-        return ResponseEntity.ok(postService.findPostsByTag(tagId, pageable));
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteTag(@PathVariable Long id) {
+        postTagService.deleteTag(id);
+        return Result.success(null);
     }
     
     /**
      * 更新标签
      */
     @PutMapping("/{id}")
-    public ResponseEntity<PostTag> updateTag(
-            @PathVariable Long id,
+    public Result<PostTag> updateTag(@PathVariable Long id, @RequestBody PostTag tag) {
+        return Result.success(postTagService.updateTag(id, tag));
+    }
+    
+    /**
+     * 为动态添加标签
+     */
+    @PostMapping("/{postId}/add")
+    public Result<Post> addTagToPost(
+            @PathVariable Long postId,
             @RequestBody Map<String, String> request) {
-        String name = request.get("name");
+        String tagName = request.get("name");
         String description = request.get("description");
-        return ResponseEntity.ok(postTagService.updateTag(id, name, description).orElseThrow(
-            () -> new IllegalArgumentException("标签不存在")));
+        
+        // 先创建标签
+        PostTag tag = postTagService.createTag(tagName, description);
+        
+        // 然后添加到动态
+        return Result.success(postService.addTag(postId, tag.getId()));
+    }
+    
+    /**
+     * 从动态中移除标签
+     */
+    @DeleteMapping("/{postId}/remove/{tagId}")
+    public Result<Post> removeTagFromPost(
+            @PathVariable Long postId,
+            @PathVariable Long tagId) {
+        return Result.success(postService.removeTag(postId, tagId));
+    }
+    
+    /**
+     * 获取动态的所有标签
+     */
+    @GetMapping("/{postId}")
+    public Result<Set<PostTag>> getPostTags(@PathVariable Long postId) {
+        return Result.success(postService.getPostTags(postId));
+    }
+    
+    /**
+     * 根据标签查找动态
+     */
+    @GetMapping("/posts/{tagId}")
+    public Result<Page<Post>> getPostsByTag(
+            @PathVariable Long tagId,
+            Pageable pageable) {
+        return Result.success(postService.findPostsByTag(tagId, pageable));
     }
     
     /**
      * 启用或禁用标签
      */
     @PutMapping("/{id}/status")
-    public ResponseEntity<PostTag> setTagStatus(
+    public Result<PostTag> setTagStatus(
             @PathVariable Long id,
             @RequestBody Map<String, Boolean> request) {
         Boolean enabled = request.get("enabled");
-        return ResponseEntity.ok(postTagService.setTagEnabled(id, enabled).orElseThrow(
-            () -> new IllegalArgumentException("标签不存在")));
+        return Result.success(postTagService.setTagEnabled(id, enabled)
+            .orElseThrow(() -> new IllegalArgumentException("标签不存在")));
     }
 } 

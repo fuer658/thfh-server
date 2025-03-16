@@ -2,6 +2,8 @@ package com.thfh.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -19,31 +21,19 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "image_urls", columnDefinition = "TEXT")
-    @Convert(converter = StringListConverter.class)
+    @ElementCollection
+    @CollectionTable(name = "post_image_urls", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "image_url")
     private List<String> imageUrls = new ArrayList<>();
-
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "email", "phone", "createTime", "updateTime", "lastLoginTime", "status", "roles","qualification","speciality","disability","points","birthday"})
-    private User user;
-
-    @ManyToMany
-    @JoinTable(
-        name = "post_tag_relation",
-        joinColumns = @JoinColumn(name = "post_id"),
-        inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    private Set<PostTag> tags = new HashSet<>();
 
     @Column(name = "like_count")
     private Integer likeCount = 0;
@@ -54,24 +44,31 @@ public class Post {
     @Column(name = "share_count")
     private Integer shareCount = 0;
 
+    @CreationTimestamp
     @Column(name = "create_time", nullable = false)
     private LocalDateTime createTime;
 
+    @UpdateTimestamp
     @Column(name = "update_time")
     private LocalDateTime updateTime;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "post_tags_relation",
+        joinColumns = @JoinColumn(name = "post_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<PostTag> tags = new HashSet<>();
+
+    @Transient
+    private Set<Long> tagIds = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "email", "phone", "createTime", "updateTime", "lastLoginTime", "status", "roles","qualification","speciality","disability","points","birthday"})
+    private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("post")
     private List<PostComment> comments;
-
-    @PrePersist
-    protected void onCreate() {
-        createTime = LocalDateTime.now();
-        updateTime = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updateTime = LocalDateTime.now();
-    }
 }

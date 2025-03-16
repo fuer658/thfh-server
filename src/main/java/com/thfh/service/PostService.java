@@ -55,7 +55,19 @@ public class PostService {
     public Post createPost(Post post) {
         User currentUser = userService.getCurrentUser();
         post.setUserId(currentUser.getId());
-        return postRepository.save(post);
+        Post savedPost = postRepository.save(post);
+        
+        // 处理标签
+        if (post.getTagIds() != null && !post.getTagIds().isEmpty()) {
+            for (Long tagId : post.getTagIds()) {
+                PostTag tag = postTagRepository.findById(tagId)
+                        .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
+                savedPost.getTags().add(tag);
+            }
+            savedPost = postRepository.save(savedPost);
+        }
+        
+        return savedPost;
     }
     
     /**
@@ -87,7 +99,19 @@ public class PostService {
         
         // 设置动态的用户ID为目标用户ID
         post.setUserId(userId);
-        return postRepository.save(post);
+        Post savedPost = postRepository.save(post);
+        
+        // 处理标签（管理员可以直接添加标签，无需权限检查）
+        if (post.getTagIds() != null && !post.getTagIds().isEmpty()) {
+            for (Long tagId : post.getTagIds()) {
+                PostTag tag = postTagRepository.findById(tagId)
+                        .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
+                savedPost.getTags().add(tag);
+            }
+            savedPost = postRepository.save(savedPost);
+        }
+        
+        return savedPost;
     }
     
     /**
@@ -351,22 +375,23 @@ public class PostService {
     /**
      * 为动态添加标签
      * @param postId 动态ID
-     * @param tagName 标签名称
-     * @param description 标签描述（可选）
+     * @param tagId 标签ID
      * @return 更新后的动态
      */
     @Transactional
-    public Post addTag(Long postId, String tagName, String description) {
+    public Post addTag(Long postId, Long tagId) {
         Post post = getPost(postId);
         User currentUser = userService.getCurrentUser();
         
-        // 检查权限
-        if (!post.getUserId().equals(currentUser.getId())) {
+        // 检查权限（如果是管理员则允许操作）
+        boolean isAdmin = adminRepository.findByUsername(currentUser.getUsername()).isPresent();
+        if (!isAdmin && !post.getUserId().equals(currentUser.getId())) {
             throw new IllegalStateException("您没有权限为该动态添加标签");
         }
         
-        // 创建或获取标签
-        PostTag tag = postTagService.createTag(tagName, description);
+        // 获取标签
+        PostTag tag = postTagRepository.findById(tagId)
+                .orElseThrow(() -> new IllegalArgumentException("标签不存在"));
         
         // 添加标签到动态
         post.getTags().add(tag);

@@ -24,9 +24,9 @@ public class PostTagService {
      */
     @Transactional
     public PostTag createTag(String name, String description) {
-        PostTag existingTag = postTagRepository.findByName(name);
-        if (existingTag != null) {
-            return existingTag;
+        // 检查标签名是否已存在
+        if (postTagRepository.findByName(name).isPresent()) {
+            throw new IllegalArgumentException("标签名已存在");
         }
         
         PostTag tag = new PostTag();
@@ -62,7 +62,8 @@ public class PostTagService {
      * @return 标签对象
      */
     public PostTag getTagByName(String name) {
-        return postTagRepository.findByName(name);
+        return postTagRepository.findByName(name)
+                .orElseThrow(() -> new IllegalArgumentException("标签不存在"));
     }
     
     /**
@@ -95,5 +96,34 @@ public class PostTagService {
             tag.setEnabled(enabled);
             return postTagRepository.save(tag);
         });
+    }
+    
+    /**
+     * 删除标签
+     */
+    @Transactional
+    public void deleteTag(Long id) {
+        postTagRepository.deleteById(id);
+    }
+    
+    /**
+     * 更新标签
+     */
+    @Transactional
+    public PostTag updateTag(Long id, PostTag updatedTag) {
+        PostTag tag = postTagRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("标签不存在"));
+        
+        // 如果要更新的名称已存在于其他标签，则抛出异常
+        postTagRepository.findByName(updatedTag.getName())
+                .ifPresent(existingTag -> {
+                    if (!existingTag.getId().equals(id)) {
+                        throw new IllegalArgumentException("标签名已存在");
+                    }
+                });
+        
+        tag.setName(updatedTag.getName());
+        tag.setDescription(updatedTag.getDescription());
+        return postTagRepository.save(tag);
     }
 } 
