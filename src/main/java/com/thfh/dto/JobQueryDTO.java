@@ -40,6 +40,11 @@ public class JobQueryDTO {
     private Boolean enabled;
     
     /**
+     * 职位分类ID查询条件
+     */
+    private Long categoryId;
+    
+    /**
      * 当前页码，默认为第1页
      */
     private Integer pageNum = 1;

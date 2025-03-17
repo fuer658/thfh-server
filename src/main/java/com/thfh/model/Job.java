@@ -25,6 +25,11 @@ public class Job {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company; // 所属公司
 
+    // 添加与职位分类的关联
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private JobCategory category; // 所属分类
+
     @Column(nullable = false)
     private String location; // 工作地点
 

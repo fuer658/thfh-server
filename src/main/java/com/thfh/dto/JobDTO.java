@@ -37,6 +37,16 @@ public class JobDTO {
     private String companyName;
     
     /**
+     * 职位分类ID
+     */
+    private Long categoryId;
+    
+    /**
+     * 职位分类名称
+     */
+    private String categoryName;
+    
+    /**
      * 工作地点
      */
     private String location;

@@ -6,9 +6,11 @@ import com.thfh.model.Job;
 import com.thfh.model.Company;
 import com.thfh.model.JobStatus;
 import com.thfh.model.JobApplicationStatus;
+import com.thfh.model.JobCategory;
 import com.thfh.repository.JobRepository;
 import com.thfh.repository.CompanyRepository;
 import com.thfh.repository.JobApplicationRepository;
+import com.thfh.repository.JobCategoryRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -39,6 +41,9 @@ public class JobService {
 
     @Autowired
     private JobApplicationRepository jobApplicationRepository;
+    
+    @Autowired
+    private JobCategoryRepository jobCategoryRepository;
 
     /**
      * 根据查询条件获取职位列表
@@ -67,6 +72,10 @@ public class JobService {
             if (queryDTO.getEnabled() != null) {
                 predicates.add(cb.equal(root.get("enabled"), queryDTO.getEnabled()));
             }
+            // 添加分类查询条件
+            if (queryDTO.getCategoryId() != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), queryDTO.getCategoryId()));
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -92,6 +101,14 @@ public class JobService {
         Job job = new Job();
         BeanUtils.copyProperties(jobDTO, job);
         job.setCompany(company);
+        
+        // 设置职位分类
+        if (jobDTO.getCategoryId() != null) {
+            JobCategory category = jobCategoryRepository.findById(jobDTO.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("职位分类不存在"));
+            job.setCategory(category);
+        }
+        
         job.setStatus(JobStatus.DRAFT);
         job = jobRepository.save(job);
 
@@ -131,10 +148,19 @@ public class JobService {
 
         // 5. 复制属性时排除不应更新的字段
         BeanUtils.copyProperties(jobDTO, job, 
-            "id", "createTime", "viewCount", "applyCount", "applications", "company");
+            "id", "createTime", "viewCount", "applyCount", "applications", "company", "category");
 
         // 6. 设置关联对象
         job.setCompany(company);
+        
+        // 设置职位分类
+        if (jobDTO.getCategoryId() != null) {
+            JobCategory category = jobCategoryRepository.findById(jobDTO.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("职位分类不存在"));
+            job.setCategory(category);
+        } else {
+            job.setCategory(null);
+        }
 
         // 7. 如果状态为空，设置为草稿状态
         if (job.getStatus() == null) {
@@ -222,6 +248,13 @@ public class JobService {
         BeanUtils.copyProperties(job, dto);
         dto.setCompanyId(job.getCompany().getId());
         dto.setCompanyName(job.getCompany().getName());
+        
+        // 设置分类信息
+        if (job.getCategory() != null) {
+            dto.setCategoryId(job.getCategory().getId());
+            dto.setCategoryName(job.getCategory().getName());
+        }
+        
         return dto;
     }
 }
