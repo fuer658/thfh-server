@@ -1,11 +1,13 @@
 package com.thfh.service;
 
 import com.thfh.dto.CourseDTO;
+import com.thfh.dto.CourseInteractionDTO;
 import com.thfh.dto.CourseQueryDTO;
-import com.thfh.model.Course;
-import com.thfh.model.CourseStatus;
-import com.thfh.model.User;
+import com.thfh.dto.SimpleUserDTO;
+import com.thfh.model.*;
 import com.thfh.repository.CourseRepository;
+import com.thfh.repository.UserCourseInteractionRepository;
+import com.thfh.repository.UserCourseRepository;
 import com.thfh.repository.UserRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 课程服务类
@@ -31,6 +36,12 @@ public class CourseService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserCourseInteractionRepository userCourseInteractionRepository;
+
+    @Autowired
+    private UserCourseRepository userCourseRepository;
 
     /**
      * 根据查询条件获取课程列表
@@ -150,6 +161,115 @@ public class CourseService {
         courseRepository.save(course);
     }
 
+    @Transactional
+    public void toggleCourseLike(Long courseId, Long userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        UserCourseInteraction interaction = userCourseInteractionRepository
+                .findByUserAndCourse(user, course)
+                .orElseGet(() -> {
+                    UserCourseInteraction newInteraction = new UserCourseInteraction();
+                    newInteraction.setUser(user);
+                    newInteraction.setCourse(course);
+                    return newInteraction;
+                });
+
+        boolean newLikeStatus = !interaction.getLiked();
+        interaction.setLiked(newLikeStatus);
+        userCourseInteractionRepository.save(interaction);
+
+        // 更新课程点赞数
+        course.setLikeCount(course.getLikeCount() + (newLikeStatus ? 1 : -1));
+        courseRepository.save(course);
+    }
+
+    @Transactional
+    public void toggleCourseFavorite(Long courseId, Long userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        UserCourseInteraction interaction = userCourseInteractionRepository
+                .findByUserAndCourse(user, course)
+                .orElseGet(() -> {
+                    UserCourseInteraction newInteraction = new UserCourseInteraction();
+                    newInteraction.setUser(user);
+                    newInteraction.setCourse(course);
+                    return newInteraction;
+                });
+
+        boolean newFavoriteStatus = !interaction.getFavorited();
+        interaction.setFavorited(newFavoriteStatus);
+        userCourseInteractionRepository.save(interaction);
+
+        // 更新课程收藏数
+        course.setFavoriteCount(course.getFavoriteCount() + (newFavoriteStatus ? 1 : -1));
+        courseRepository.save(course);
+    }
+
+    /**
+     * 学生加入课程
+     * @param courseId 课程ID
+     * @param userId 学生ID
+     * @return 加入后的课程信息
+     */
+    public CourseDTO enrollCourse(Long courseId, Long userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+
+        if (!course.getEnabled()) {
+            throw new RuntimeException("课程未启用，无法加入");
+        }
+
+        User student = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        if (student.getUserType() != UserType.STUDENT) {
+            throw new RuntimeException("只有学生用户才能加入课程");
+        }
+
+        if (userCourseRepository.existsByUserAndCourse(student, course)) {
+            throw new RuntimeException("您已经加入过该课程");
+        }
+
+        UserCourse userCourse = new UserCourse();
+        userCourse.setUser(student);
+        userCourse.setCourse(course);
+        userCourseRepository.save(userCourse);
+
+        // 更新课程学习人数
+        course.setStudentCount(course.getStudentCount() + 1);
+        courseRepository.save(course);
+
+        return convertToDTO(course);
+    }
+
+    /**
+     * 学生退出课程
+     * @param courseId 课程ID
+     * @param userId 学生ID
+     */
+    public void unenrollCourse(Long courseId, Long userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+
+        User student = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        UserCourse userCourse = userCourseRepository.findByUserAndCourse(student, course)
+                .orElseThrow(() -> new RuntimeException("您尚未加入该课程"));
+
+        userCourseRepository.delete(userCourse);
+
+        // 更新课程学习人数
+        course.setStudentCount(Math.max(0, course.getStudentCount() - 1));
+        courseRepository.save(course);
+    }
+
     /**
      * 将课程实体对象转换为DTO对象
      * @param course 课程实体对象
@@ -161,5 +281,71 @@ public class CourseService {
         dto.setTeacherId(course.getTeacher().getId());
         dto.setTeacherName(course.getTeacher().getRealName());
         return dto;
+    }
+
+    /**
+     * 获取课程的学生列表
+     * @param courseId 课程ID
+     * @return 学生列表，包含基本信息（ID、姓名、头像）
+     */
+    public List<SimpleUserDTO> getCourseStudents(Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+
+        List<UserCourse> userCourses = userCourseRepository.findByCourse(course);
+        return userCourses.stream()
+                .map(uc -> SimpleUserDTO.fromEntity(uc.getUser()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取用户对课程的交互信息（点赞和收藏状态）
+     * @param courseId 课程ID
+     * @param userId 用户ID
+     * @return 包含点赞和收藏状态的对象，只有为true的状态才会包含在返回结果中
+     */
+    public CourseInteractionDTO getCourseInteractionInfo(Long courseId, Long userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        CourseInteractionDTO interactionDTO = new CourseInteractionDTO();
+        userCourseInteractionRepository.findByUserAndCourse(user, course)
+                .ifPresent(interaction -> {
+                    if (interaction.getLiked()) {
+                        interactionDTO.setLiked(true);
+                    }
+                    if (interaction.getFavorited()) {
+                        interactionDTO.setFavorited(true);
+                    }
+                });
+
+        return interactionDTO;
+    }
+
+    /**
+     * 获取课程的点赞和收藏用户列表
+     * @param courseId 课程ID
+     * @return 包含点赞和收藏用户列表的对象
+     */
+    public Map<String, List<SimpleUserDTO>> getCourseInteractionUsers(Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+
+        List<SimpleUserDTO> likedUsers = userCourseInteractionRepository.findByCourseAndLikedTrue(course)
+                .stream()
+                .map(interaction -> SimpleUserDTO.fromEntity(interaction.getUser()))
+                .collect(Collectors.toList());
+
+        List<SimpleUserDTO> favoritedUsers = userCourseInteractionRepository.findByCourseAndFavoritedTrue(course)
+                .stream()
+                .map(interaction -> SimpleUserDTO.fromEntity(interaction.getUser()))
+                .collect(Collectors.toList());
+
+        Map<String, List<SimpleUserDTO>> result = new HashMap<>();
+        result.put("likedUsers", likedUsers);
+        result.put("favoritedUsers", favoritedUsers);
+        return result;
     }
 }
