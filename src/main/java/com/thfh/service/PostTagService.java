@@ -2,7 +2,10 @@ package com.thfh.service;
 
 import com.thfh.model.PostTag;
 import com.thfh.repository.PostTagRepository;
+import com.thfh.repository.PostRepository;
+import com.thfh.model.Post;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +17,9 @@ public class PostTagService {
     
     @Autowired
     private PostTagRepository postTagRepository;
+    
+    @Autowired
+    private PostRepository postRepository;
     
     /**
      * 创建新标签
@@ -103,6 +109,17 @@ public class PostTagService {
      */
     @Transactional
     public void deleteTag(Long id) {
+        PostTag tag = postTagRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("标签不存在"));
+
+        // 获取所有使用该标签的动态，并解除关联
+        List<Post> posts = postRepository.findByTagsId(id, Pageable.unpaged()).getContent();
+        for (Post post : posts) {
+            post.getTags().remove(tag);
+            postRepository.save(post);
+        }
+
+        // 删除标签
         postTagRepository.deleteById(id);
     }
     

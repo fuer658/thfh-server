@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,14 +38,16 @@ public class PostTagController {
      * 创建新标签
      */
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public Result<PostTag> createTag(@RequestBody PostTag tag) {
         return Result.success(postTagService.createTag(tag.getName(), tag.getDescription()));
     }
     
     /**
-     * 删除标签
+     * 删除标签（仅管理员可操作）
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<Void> deleteTag(@PathVariable Long id) {
         postTagService.deleteTag(id);
         return Result.success(null);
@@ -54,6 +57,7 @@ public class PostTagController {
      * 更新标签
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<PostTag> updateTag(@PathVariable Long id, @RequestBody PostTag tag) {
         return Result.success(postTagService.updateTag(id, tag));
     }
@@ -62,6 +66,7 @@ public class PostTagController {
      * 为动态添加标签
      */
     @PostMapping("/{postId}/add")
+    @PreAuthorize("hasRole('USER')")
     public Result<Post> addTagToPost(
             @PathVariable Long postId,
             @RequestBody Map<String, String> request) {
@@ -79,6 +84,7 @@ public class PostTagController {
      * 从动态中移除标签
      */
     @DeleteMapping("/{postId}/remove/{tagId}")
+    @PreAuthorize("hasRole('USER')")
     public Result<Post> removeTagFromPost(
             @PathVariable Long postId,
             @PathVariable Long tagId) {
@@ -107,6 +113,7 @@ public class PostTagController {
      * 启用或禁用标签
      */
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<PostTag> setTagStatus(
             @PathVariable Long id,
             @RequestBody Map<String, Boolean> request) {
