@@ -87,6 +87,20 @@ public class UserController {
     }
 
     /**
+     * 更新个性签名
+     * @param introduction 新的个性签名（限制100字以内）
+     * @return 操作结果
+     */
+    @PutMapping("/introduction")
+    public Result<Void> updateIntroduction(@RequestParam String introduction) {
+        if (introduction != null && introduction.length() > 100) {
+            return Result.error("个性签名不能超过100字");
+        }
+        userService.updateIntroduction(introduction);
+        return Result.success(null);
+    }
+
+    /**
      * 切换用户状态（启用/禁用）
      * @param id 用户ID
      * @return 操作结果

@@ -373,4 +373,19 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
     }
+
+    /**
+     * 更新用户个性签名
+     * @param introduction 新的个性签名
+     * @throws RuntimeException 当用户未登录时抛出
+     */
+    public void updateIntroduction(String introduction) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        currentUser.setIntroduction(introduction);
+        currentUser.setUpdateTime(LocalDateTime.now());
+        userRepository.save(currentUser);
+    }
 }
