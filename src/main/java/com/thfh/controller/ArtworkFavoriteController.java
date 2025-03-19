@@ -1,7 +1,6 @@
 package com.thfh.controller;
 
 import com.thfh.common.Result;
-import com.thfh.common.CustomPage;
 import com.thfh.model.Artwork;
 import com.thfh.model.User;
 import com.thfh.service.ArtworkFavoriteService;
@@ -55,20 +54,20 @@ public class ArtworkFavoriteController {
 
     /**
      * 获取用户收藏的作品列表
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @param page 页码
      * @param size 每页大小
      * @return 收藏的作品分页列表
      */
     @GetMapping("/favorites")
-    public Result<CustomPage<Artwork>> getFavorites(
+    public Result<Page<Artwork>> getFavorites(
             Authentication authentication,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         User user = userService.getCurrentUser();
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "favoriteTime"));
         Page<Artwork> artworkPage = artworkFavoriteService.getUserFavorites(user.getId(), pageRequest);
-        return Result.success(new CustomPage<>(artworkPage));
+        return Result.success(artworkPage);
     }
 
     /**

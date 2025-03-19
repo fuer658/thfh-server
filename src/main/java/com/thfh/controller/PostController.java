@@ -32,7 +32,7 @@ public class PostController {
      */
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> createPost(@RequestBody Post post) {
+    public Result<Post> createPost(@RequestBody Post post) {
         // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
@@ -43,7 +43,7 @@ public class PostController {
             }
         }
         
-        return ResponseEntity.ok(createdPost);
+        return Result.success(createdPost);
     }
 
     /**
@@ -191,10 +191,10 @@ public class PostController {
      */
     @PostMapping("/admin/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Post> createPostByAdmin(@PathVariable Long userId, @RequestBody Post post) {
+    public Result<Post> createPostByAdmin(@PathVariable Long userId, @RequestBody Post post) {
         // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
-        Post createdPost = postService.createPostByAdmin(post, userId);
+        Post createdPost = postService.createPost(post);
         
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
@@ -202,7 +202,7 @@ public class PostController {
             }
         }
         
-        return ResponseEntity.ok(createdPost);
+        return Result.success(createdPost);
     }
 
     /**

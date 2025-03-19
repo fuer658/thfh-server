@@ -7,7 +7,9 @@ import com.thfh.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -103,8 +105,9 @@ public class FollowController {
      * @return 是否已关注
      */
     @GetMapping("/check/{followedId}")
-    public ResponseEntity<Boolean> isFollowing(Authentication authentication, @PathVariable Long followedId) {
+    @PreAuthorize("hasRole('USER')")
+    public Result<Boolean> isFollowing(Authentication authentication, @PathVariable Long followedId) {
         Long followerId = userService.getUserInfo(authentication.getName()).getId();
-        return ResponseEntity.ok(followService.isFollowing(followerId, followedId));
+        return Result.success(followService.isFollowing(followerId, followedId));
     }
 }
