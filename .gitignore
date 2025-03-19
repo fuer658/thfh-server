@@ -55,5 +55,4 @@ start.bat
 cursor/
 
 # Cursor specific files
-.cursor/rules/java-rule.mdc
-.cursor/rules/vue-rule.mdc
+.cursor/rules/

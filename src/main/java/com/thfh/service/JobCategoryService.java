@@ -198,4 +198,26 @@ public class JobCategoryService {
         BeanUtils.copyProperties(category, dto);
         return dto;
     }
+    
+    /**
+     * 获取指定父分类的子分类
+     * @param parentId 父分类ID，如果为null则获取所有顶级分类
+     * @return 子分类DTO列表
+     */
+    public List<JobCategoryDTO> getChildCategories(Long parentId) {
+        List<JobCategory> categories;
+        
+        if (parentId == null) {
+            // 如果父分类ID为null，获取所有启用的顶级分类
+            categories = jobCategoryRepository.findByParentIdIsNullAndEnabledTrueOrderBySortAsc();
+        } else {
+            // 获取指定父分类ID下的所有启用的子分类
+            categories = jobCategoryRepository.findByParentIdAndEnabledTrueOrderBySortAsc(parentId);
+        }
+        
+        // 转换为DTO列表
+        return categories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 } 

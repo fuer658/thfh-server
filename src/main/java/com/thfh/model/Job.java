@@ -83,4 +83,13 @@ public class Job {
     public void preUpdate() {
         this.updateTime = LocalDateTime.now();
     }
+    
+    /**
+     * 初始化实体的createTime和updateTime
+     */
+    @PrePersist
+    public void prePersist() {
+        this.createTime = LocalDateTime.now();
+        this.updateTime = LocalDateTime.now();
+    }
 } 

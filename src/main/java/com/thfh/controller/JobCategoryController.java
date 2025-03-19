@@ -92,4 +92,14 @@ public class JobCategoryController {
     public Result<JobCategoryDTO> toggleCategoryStatus(@PathVariable Long id) {
         return Result.success(jobCategoryService.toggleCategoryStatus(id));
     }
+
+    /**
+     * 根据父分类ID获取子分类列表
+     * @param parentId 父分类ID
+     * @return 子分类列表
+     */
+    @GetMapping("/children")
+    public Result<List<JobCategoryDTO>> getChildCategories(@RequestParam(required = false) Long parentId) {
+        return Result.success(jobCategoryService.getChildCategories(parentId));
+    }
 } 
