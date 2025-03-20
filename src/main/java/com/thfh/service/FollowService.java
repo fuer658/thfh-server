@@ -79,23 +79,23 @@ public class FollowService {
     }
 
     /**
-     * 获取用户关注的用户列表
-     * @param userId 用户ID
-     * @return 用户关注的用户DTO列表
+     * 获取用户关注的用户列表（仅返回关注的用户）
      */
     public List<FollowDTO> getFollowingList(Long userId) {
-        List<Follow> follows = followRepository.findByFollowerId(userId);
-        return follows.stream().map(FollowDTO::fromEntity).collect(Collectors.toList());
+        return followRepository.findByFollowerId(userId)
+                .stream()
+                .map(FollowDTO::fromEntityForFollowing) // 只转换关注的用户
+                .collect(Collectors.toList());
     }
 
     /**
-     * 获取关注用户的粉丝列表
-     * @param userId 用户ID
-     * @return 关注该用户的粉丝DTO列表
+     * 获取粉丝列表（仅返回粉丝信息）
      */
     public List<FollowDTO> getFollowersList(Long userId) {
-        List<Follow> follows = followRepository.findByFollowedId(userId);
-        return follows.stream().map(FollowDTO::fromEntity).collect(Collectors.toList());
+        return followRepository.findByFollowedId(userId)
+                .stream()
+                .map(FollowDTO::fromEntityForFollowers) // 只转换粉丝
+                .collect(Collectors.toList());
     }
 
     /**
