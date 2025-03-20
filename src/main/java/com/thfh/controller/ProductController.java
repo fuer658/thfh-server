@@ -1,5 +1,6 @@
 package com.thfh.controller;
 
+import com.thfh.common.Result;
 import com.thfh.dto.ProductDTO;
 import com.thfh.dto.ProductSearchDTO;
 import com.thfh.model.Product;
@@ -30,39 +31,39 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody ProductDTO productDTO) {
-        return ResponseEntity.ok(productService.createProduct(productDTO));
+    public Result<ProductDTO> createProduct(@Valid @RequestBody ProductDTO productDTO) {
+        return Result.success(productService.createProduct(productDTO));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDTO> getProduct(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.getProduct(id));
+    public Result<ProductDTO> getProduct(@PathVariable Long id) {
+        return Result.success(productService.getProduct(id));
     }
 
     @GetMapping
-    public ResponseEntity<Page<Product>> getAllProducts(Pageable pageable) {
-        return ResponseEntity.ok(productService.getAllProducts(pageable));
+    public Result<Page<Product>> getAllProducts(Pageable pageable) {
+        return Result.success(productService.getAllProducts(pageable));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDTO productDTO) {
-        return ResponseEntity.ok(productService.updateProduct(id, productDTO));
+    public Result<ProductDTO> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDTO productDTO) {
+        return Result.success(productService.updateProduct(id, productDTO));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public Result<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return ResponseEntity.ok().build();
+        return Result.success(null);
     }
 
     /**
      * 搜索商品
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<Product>> searchProducts(@Valid ProductSearchDTO searchDTO) {
-        return ResponseEntity.ok(productService.searchProducts(searchDTO));
+    public Result<Page<Product>> searchProducts(@Valid ProductSearchDTO searchDTO) {
+        return Result.success(productService.searchProducts(searchDTO));
     }
 
     /**
@@ -70,68 +71,68 @@ public class ProductController {
      */
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ProductDTO> updateProductStatus(
+    public Result<ProductDTO> updateProductStatus(
             @PathVariable Long id,
             @RequestParam ProductStatus status) {
-        return ResponseEntity.ok(productService.updateProductStatus(id, status));
+        return Result.success(productService.updateProductStatus(id, status));
     }
 
     /**
      * 获取指定状态的商品
      */
     @GetMapping("/status/{status}")
-    public ResponseEntity<Page<Product>> getProductsByStatus(
+    public Result<Page<Product>> getProductsByStatus(
             @PathVariable ProductStatus status,
             Pageable pageable) {
-        return ResponseEntity.ok(productService.getProductsByStatus(status, pageable));
+        return Result.success(productService.getProductsByStatus(status, pageable));
     }
 
     @PostMapping("/{id}/like")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<?> likeProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
+    public Result<Void> likeProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
         productService.likeProduct(productId, user.getId());
-        return ResponseEntity.ok().build();
+        return Result.success(null);
     }
 
     @DeleteMapping("/{id}/like")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<?> unlikeProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
+    public Result<Void> unlikeProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
         productService.unlikeProduct(productId, user.getId());
-        return ResponseEntity.ok().build();
+        return Result.success(null);
     }
 
     @PostMapping("/{id}/favorite")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<?> favoriteProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
+    public Result<Void> favoriteProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
         productService.favoriteProduct(productId, user.getId());
-        return ResponseEntity.ok().build();
+        return Result.success(null);
     }
 
     @DeleteMapping("/{id}/favorite")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<?> unfavoriteProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
+    public Result<Void> unfavoriteProduct(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
         productService.unfavoriteProduct(productId, user.getId());
-        return ResponseEntity.ok().build();
+        return Result.success(null);
     }
     
     @GetMapping("/favorites")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<Page<Product>> getUserFavorites(Pageable pageable, @AuthenticationPrincipal UserDetails userDetails) {
+    public Result<Page<Product>> getUserFavorites(Pageable pageable, @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
-        return ResponseEntity.ok(productService.getUserFavorites(user.getId(), pageable));
+        return Result.success(productService.getUserFavorites(user.getId(), pageable));
     }
     
     @GetMapping("/{id}/favorite/status")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<Map<String, Boolean>> checkFavoriteStatus(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
+    public Result<Map<String, Boolean>> checkFavoriteStatus(@PathVariable("id") Long productId, @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
         boolean isFavorited = productService.isProductFavorited(productId, user.getId());
         Map<String, Boolean> response = new HashMap<>();
         response.put("favorited", isFavorited);
-        return ResponseEntity.ok(response);
+        return Result.success(response);
     }
 } 
