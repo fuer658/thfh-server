@@ -98,6 +98,18 @@ public class Product {
     private String category;
 
     /**
+     * 商品点赞数
+     */
+    @Column(nullable = false)
+    private Integer likeCount = 0;
+
+    /**
+     * 商品收藏数
+     */
+    @Column(nullable = false)
+    private Integer favoriteCount = 0;
+
+    /**
      * 创建商品时自动设置创建时间和更新时间
      */
     @PrePersist

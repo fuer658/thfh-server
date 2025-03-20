@@ -4,7 +4,12 @@ import com.thfh.dto.ProductDTO;
 import com.thfh.dto.ProductSearchDTO;
 import com.thfh.model.Product;
 import com.thfh.model.ProductStatus;
+import com.thfh.model.ProductLike;
+import com.thfh.model.ProductFavorite;
+import com.thfh.model.User;
 import com.thfh.repository.ProductRepository;
+import com.thfh.repository.ProductLikeRepository;
+import com.thfh.repository.ProductFavoriteRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,6 +26,12 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ProductLikeRepository productLikeRepository;
+
+    @Autowired
+    private ProductFavoriteRepository productFavoriteRepository;
 
     @Transactional
     public ProductDTO createProduct(ProductDTO productDTO) {
@@ -121,5 +132,76 @@ public class ProductService {
             keywords.append(product.getCategory());
         }
         return keywords.toString().toLowerCase();
+    }
+
+    @Transactional
+    public void likeProduct(Long productId, Long userId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("商品不存在"));
+
+        if (!productLikeRepository.existsByUserIdAndProductId(userId, productId)) {
+            ProductLike like = new ProductLike();
+            like.setProduct(product);
+            User user = new User();
+            user.setId(userId);
+            like.setUser(user);
+            productLikeRepository.save(like);
+
+            product.setLikeCount(product.getLikeCount() + 1);
+            productRepository.save(product);
+        }
+    }
+
+    @Transactional
+    public void unlikeProduct(Long productId, Long userId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("商品不存在"));
+
+        if (productLikeRepository.existsByUserIdAndProductId(userId, productId)) {
+            productLikeRepository.deleteByUserIdAndProductId(userId, productId);
+            product.setLikeCount(Math.max(0, product.getLikeCount() - 1));
+            productRepository.save(product);
+        }
+    }
+
+    @Transactional
+    public void favoriteProduct(Long productId, Long userId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("商品不存在"));
+
+        if (!productFavoriteRepository.existsByUserIdAndProductId(userId, productId)) {
+            ProductFavorite favorite = new ProductFavorite();
+            favorite.setProduct(product);
+            User user = new User();
+            user.setId(userId);
+            favorite.setUser(user);
+            productFavoriteRepository.save(favorite);
+
+            product.setFavoriteCount(product.getFavoriteCount() + 1);
+            productRepository.save(product);
+        }
+    }
+
+    @Transactional
+    public void unfavoriteProduct(Long productId, Long userId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("商品不存在"));
+
+        if (productFavoriteRepository.existsByUserIdAndProductId(userId, productId)) {
+            productFavoriteRepository.deleteByUserIdAndProductId(userId, productId);
+            product.setFavoriteCount(Math.max(0, product.getFavoriteCount() - 1));
+            productRepository.save(product);
+        }
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<Product> getUserFavorites(Long userId, Pageable pageable) {
+        Page<ProductFavorite> favorites = productFavoriteRepository.findByUserId(userId, pageable);
+        return favorites.map(ProductFavorite::getProduct);
+    }
+    
+    @Transactional(readOnly = true)
+    public boolean isProductFavorited(Long productId, Long userId) {
+        return productFavoriteRepository.existsByUserIdAndProductId(userId, productId);
     }
 } 

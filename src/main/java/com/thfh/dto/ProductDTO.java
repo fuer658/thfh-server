@@ -56,4 +56,14 @@ public class ProductDTO {
      * 商品分类
      */
     private String category;
+    
+    /**
+     * 商品点赞数
+     */
+    private Integer likeCount = 0;
+    
+    /**
+     * 商品收藏数
+     */
+    private Integer favoriteCount = 0;
 } 
