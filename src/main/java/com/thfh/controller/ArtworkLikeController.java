@@ -1,6 +1,5 @@
 package com.thfh.controller;
 
-import com.thfh.common.CustomPage;
 import com.thfh.common.Result;
 import com.thfh.model.Artwork;
 import com.thfh.model.User;
@@ -61,14 +60,14 @@ public class ArtworkLikeController {
      * @return 点赞的作品分页列表
      */
     @GetMapping("/likes")
-    public Result<CustomPage<Artwork>> getLikes(
+    public Result<Page<Artwork>> getLikes(
             Authentication authentication,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         User user = userService.getCurrentUser();
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "likeTime"));
         Page<Artwork> artworkPage = artworkLikeService.getUserLikes(user.getId(), pageRequest);
-        return Result.success(new CustomPage<>(artworkPage));
+        return Result.success(artworkPage);
     }
 
     /**

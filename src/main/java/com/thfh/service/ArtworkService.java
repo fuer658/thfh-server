@@ -257,4 +257,32 @@ public class ArtworkService {
         
         return artworkRepository.save(artwork);
     }
+
+    /**
+     * 根据条件查询作品列表
+     * @param title 作品标题（可选）
+     * @param studentId 学生ID（可选）
+     * @param enabled 是否启用（可选）
+     * @param pageable 分页参数
+     * @return 作品分页列表
+     */
+    public Page<Artwork> getArtworks(String title, Long studentId, Boolean enabled, Pageable pageable) {
+        if (title != null && !title.isEmpty() && studentId != null && enabled != null) {
+            return artworkRepository.findByTitleContainingAndCreatorIdAndEnabled(title, studentId, enabled, pageable);
+        } else if (title != null && !title.isEmpty() && studentId != null) {
+            return artworkRepository.findByTitleContainingAndCreatorId(title, studentId, pageable);
+        } else if (title != null && !title.isEmpty() && enabled != null) {
+            return artworkRepository.findByTitleContainingAndEnabled(title, enabled, pageable);
+        } else if (studentId != null && enabled != null) {
+            return artworkRepository.findByCreatorIdAndEnabled(studentId, enabled, pageable);
+        } else if (title != null && !title.isEmpty()) {
+            return artworkRepository.findByTitleContaining(title, pageable);
+        } else if (studentId != null) {
+            return artworkRepository.findByCreatorId(studentId, pageable);
+        } else if (enabled != null) {
+            return artworkRepository.findByEnabled(enabled, pageable);
+        } else {
+            return artworkRepository.findAll(pageable);
+        }
+    }
 }

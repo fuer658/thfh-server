@@ -1,6 +1,5 @@
 package com.thfh.controller;
 
-import com.thfh.common.CustomPage;
 import com.thfh.common.Result;
 import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.ArtworkScoreDTO;
@@ -96,17 +95,23 @@ public class ArtworkController {
     }
 
     /**
-     * 获取作品列表
+     * 获取作品列表（分页）
      * @param page 页码
-     * @param size 每页大小
-     * @return 作品分页列表
+     * @param size 每页数量
+     * @param title 作品标题（可选）
+     * @param studentId 学生ID（可选）
+     * @param enabled 是否启用（可选）
+     * @return 作品列表
      */
     @GetMapping
-    public Result<CustomPage<ArtworkDTO>> getArtworks(
+    public Result<Page<ArtworkDTO>> getArtworks(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) Long studentId,
+            @RequestParam(required = false) Boolean enabled) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        Page<Artwork> artworkPage = artworkService.getAllArtworks(pageRequest);
+        Page<Artwork> artworkPage = artworkService.getArtworks(title, studentId, enabled, pageRequest);
         
         // 转换为DTO
         Page<ArtworkDTO> dtoPage = artworkPage.map(artwork -> {
@@ -136,29 +141,28 @@ public class ArtworkController {
             return dto;
         });
         
-        return Result.success(new CustomPage<>(dtoPage));
+        return Result.success(dtoPage);
     }
 
     /**
-     * 获取当前用户的作品列表
-     * @param user 当前登录用户
+     * 获取我的作品列表
+     * @param authentication 认证信息
      * @param type 作品类型（可选）
      * @param enabled 是否启用（可选）
      * @param page 页码
-     * @param size 每页大小
-     * @return 作品分页列表
+     * @param size 每页数量
+     * @return 我的作品列表
      */
     @GetMapping("/my")
-    public Result<CustomPage<Artwork>> getMyArtworks(
+    public Result<Page<Artwork>> getMyArtworks(
             Authentication authentication,
             @RequestParam(required = false) ArtworkType type,
             @RequestParam(required = false) Boolean enabled,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         User user = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-
+        
         Page<Artwork> artworks;
         if (type != null && enabled != null) {
             artworks = artworkService.getUserArtworksByTypeAndEnabled(user.getId(), type, enabled, pageRequest);
@@ -169,8 +173,8 @@ public class ArtworkController {
         } else {
             artworks = artworkService.getUserArtworks(user.getId(), pageRequest);
         }
-
-        return Result.success(new CustomPage<>(artworks));
+        
+        return Result.success(artworks);
     }
 
     /**

@@ -1,12 +1,12 @@
 package com.thfh.controller;
 
-import com.thfh.common.CustomPage;
 import com.thfh.common.Result;
 import com.thfh.dto.PointsRecordDTO;
 import com.thfh.dto.PointsAdjustDTO;
 import com.thfh.dto.PointsQueryDTO;
 import com.thfh.service.PointsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,8 +16,8 @@ public class PointsController {
     private PointsService pointsService;
 
     @GetMapping("/records")
-    public Result<CustomPage<PointsRecordDTO>> getPointsRecords(PointsQueryDTO queryDTO) {
-        return Result.success(new CustomPage<>(pointsService.getPointsRecords(queryDTO)));
+    public Result<Page<PointsRecordDTO>> getPointsRecords(PointsQueryDTO queryDTO) {
+        return Result.success(pointsService.getPointsRecords(queryDTO));
     }
 
     @PostMapping("/adjust")

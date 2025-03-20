@@ -1,6 +1,6 @@
 package com.thfh.controller;
 
-import com.thfh.common.R;
+import com.thfh.common.Result;
 import com.thfh.model.Company;
 import com.thfh.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +36,12 @@ public class CompanyController {
      * @return 创建的企业信息
      */
     @PostMapping
-    public R create(@RequestBody Company company) {
+    public Result<Company> create(@RequestBody Company company) {
         company.setCreateTime(LocalDateTime.now());
         company.setUpdateTime(LocalDateTime.now());
         company.setEnabled(true);
         Company savedCompany = companyRepository.save(company);
-        return R.ok().data(savedCompany);
+        return Result.success(savedCompany);
     }
 
     /**
@@ -52,7 +52,7 @@ public class CompanyController {
      * @return 企业分页列表
      */
     @GetMapping
-    public R list(Pageable pageable,
+    public Result<Page<Company>> list(Pageable pageable,
                  @RequestParam(required = false) String name,
                  @RequestParam(required = false) Boolean enabled) {
         Page<Company> companies = companyRepository.findByCondition(
@@ -60,7 +60,7 @@ public class CompanyController {
             enabled,
             pageable
         );
-        return R.ok().data(companies);
+        return Result.success(companies);
     }
 
     /**
@@ -69,9 +69,9 @@ public class CompanyController {
      * @return 企业详细信息
      */
     @GetMapping("/{id}")
-    public R getById(@PathVariable Long id) {
+    public Result<Company> getById(@PathVariable Long id) {
         Optional<Company> company = companyRepository.findById(id);
-        return company.isPresent() ? R.ok().data(company.get()) : R.error("公司不存在");
+        return company.isPresent() ? Result.success(company.get()) : Result.error("公司不存在");
     }
 
     /**
@@ -81,7 +81,7 @@ public class CompanyController {
      * @return 更新后的企业信息
      */
     @PutMapping("/{id}")
-    public R update(@PathVariable Long id, @RequestBody Company company) {
+    public Result<Company> update(@PathVariable Long id, @RequestBody Company company) {
         Optional<Company> existingCompany = companyRepository.findById(id);
         if (existingCompany.isPresent()) {
             Company updatedCompany = existingCompany.get();
@@ -95,9 +95,9 @@ public class CompanyController {
             updatedCompany.setWorkStartTime(company.getWorkStartTime());
             updatedCompany.setWorkEndTime(company.getWorkEndTime());
             updatedCompany.setUpdateTime(LocalDateTime.now());
-            return R.ok().data(companyRepository.save(updatedCompany));
+            return Result.success(companyRepository.save(updatedCompany));
         }
-        return R.error("公司不存在");
+        return Result.error("公司不存在");
     }
 
     /**
@@ -107,7 +107,7 @@ public class CompanyController {
      */
     @DeleteMapping("/{id}")
     @Transactional
-    public R delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable Long id) {
         System.out.println("接收到删除公司请求，ID: " + id);
         try {
             Optional<Company> company = companyRepository.findById(id);
@@ -120,15 +120,15 @@ public class CompanyController {
                 // 再删除公司
                 companyRepository.deleteById(id);
                 System.out.println("公司删除成功，ID: " + id);
-                return R.ok();
+                return Result.success(null);
             } else {
                 System.out.println("公司不存在，ID: " + id);
-                return R.error("公司不存在");
+                return Result.error("公司不存在");
             }
         } catch (Exception e) {
             System.err.println("删除公司时发生错误: " + e.getMessage());
             e.printStackTrace();
-            return R.error("删除失败: " + e.getMessage());
+            return Result.error("删除失败: " + e.getMessage());
         }
     }
 
@@ -139,15 +139,15 @@ public class CompanyController {
      * @return 更新后的企业信息
      */
     @PutMapping("/{id}/status")
-    public R toggleStatus(@PathVariable Long id, @RequestParam Boolean enabled) {
+    public Result<Company> toggleStatus(@PathVariable Long id, @RequestParam Boolean enabled) {
         Optional<Company> company = companyRepository.findById(id);
         if (company.isPresent()) {
             Company companyToUpdate = company.get();
             companyToUpdate.setEnabled(enabled);
             companyToUpdate.setUpdateTime(LocalDateTime.now());
-            return R.ok().data(companyRepository.save(companyToUpdate));
+            return Result.success(companyRepository.save(companyToUpdate));
         }
-        return R.error("公司不存在");
+        return Result.error("公司不存在");
     }
 
     /**
@@ -157,10 +157,10 @@ public class CompanyController {
      */
     @DeleteMapping("/batch")
     @Transactional
-    public R batchDelete(@RequestBody Map<String, List<Long>> request) {
+    public Result<Void> batchDelete(@RequestBody Map<String, List<Long>> request) {
         List<Long> ids = request.get("ids");
         if (ids == null || ids.isEmpty()) {
-            return R.error("未提供要删除的公司ID");
+            return Result.error("未提供要删除的公司ID");
         }
         
         System.out.println("接收到批量删除公司请求，ID列表: " + ids);
@@ -173,17 +173,17 @@ public class CompanyController {
             // 再删除公司
             companyRepository.deleteAllById(ids);
             System.out.println("批量删除公司成功，ID列表: " + ids);
-            return R.ok();
+            return Result.success(null);
         } catch (Exception e) {
             System.err.println("批量删除公司时发生错误: " + e.getMessage());
             e.printStackTrace();
-            return R.error("批量删除失败: " + e.getMessage());
+            return Result.error("批量删除失败: " + e.getMessage());
         }
     }
 
     @GetMapping("/enabled")
-    public R listEnabled() {
+    public Result<List<Company>> listEnabled() {
         List<Company> companies = companyRepository.findAllEnabled();
-        return R.ok().data(companies);
+        return Result.success(companies);
     }
 }

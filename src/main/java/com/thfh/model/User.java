@@ -42,7 +42,7 @@ public class User {
 
     private String avatar;
 
-    @Column(length = 500)
+    @Column(length = 100)
     private String introduction;
 
     // 教员特有字段

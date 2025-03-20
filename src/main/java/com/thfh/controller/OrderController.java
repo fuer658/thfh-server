@@ -4,7 +4,7 @@ import com.thfh.dto.LogisticsDTO;
 import com.thfh.dto.OrderQueryDTO;
 import com.thfh.model.Order;
 import com.thfh.service.OrderService;
-import com.thfh.common.R;
+import com.thfh.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -28,9 +28,9 @@ public class OrderController {
      * @return 订单分页列表
      */
     @GetMapping
-    public R getOrders(OrderQueryDTO queryDTO) {
+    public Result<Page<Order>> getOrders(OrderQueryDTO queryDTO) {
         Page<Order> page = orderService.getOrders(queryDTO);
-        return R.ok().data(page);
+        return Result.success(page);
     }
 
     /**
@@ -39,9 +39,9 @@ public class OrderController {
      * @return 订单详细信息
      */
     @GetMapping("/{id}")
-    public R getOrderDetail(@PathVariable Long id) {
+    public Result<Order> getOrderDetail(@PathVariable Long id) {
         Order order = orderService.getOrderDetail(id);
-        return R.ok().data(order);
+        return Result.success(order);
     }
 
     /**
@@ -51,12 +51,12 @@ public class OrderController {
      * @return 操作结果
      */
     @PutMapping("/{id}/status")
-    public R updateOrderStatus(
+    public Result<Void> updateOrderStatus(
         @PathVariable Long id,
         @RequestBody Map<String, String> body
     ) {
         orderService.updateOrderStatus(id, body.get("status"));
-        return R.ok();
+        return Result.success(null);
     }
 
     /**
@@ -66,12 +66,12 @@ public class OrderController {
      * @return 操作结果
      */
     @PutMapping("/{id}/logistics")
-    public R updateLogistics(
+    public Result<Void> updateLogistics(
         @PathVariable Long id,
         @RequestBody LogisticsDTO logisticsDTO
     ) {
         orderService.updateLogistics(id, logisticsDTO);
-        return R.ok();
+        return Result.success(null);
     }
 
     /**
@@ -81,11 +81,11 @@ public class OrderController {
      * @return 物流跟踪信息
      */
     @GetMapping("/logistics/track")
-    public R getLogisticsInfo(
+    public Result<Object> getLogisticsInfo(
         @RequestParam String company,
         @RequestParam String number
     ) {
         Object info = orderService.getLogisticsInfo(company, number);
-        return R.ok().data(info);
+        return Result.success(info);
     }
 } 

@@ -340,7 +340,20 @@ public class PostService {
                 .stream()
                 .map(FollowDTO::getFollowedId)
                 .collect(Collectors.toList());
-        return postRepository.findByUserIdIn(followingIds, pageable);
+        return postRepository.findByUserIdInOrderByCreateTimeDesc(followingIds, pageable);
+    }
+    
+    /**
+     * 获取关注用户的动态列表（包含用户信息）
+     * @param pageable 分页参数
+     * @return 动态DTO列表
+     */
+    public Page<PostDTO> getFollowingPostsWithUserInfo(Pageable pageable) {
+        Page<Post> posts = getFollowingPosts(pageable);
+        List<PostDTO> dtoList = posts.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtoList, pageable, posts.getTotalElements());
     }
     
     /**
