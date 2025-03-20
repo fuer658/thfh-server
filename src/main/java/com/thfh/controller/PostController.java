@@ -176,11 +176,11 @@ public class PostController {
      * 获取关注用户的动态列表
      */
     @GetMapping("/following")
-    public Result<Page<Post>> getFollowingPosts(
+    public Result<Page<PostDTO>> getFollowingPosts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return Result.success(postService.getFollowingPosts(pageRequest));
+        return Result.success(postService.getFollowingPostsWithUserInfo(pageRequest));
     }
 
     /**

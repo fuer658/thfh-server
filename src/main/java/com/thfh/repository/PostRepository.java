@@ -41,4 +41,12 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
      * @return 包含指定标签的动态列表
      */
     Page<Post> findByTagsId(Long tagId, Pageable pageable);
+
+    /**
+     * 查询指定用户关注的用户发布的动态
+     * @param userIds 关注的用户ID列表
+     * @param pageable 分页参数
+     * @return 动态列表
+     */
+    Page<Post> findByUserIdInOrderByCreateTimeDesc(List<Long> userIds, Pageable pageable);
 }
