@@ -1,5 +1,6 @@
 package com.thfh.dto;
 
+import com.thfh.model.Gender;
 import com.thfh.model.User;
 import com.thfh.model.UserType;
 import lombok.Data;
@@ -47,6 +48,11 @@ public class UserDTO {
     private String email;
     
     /**
+     * 用户性别
+     */
+    private Gender gender;
+    
+    /**
      * 用户头像URL
      */
     private String avatar;
@@ -75,6 +81,11 @@ public class UserDTO {
      * 用户积分
      */
     private Integer points;
+
+    /**
+     * 地区
+     */
+    private  String Locate;
     
     /**
      * 账号是否启用

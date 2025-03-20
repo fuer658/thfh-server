@@ -23,8 +23,8 @@ public class User {
     @Column(length = 100)
     private String realName;
 
-    @Column(length = 100)
-    private String Locate;
+    @Column(length = 100, name = "locate")
+    private String locate; // 用户所在地区
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -35,6 +35,10 @@ public class User {
 
     @Column(length = 100)
     private String email;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Gender gender = Gender.UNKNOWN; // 性别，默认为未知
 
     private String avatar;
 
