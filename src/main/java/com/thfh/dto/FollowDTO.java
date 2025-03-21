@@ -50,6 +50,7 @@ public class FollowDTO {
     public static FollowDTO fromEntityForFollowing(Follow follow) {
         FollowDTO dto = new FollowDTO();
         dto.setId(follow.getId());
+        dto.setFollowerId(Optional.ofNullable(follow.getFollowerId()).orElse(0L));
         dto.setFollowedId(Optional.ofNullable(follow.getFollowedId()).orElse(0L));
         dto.setFollowTime(Optional.ofNullable(follow.getFollowTime()).orElse(LocalDateTime.now()));
 
@@ -65,6 +66,7 @@ public class FollowDTO {
         FollowDTO dto = new FollowDTO();
         dto.setId(follow.getId());
         dto.setFollowerId(Optional.ofNullable(follow.getFollowerId()).orElse(0L));
+        dto.setFollowedId(Optional.ofNullable(follow.getFollowedId()).orElse(0L));
         dto.setFollowTime(Optional.ofNullable(follow.getFollowTime()).orElse(LocalDateTime.now()));
 
         dto.setFollower(Optional.ofNullable(follow.getFollower()).map(SimpleUserDTO::fromEntity).orElse(null));
