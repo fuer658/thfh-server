@@ -294,6 +294,16 @@ public class PostService {
         return postLikeRepository.existsByUserIdAndPostId(userId, postId);
     }
 
+    /**
+     * 获取用户点赞的动态列表
+     * @param userId 用户ID
+     * @param pageable 分页参数
+     * @return 分页后的动态列表
+     */
+    public Page<Post> getUserLikedPosts(Long userId, Pageable pageable) {
+        return postLikeRepository.findPostsByUserId(userId, pageable);
+    }
+
     private PostDTO convertToDTO(Post post) {
         PostDTO dto = new PostDTO();
         BeanUtils.copyProperties(post, dto);

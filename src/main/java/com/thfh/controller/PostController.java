@@ -215,4 +215,16 @@ public class PostController {
         postService.deletePostByAdmin(postId);
         return Result.success(null);
     }
+
+    /**
+     * 获取用户点赞的动态列表
+     */
+    @GetMapping("/likes")
+    public Result<Page<Post>> getUserLikedPosts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        User currentUser = userService.getCurrentUser();
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        return Result.success(postService.getUserLikedPosts(currentUser.getId(), pageRequest));
+    }
 }
