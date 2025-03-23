@@ -62,6 +62,8 @@ public class Artwork {
 
     private Integer likeCount = 0;
 
+    private Integer viewCount = 0;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;

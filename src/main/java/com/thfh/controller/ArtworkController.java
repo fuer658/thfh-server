@@ -293,6 +293,47 @@ public class ArtworkController {
     }
 
     /**
+     * 获取作品详情
+     * @param artworkId 作品ID
+     * @return 作品详情
+     */
+    @GetMapping("/{artworkId}")
+    public Result<ArtworkDTO> getArtworkDetail(@PathVariable Long artworkId) {
+        // 增加浏览量
+        artworkService.incrementViewCount(artworkId);
+        
+        // 获取作品信息
+        Artwork artwork = artworkService.getArtworkById(artworkId)
+                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+        
+        // 转换为DTO
+        ArtworkDTO dto = new ArtworkDTO();
+        BeanUtils.copyProperties(artwork, dto, "creator", "tags");
+        
+        // 设置创建者信息
+        if (artwork.getCreator() != null) {
+            dto.setCreatorId(artwork.getCreator().getId());
+            dto.setCreatorName(artwork.getCreator().getUsername());
+            dto.setCreatorAvatar(artwork.getCreator().getAvatar());
+        }
+        
+        // 转换标签
+        if (artwork.getTags() != null) {
+            Set<TagDTO> tagDTOs = artwork.getTags().stream()
+                .map(tag -> {
+                    TagDTO tagDTO = new TagDTO();
+                    tagDTO.setId(tag.getId());
+                    tagDTO.setTagName(tag.getName());
+                    return tagDTO;
+                })
+                .collect(Collectors.toSet());
+            dto.setTags(tagDTOs);
+        }
+        
+        return Result.success(dto);
+    }
+
+    /**
      * 修改商业作品价格
      * @param artworkId 作品ID
      * @param price 新价格

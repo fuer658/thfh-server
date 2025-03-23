@@ -231,7 +231,7 @@ public class ArtworkService {
                 .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
         
         // 更新基本信息
-        BeanUtils.copyProperties(updateDTO, artwork, "id", "creator", "createTime", "averageScore", "scoreCount", "totalScore", "favoriteCount", "likeCount");
+        BeanUtils.copyProperties(updateDTO, artwork, "id", "creator", "createTime", "averageScore", "scoreCount", "totalScore", "favoriteCount", "likeCount", "viewCount");
         
         // 处理标签
         if (updateDTO.getTags() != null) {
@@ -255,6 +255,23 @@ public class ArtworkService {
             artwork.setTags(processedTags);
         }
         
+        return artworkRepository.save(artwork);
+    }
+
+    /**
+     * 增加作品浏览量
+     * @param artworkId 作品ID
+     * @return 更新后的作品
+     */
+    @Transactional
+    public Artwork incrementViewCount(Long artworkId) {
+        Artwork artwork = artworkRepository.findById(artworkId)
+                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+        
+        if (artwork.getViewCount() == null) {
+            artwork.setViewCount(0);
+        }
+        artwork.setViewCount(artwork.getViewCount() + 1);
         return artworkRepository.save(artwork);
     }
 
