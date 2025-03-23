@@ -3,6 +3,8 @@ package com.thfh.model;
 import lombok.Data;
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
 @Entity
@@ -40,4 +42,8 @@ public class Company {
 
     @Column(nullable = false)
     private LocalDateTime updateTime = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("company")
+    private List<CompanyAlbumCategory> albumCategories;
 } 
