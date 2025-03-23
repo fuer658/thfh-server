@@ -283,6 +283,7 @@ CREATE TABLE `user` (
   `user_type` varchar(20) NOT NULL,
   `phone` varchar(50) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
+  `gender` varchar(20) NOT NULL DEFAULT 'UNKNOWN',
   `avatar` varchar(255) DEFAULT NULL,
   `introduction` varchar(500) DEFAULT NULL,
   `qualification` varchar(500) DEFAULT NULL,

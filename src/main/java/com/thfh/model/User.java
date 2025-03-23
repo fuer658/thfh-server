@@ -37,7 +37,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = GenderConverter.class)
     private Gender gender = Gender.UNKNOWN; // 性别，默认为未知
 
     private String avatar;
@@ -83,5 +83,21 @@ public class User {
     @PreUpdate
     public void preUpdate() {
         this.updateTime = LocalDateTime.now();
+    }
+}
+
+/**
+ * 性别转换器
+ */
+@Converter
+class GenderConverter implements AttributeConverter<Gender, String> {
+    @Override
+    public String convertToDatabaseColumn(Gender gender) {
+        return gender == null ? null : gender.name();
+    }
+
+    @Override
+    public Gender convertToEntityAttribute(String value) {
+        return Gender.fromString(value);
     }
 }

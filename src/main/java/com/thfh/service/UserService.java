@@ -5,6 +5,7 @@ import com.thfh.dto.UserQueryDTO;
 import com.thfh.dto.LoginDTO;
 import com.thfh.model.User;
 import com.thfh.model.UserType;
+import com.thfh.model.Gender;
 import com.thfh.repository.UserRepository;
 import com.thfh.util.JwtUtil;
 import org.springframework.beans.BeanUtils;
@@ -109,6 +110,11 @@ public class UserService {
         // 验证用户类型
         if (userDTO.getUserType() == null) {
             errors.add("用户类型不能为空");
+        }
+
+        // 验证性别
+        if (userDTO.getGender() == null) {
+            userDTO.setGender(Gender.UNKNOWN);
         }
 
         // 验证邮箱格式
