@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.Predicate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -134,9 +135,38 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("课程不存在"));
 
-        BeanUtils.copyProperties(courseDTO, course, "id", "teacher", "createTime");
+        // 验证必填字段
+        if (courseDTO.getTitle() == null || courseDTO.getTitle().trim().isEmpty()) {
+            throw new RuntimeException("课程标题不能为空");
+        }
+        if (courseDTO.getCoverImage() == null || courseDTO.getCoverImage().trim().isEmpty()) {
+            throw new RuntimeException("课程封面不能为空");
+        }
+        if (courseDTO.getPrice() == null) {
+            throw new RuntimeException("课程价格不能为空");
+        }
+        if (courseDTO.getTotalHours() == null || courseDTO.getTotalHours() <= 0) {
+            throw new RuntimeException("课程总时长必须大于0");
+        }
+
+        // 更新课程信息
+        course.setTitle(courseDTO.getTitle());
+        course.setDescription(courseDTO.getDescription());
+        course.setCoverImage(courseDTO.getCoverImage());
+        course.setCoverVideo(courseDTO.getCoverVideo());
+        course.setPrice(courseDTO.getPrice());
+        course.setPointsPrice(courseDTO.getPointsPrice());
+        course.setTotalHours(courseDTO.getTotalHours());
+        course.setStatus(courseDTO.getStatus());
+        course.setVideoUrl(courseDTO.getVideoUrl());
+        course.setMaterials(courseDTO.getMaterials());
+        // 如果enabled为null，保持原值
+        if (courseDTO.getEnabled() != null) {
+            course.setEnabled(courseDTO.getEnabled());
+        }
+        course.setUpdateTime(LocalDateTime.now());
+
         course = courseRepository.save(course);
-        
         return convertToDTO(course);
     }
 

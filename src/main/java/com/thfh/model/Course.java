@@ -22,6 +22,8 @@ public class Course {
     @Column(nullable = false)
     private String coverImage; // 课程封面图片
 
+    private String coverVideo; // 课程封面视频
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
     private User teacher; // 教员

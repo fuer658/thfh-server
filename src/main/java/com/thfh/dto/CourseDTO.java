@@ -31,6 +31,11 @@ public class CourseDTO {
     private String coverImage;
     
     /**
+     * 课程封面视频URL
+     */
+    private String coverVideo;
+    
+    /**
      * 讲师ID
      */
     private Long teacherId;
