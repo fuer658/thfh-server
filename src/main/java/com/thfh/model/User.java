@@ -52,6 +52,7 @@ public class User {
     // 学员特有字段
     private String disability; // 残疾类型
     private Integer points = 0; // 积分
+    private Integer makeupCards = 0; // 补签卡数量
 
     @Column(nullable = false)
     private Integer experience = 0; // 经验值
