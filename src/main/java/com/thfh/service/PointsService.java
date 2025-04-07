@@ -29,6 +29,9 @@ public class PointsService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserService userService;
+
     public Page<PointsRecordDTO> getPointsRecords(PointsQueryDTO queryDTO) {
         Specification<PointsRecord> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -80,5 +83,13 @@ public class PointsService {
         dto.setStudentId(record.getStudent().getId());
         dto.setStudentName(record.getStudent().getRealName());
         return dto;
+    }
+
+    public Integer getCurrentUserPoints() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        return currentUser.getPoints();
     }
 }
