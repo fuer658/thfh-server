@@ -65,7 +65,7 @@ public class ArtworkFavoriteController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         User user = userService.getCurrentUser();
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "favoriteTime"));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Artwork> artworkPage = artworkFavoriteService.getUserFavorites(user.getId(), pageRequest);
         return Result.success(artworkPage);
     }

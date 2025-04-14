@@ -41,6 +41,6 @@ public interface ArtworkFavoriteRepository extends JpaRepository<ArtworkFavorite
      * @param pageable 分页参数
      * @return 分页后的用户收藏作品列表
      */
-    @Query("SELECT af.artwork FROM ArtworkFavorite af WHERE af.user.id = ?1")
+    @Query("SELECT af.artwork FROM ArtworkFavorite af WHERE af.user.id = ?1 ORDER BY af.createTime DESC")
     Page<Artwork> findArtworksByUserId(Long userId, Pageable pageable);
 }

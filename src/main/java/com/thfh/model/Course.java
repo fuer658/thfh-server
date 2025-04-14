@@ -4,6 +4,8 @@ import lombok.Data;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -52,6 +54,14 @@ public class Course {
 
     @Column(nullable = false)
     private Boolean enabled = true;
+
+    @ManyToMany
+    @JoinTable(
+        name = "course_tag_relation",
+        joinColumns = @JoinColumn(name = "course_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<CourseTag> tags = new HashSet<>();
 
     @Column(nullable = false)
     private LocalDateTime createTime = LocalDateTime.now();

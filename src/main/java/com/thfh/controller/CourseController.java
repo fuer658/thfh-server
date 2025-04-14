@@ -10,6 +10,8 @@ import com.thfh.service.CourseService;
 import com.thfh.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -157,5 +159,20 @@ public class CourseController {
     @GetMapping("/{id}/interaction-users")
     public Result<Map<String, List<SimpleUserDTO>>> getCourseInteractionUsers(@PathVariable Long id) {
         return Result.success(courseService.getCourseInteractionUsers(id));
+    }
+
+    /**
+     * 获取当前用户收藏的课程列表
+     * @param page 页码
+     * @param size 每页数量
+     * @return 收藏的课程列表
+     */
+    @GetMapping("/favorites")
+    public Result<Page<CourseDTO>> getFavoriteCourses(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        User currentUser = userService.getCurrentUser();
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        return Result.success(courseService.getUserFavoriteCourses(currentUser.getId(), pageRequest));
     }
 }

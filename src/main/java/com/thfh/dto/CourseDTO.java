@@ -3,6 +3,7 @@ package com.thfh.dto;
 import com.thfh.model.CourseStatus;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.Set;
 
 /**
  * 课程数据传输对象
@@ -94,6 +95,11 @@ public class CourseDTO {
      * 课程是否启用
      */
     private Boolean enabled;
+    
+    /**
+     * 课程标签
+     */
+    private Set<CourseTagDTO> tags;
     
     /**
      * 课程创建时间

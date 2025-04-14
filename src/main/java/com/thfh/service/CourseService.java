@@ -1,9 +1,6 @@
 package com.thfh.service;
 
-import com.thfh.dto.CourseDTO;
-import com.thfh.dto.CourseInteractionDTO;
-import com.thfh.dto.CourseQueryDTO;
-import com.thfh.dto.SimpleUserDTO;
+import com.thfh.dto.*;
 import com.thfh.model.*;
 import com.thfh.repository.CourseRepository;
 import com.thfh.repository.UserCourseInteractionRepository;
@@ -13,6 +10,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +42,9 @@ public class CourseService {
 
     @Autowired
     private UserCourseRepository userCourseRepository;
+
+    @Autowired
+    private CourseTagService courseTagService;
 
     /**
      * 根据查询条件获取课程列表
@@ -118,6 +120,11 @@ public class CourseService {
         course.setStudentCount(0);
         course.setEnabled(true);
         
+        // 处理课程标签
+        if (courseDTO.getTags() != null) {
+            course.setTags(courseTagService.processTags(courseDTO.getTags()));
+        }
+        
         course = courseRepository.save(course);
         
         return convertToDTO(course);
@@ -165,6 +172,11 @@ public class CourseService {
             course.setEnabled(courseDTO.getEnabled());
         }
         course.setUpdateTime(LocalDateTime.now());
+
+        // 处理课程标签
+        if (courseDTO.getTags() != null) {
+            course.setTags(courseTagService.processTags(courseDTO.getTags()));
+        }
 
         course = courseRepository.save(course);
         return convertToDTO(course);
@@ -301,15 +313,37 @@ public class CourseService {
     }
 
     /**
-     * 将课程实体对象转换为DTO对象
-     * @param course 课程实体对象
-     * @return 转换后的课程DTO对象
+     * 将Course实体转换为CourseDTO
+     * @param course 课程实体
+     * @return 课程DTO对象
      */
     private CourseDTO convertToDTO(Course course) {
         CourseDTO dto = new CourseDTO();
         BeanUtils.copyProperties(course, dto);
-        dto.setTeacherId(course.getTeacher().getId());
-        dto.setTeacherName(course.getTeacher().getRealName());
+        
+        // 设置讲师信息
+        if (course.getTeacher() != null) {
+            dto.setTeacherId(course.getTeacher().getId());
+            dto.setTeacherName(course.getTeacher().getUsername());
+        }
+        
+        // 设置标签信息
+        if (course.getTags() != null) {
+            Set<CourseTagDTO> tagDTOs = course.getTags().stream()
+                .map(tag -> {
+                    CourseTagDTO tagDTO = new CourseTagDTO();
+                    BeanUtils.copyProperties(tag, tagDTO);
+                    return tagDTO;
+                })
+                .collect(Collectors.toSet());
+            dto.setTags(tagDTOs);
+        }
+        
+        // 设置时间格式
+        if (course.getCreateTime() != null) {
+            dto.setCreateTime(course.getCreateTime().toString());
+        }
+        
         return dto;
     }
 
@@ -377,5 +411,18 @@ public class CourseService {
         result.put("likedUsers", likedUsers);
         result.put("favoritedUsers", favoritedUsers);
         return result;
+    }
+
+    /**
+     * 获取用户收藏的课程列表
+     * @param userId 用户ID
+     * @param pageable 分页参数
+     * @return 分页后的课程列表
+     */
+    public Page<CourseDTO> getUserFavoriteCourses(Long userId, Pageable pageable) {
+        Page<UserCourseInteraction> interactions = userCourseInteractionRepository
+                .findByUserIdAndFavoritedTrue(userId, pageable);
+        
+        return interactions.map(interaction -> convertToDTO(interaction.getCourse()));
     }
 }

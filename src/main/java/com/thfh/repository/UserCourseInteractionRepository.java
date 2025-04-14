@@ -3,6 +3,8 @@ package com.thfh.repository;
 import com.thfh.model.Course;
 import com.thfh.model.User;
 import com.thfh.model.UserCourseInteraction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -26,4 +28,12 @@ public interface UserCourseInteractionRepository extends JpaRepository<UserCours
      * @return 收藏用户列表
      */
     List<UserCourseInteraction> findByCourseAndFavoritedTrue(Course course);
+
+    /**
+     * 查找用户收藏的所有课程
+     * @param userId 用户ID
+     * @param pageable 分页参数
+     * @return 分页后的课程交互列表
+     */
+    Page<UserCourseInteraction> findByUserIdAndFavoritedTrue(Long userId, Pageable pageable);
 }
