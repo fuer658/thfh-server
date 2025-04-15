@@ -89,16 +89,51 @@ check_java() {
 
 # 检查Maven是否安装
 check_maven() {
-    if type -p mvn > /dev/null 2>&1; then
+    # 直接尝试运行mvn命令
+    if command -v mvn >/dev/null 2>&1 || which mvn >/dev/null 2>&1 || mvn -version >/dev/null 2>&1; then
         log "找到Maven命令"
         MVN="mvn"
-    else
-        error "未找到Maven。请安装Maven 3或更高版本。"
-        exit 1
+        MVN_VERSION=$(mvn -version 2>&1 | head -n 1)
+        log "Maven版本: $MVN_VERSION"
+        return 0
     fi
 
-    MVN_VERSION=$($MVN -version | head -n 1)
-    log "Maven版本: $MVN_VERSION"
+    # 检查M2_HOME环境变量
+    if [ -n "$M2_HOME" ]; then
+        if [ -x "$M2_HOME/bin/mvn" ]; then
+            log "找到M2_HOME: $M2_HOME"
+            MVN="$M2_HOME/bin/mvn"
+            MVN_VERSION=$($MVN -version 2>&1 | head -n 1)
+            log "Maven版本: $MVN_VERSION"
+            return 0
+        fi
+    fi
+
+    # 检查MAVEN_HOME环境变量
+    if [ -n "$MAVEN_HOME" ]; then
+        if [ -x "$MAVEN_HOME/bin/mvn" ]; then
+            log "找到MAVEN_HOME: $MAVEN_HOME"
+            MVN="$MAVEN_HOME/bin/mvn"
+            MVN_VERSION=$($MVN -version 2>&1 | head -n 1)
+            log "Maven版本: $MVN_VERSION"
+            return 0
+        fi
+    fi
+
+    # 如果在环境变量中找不到，尝试常见的安装路径
+    for mvn_path in "/usr/bin/mvn" "/usr/local/bin/mvn" "/opt/maven/bin/mvn" "/usr/share/maven/bin/mvn"; do
+        if [ -x "$mvn_path" ]; then
+            log "找到Maven: $mvn_path"
+            MVN="$mvn_path"
+            MVN_VERSION=$($MVN -version 2>&1 | head -n 1)
+            log "Maven版本: $MVN_VERSION"
+            return 0
+        fi
+    done
+
+    # 如果所有尝试都失败
+    error "未找到Maven。请确保Maven已安装并添加到PATH环境变量中，或设置M2_HOME/MAVEN_HOME环境变量。"
+    exit 1
 }
 
 # 检查应用是否正在运行
@@ -117,7 +152,14 @@ build_app() {
     log "开始构建应用..."
     cd "$APP_DIR" || { error "无法进入应用目录: $APP_DIR"; exit 1; }
 
-    $MVN clean package -DskipTests
+    # 检查是否存在Maven配置文件
+    if [ -f "$APP_DIR/settings.xml" ]; then
+        log "使用自定义Maven配置文件: $APP_DIR/settings.xml"
+        $MVN -s "$APP_DIR/settings.xml" clean package -DskipTests
+    else
+        log "使用默认Maven配置"
+        $MVN clean package -DskipTests
+    fi
 
     if [ $? -ne 0 ]; then
         error "构建失败，请检查Maven日志"
@@ -289,17 +331,73 @@ show_help() {
     echo "用法: $0 {start|start-nolog|stop|restart|restart-nolog|status|build|logs [行数]|follow|check-mysql|help}"
     echo ""
     echo "命令:"
-    echo "  start         启动应用并显示实时日志"
-    echo "  start-nolog   启动应用但不显示日志"
-    echo "  stop          停止应用"
-    echo "  restart       重启应用并显示实时日志"
-    echo "  restart-nolog 重启应用但不显示日志"
-    echo "  status        显示应用状态"
-    echo "  build         仅构建应用"
-    echo "  logs          显示最近的日志 (默认100行)"
-    echo "  follow        实时查看日志"
-    echo "  check-mysql   检查MySQL配置"
-    echo "  help          显示此帮助信息"
+    echo "  1. start         启动应用并显示实时日志"
+    echo "  2. start-nolog   启动应用但不显示日志"
+    echo "  3. stop          停止应用"
+    echo "  4. restart       重启应用并显示实时日志"
+    echo "  5. restart-nolog 重启应用但不显示日志"
+    echo "  6. status        显示应用状态"
+    echo "  7. build         仅构建应用"
+    echo "  8. logs          显示最近的日志 (默认100行)"
+    echo "  9. follow        实时查看日志"
+    echo " 10. check-mysql   检查MySQL配置"
+    echo " 11. help          显示此帮助信息"
+
+    if [ "$1" = "interactive" ]; then
+        show_interactive_menu
+    fi
+}
+
+# 交互式菜单
+show_interactive_menu() {
+    echo ""
+    echo -n "请输入命令编号 (1-11): "
+    read -r choice
+
+    case "$choice" in
+        1)
+            main "start"
+            ;;
+        2)
+            main "start-nolog"
+            ;;
+        3)
+            main "stop"
+            ;;
+        4)
+            main "restart"
+            ;;
+        5)
+            main "restart-nolog"
+            ;;
+        6)
+            main "status"
+            ;;
+        7)
+            main "build"
+            ;;
+        8)
+            echo -n "请输入要显示的日志行数 (默认100): "
+            read -r log_lines
+            if [ -z "$log_lines" ]; then
+                log_lines=100
+            fi
+            main "logs" "$log_lines"
+            ;;
+        9)
+            main "follow"
+            ;;
+        10)
+            main "check-mysql"
+            ;;
+        11)
+            main "help"
+            ;;
+        *)
+            echo "无效的选择: $choice"
+            exit 1
+            ;;
+    esac
 }
 
 # 主函数
@@ -383,8 +481,13 @@ main() {
             show_help
             ;;
         *)
-            show_help
-            exit 1
+            if [ -z "$1" ]; then
+                # 如果没有提供参数，显示帮助并进入交互式模式
+                show_help "interactive"
+            else
+                show_help
+                exit 1
+            fi
             ;;
     esac
 
