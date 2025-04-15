@@ -2,10 +2,7 @@ package com.thfh.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -21,6 +18,7 @@ import java.util.List;
 /**
  * 文件上传控制器
  * 提供文件上传功能，支持图片、视频等多种类型文件的上传
+ * 支持自定义存储路径和文件名
  */
 @RestController
 @RequestMapping("/api")
@@ -62,35 +60,66 @@ public class FileController {
     }
 
     /**
+     * 处理文件保存
+     * @param file 上传的文件
+     * @param customPath 自定义路径（可选）
+     * @param customFileName 自定义文件名（可选）
+     * @return 保存后的文件路径和URL
+     */
+    private Map<String, String> saveFile(MultipartFile file, String customPath, String customFileName) throws IOException {
+        // 确定存储路径
+        String finalPath = customPath != null && !customPath.trim().isEmpty() 
+            ? uploadDir + "/" + customPath.trim() 
+            : uploadDir;
+        
+        // 创建目录（如果不存在）
+        Path uploadPath = Paths.get(finalPath);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // 确定文件名
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String filename = customFileName != null && !customFileName.trim().isEmpty()
+            ? customFileName.trim() + extension
+            : UUID.randomUUID().toString() + extension;
+
+        // 保存文件
+        Path filePath = uploadPath.resolve(filename);
+        Files.copy(file.getInputStream(), filePath);
+
+        // 构建相对路径和完整URL
+        String relativePath = (customPath != null ? customPath + "/" : "") + filename;
+        String fileUrl = getServerUrl() + "/uploads/" + relativePath;
+
+        Map<String, String> result = new HashMap<>();
+        result.put("path", relativePath);
+        result.put("url", fileUrl);
+        return result;
+    }
+
+    /**
      * 文件上传接口
-     * 支持各种类型文件的上传，生成唯一文件名并返回访问URL
+     * 支持各种类型文件的上传，可自定义存储路径和文件名
      * 
      * @param file 上传的文件
+     * @param customPath 自定义存储路径（可选）
+     * @param customFileName 自定义文件名（可选，不包含扩展名）
      * @return 上传结果，包含文件访问URL
      */
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "path", required = false) String customPath,
+            @RequestParam(value = "filename", required = false) String customFileName) {
         try {
-            // 创建上传目录（如果不存在）
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // 生成唯一的文件名
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String filename = UUID.randomUUID().toString() + extension;
-
-            // 保存文件
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(file.getInputStream(), filePath);
-
-            // 返回完整的文件访问URL
-            String fileUrl = getServerUrl() + "/uploads/" + filename;
+            Map<String, String> fileInfo = saveFile(file, customPath, customFileName);
+            
             Map<String, Object> data = new HashMap<>();
             data.put("code", 200);
-            data.put("url", fileUrl);
+            data.put("url", fileInfo.get("url"));
+            data.put("path", fileInfo.get("path"));
             data.put("message", "上传成功");
             return ResponseEntity.ok(data);
 
@@ -98,20 +127,25 @@ public class FileController {
             e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("code", 500);
-            error.put("message", "文件上传失败");
+            error.put("message", "文件上传失败: " + e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
 
     /**
      * 视频文件上传接口
-     * 专门用于上传视频文件，支持大文件上传
+     * 专门用于上传视频文件，支持大文件上传，可自定义存储路径和文件名
      * 
      * @param file 上传的视频文件
+     * @param customPath 自定义存储路径（可选）
+     * @param customFileName 自定义文件名（可选，不包含扩展名）
      * @return 上传结果，包含视频访问URL
      */
     @PostMapping("/upload/video")
-    public ResponseEntity<?> uploadVideo(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadVideo(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "path", required = false) String customPath,
+            @RequestParam(value = "filename", required = false) String customFileName) {
         try {
             // 验证文件类型
             if (!isValidVideoType(file)) {
@@ -129,26 +163,12 @@ public class FileController {
                 return ResponseEntity.badRequest().body(error);
             }
 
-            // 创建上传目录（如果不存在）
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // 生成唯一的文件名
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String filename = UUID.randomUUID().toString() + extension;
-
-            // 保存文件
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(file.getInputStream(), filePath);
-
-            // 返回完整的文件访问URL
-            String fileUrl = getServerUrl() + "/uploads/" + filename;
+            Map<String, String> fileInfo = saveFile(file, customPath, customFileName);
+            
             Map<String, Object> data = new HashMap<>();
             data.put("code", 200);
-            data.put("url", fileUrl);
+            data.put("url", fileInfo.get("url"));
+            data.put("path", fileInfo.get("path"));
             data.put("message", "视频上传成功");
             data.put("size", file.getSize());
             data.put("contentType", file.getContentType());
@@ -158,7 +178,7 @@ public class FileController {
             e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("code", 500);
-            error.put("message", "视频上传失败");
+            error.put("message", "视频上传失败: " + e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
