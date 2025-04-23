@@ -6,7 +6,7 @@ import com.thfh.dto.CourseInteractionDTO;
 import com.thfh.dto.CourseQueryDTO;
 import com.thfh.dto.SimpleUserDTO;
 import com.thfh.model.User;
-import com.thfh.service.CourseService;
+import com.thfh.service.CourseManagementService;
 import com.thfh.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,7 +25,7 @@ import java.util.Map;
 @RequestMapping("/api/courses")
 public class CourseController {
     @Autowired
-    private CourseService courseService;
+    private CourseManagementService courseManagementService;
 
     @Autowired
     private UserService userService;
@@ -37,7 +37,7 @@ public class CourseController {
      */
     @GetMapping
     public Result<Page<CourseDTO>> getCourses(CourseQueryDTO queryDTO) {
-        return Result.success(courseService.getCourses(queryDTO));
+        return Result.success(courseManagementService.getCourses(queryDTO));
     }
 
     /**
@@ -47,7 +47,7 @@ public class CourseController {
      */
     @PostMapping
     public Result<CourseDTO> createCourse(@RequestBody CourseDTO courseDTO) {
-        return Result.success(courseService.createCourse(courseDTO));
+        return Result.success(courseManagementService.createCourse(courseDTO));
     }
 
     /**
@@ -58,7 +58,7 @@ public class CourseController {
      */
     @PutMapping("/{id}")
     public Result<CourseDTO> updateCourse(@PathVariable Long id, @RequestBody CourseDTO courseDTO) {
-        return Result.success(courseService.updateCourse(id, courseDTO));
+        return Result.success(courseManagementService.updateCourse(id, courseDTO));
     }
 
     /**
@@ -68,7 +68,7 @@ public class CourseController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteCourse(@PathVariable Long id) {
-        courseService.deleteCourse(id);
+        courseManagementService.deleteCourse(id);
         return Result.success(null);
     }
 
@@ -79,7 +79,7 @@ public class CourseController {
      */
     @PutMapping("/{id}/toggle-status")
     public Result<Void> toggleCourseStatus(@PathVariable Long id) {
-        courseService.toggleCourseStatus(id);
+        courseManagementService.toggleCourseStatus(id);
         return Result.success(null);
     }
 
@@ -90,7 +90,7 @@ public class CourseController {
      */
     @GetMapping("/{id}/students")
     public Result<List<SimpleUserDTO>> getCourseStudents(@PathVariable Long id) {
-        return Result.success(courseService.getCourseStudents(id));
+        return Result.success(courseManagementService.getCourseStudents(id));
     }
 
     /**
@@ -101,7 +101,7 @@ public class CourseController {
     @PostMapping("/{id}/enroll")
     public Result<CourseDTO> enrollCourse(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
-        return Result.success(courseService.enrollCourse(id, currentUser.getId()));
+        return Result.success(courseManagementService.enrollCourse(id, currentUser.getId()));
     }
 
     /**
@@ -112,7 +112,7 @@ public class CourseController {
     @PostMapping("/{id}/unenroll")
     public Result<Void> unenrollCourse(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
-        courseService.unenrollCourse(id, currentUser.getId());
+        courseManagementService.unenrollCourse(id, currentUser.getId());
         return Result.success(null);
     }
 
@@ -124,7 +124,7 @@ public class CourseController {
     @PostMapping("/{id}/toggle-like")
     public Result<Void> toggleCourseLike(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
-        courseService.toggleCourseLike(id, currentUser.getId());
+        courseManagementService.toggleCourseLike(id, currentUser.getId());
         return Result.success(null);
     }
 
@@ -136,7 +136,7 @@ public class CourseController {
     @PostMapping("/{id}/toggle-favorite")
     public Result<Void> toggleCourseFavorite(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
-        courseService.toggleCourseFavorite(id, currentUser.getId());
+        courseManagementService.toggleCourseFavorite(id, currentUser.getId());
         return Result.success(null);
     }
 
@@ -148,7 +148,7 @@ public class CourseController {
     @GetMapping("/{id}/interaction")
     public Result<CourseInteractionDTO> getCourseInteractionInfo(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
-        return Result.success(courseService.getCourseInteractionInfo(id, currentUser.getId()));
+        return Result.success(courseManagementService.getCourseInteractionInfo(id, currentUser.getId()));
     }
 
     /**
@@ -158,7 +158,7 @@ public class CourseController {
      */
     @GetMapping("/{id}/interaction-users")
     public Result<Map<String, List<SimpleUserDTO>>> getCourseInteractionUsers(@PathVariable Long id) {
-        return Result.success(courseService.getCourseInteractionUsers(id));
+        return Result.success(courseManagementService.getCourseInteractionUsers(id));
     }
 
     /**
@@ -173,6 +173,26 @@ public class CourseController {
             @RequestParam(defaultValue = "10") Integer size) {
         User currentUser = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return Result.success(courseService.getUserFavoriteCourses(currentUser.getId(), pageRequest));
+        return Result.success(courseManagementService.getUserFavoriteCourses(currentUser.getId(), pageRequest));
+    }
+    
+    /**
+     * 获取课程详情
+     * @param id 课程ID
+     * @return 课程详细信息
+     */
+    @GetMapping("/{id}")
+    public Result<CourseDTO> getCourseDetail(@PathVariable Long id) {
+        return Result.success(courseManagementService.getCourseDetail(id));
+    }
+    
+    /**
+     * 发布课程
+     * @param id 课程ID
+     * @return 发布后的课程信息
+     */
+    @PostMapping("/{id}/publish")
+    public Result<CourseDTO> publishCourse(@PathVariable Long id) {
+        return Result.success(courseManagementService.publishCourse(id));
     }
 }
