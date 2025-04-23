@@ -6,6 +6,7 @@ import com.thfh.dto.PostDTO;
 import com.thfh.model.Post;
 import com.thfh.model.PostComment;
 import com.thfh.model.User;
+import com.thfh.dto.PostCommentDTO;
 import com.thfh.service.PostService;
 import com.thfh.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,13 +37,13 @@ public class PostController {
         // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
-        
+
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
                 postService.addTag(createdPost.getId(), tagId);
             }
         }
-        
+
         return Result.success(createdPost);
     }
 
@@ -92,8 +93,8 @@ public class PostController {
             @PathVariable Long postId,
             @RequestBody CommentRequest request) {
         return Result.success(postService.commentPost(
-            postId, 
-            request.getContent(), 
+            postId,
+            request.getContent(),
             request.getParentId()
         ));
     }
@@ -102,7 +103,7 @@ public class PostController {
      * 获取动态评论列表（树状结构）
      */
     @GetMapping("/{postId}/comments/tree")
-    public Result<Page<PostComment>> getPostCommentTree(
+    public Result<Page<PostCommentDTO>> getPostCommentTree(
             @PathVariable Long postId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -114,7 +115,7 @@ public class PostController {
      * 获取动态评论列表（扁平结构）
      */
     @GetMapping("/{postId}/comments")
-    public Result<Page<PostComment>> getPostComments(
+    public Result<Page<PostCommentDTO>> getPostComments(
             @PathVariable Long postId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -195,13 +196,13 @@ public class PostController {
         // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
-        
+
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
                 postService.addTag(createdPost.getId(), tagId);
             }
         }
-        
+
         return Result.success(createdPost);
     }
 
@@ -226,5 +227,86 @@ public class PostController {
         User currentUser = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getUserLikedPosts(currentUser.getId(), pageRequest));
+    }
+
+    /**
+     * 管理员以指定用户身份评论动态
+     * @param postId 动态ID
+     * @param userId 用户ID，表示以哪个用户的身份发布评论
+     * @param request 评论请求，包含评论内容和父评论ID
+     * @return 创建的评论
+     */
+    @PostMapping("/admin/{userId}/posts/{postId}/comments")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<PostComment> commentPostByAdmin(
+            @PathVariable Long postId,
+            @PathVariable Long userId,
+            @RequestBody CommentRequest request) {
+        return Result.success(postService.commentPostByAdmin(
+            postId,
+            request.getContent(),
+            request.getParentId(),
+            userId
+        ));
+    }
+
+    /**
+     * 管理员删除评论
+     * @param commentId 评论ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/admin/comments/{commentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<Void> deleteCommentByAdmin(@PathVariable Long commentId) {
+        postService.deleteCommentByAdmin(commentId);
+        return Result.success(null);
+    }
+
+    /**
+     * 点赞评论
+     * @param commentId 评论ID
+     * @return 更新后的点赞数
+     */
+    @PostMapping("/comments/{commentId}/like")
+    public Result<Integer> likeComment(@PathVariable Long commentId) {
+        int likeCount = postService.likeComment(commentId);
+        return Result.success(likeCount);
+    }
+
+    /**
+     * 取消点赞评论
+     * @param commentId 评论ID
+     * @return 更新后的点赞数
+     */
+    @DeleteMapping("/comments/{commentId}/like")
+    public Result<Integer> unlikeComment(@PathVariable Long commentId) {
+        int likeCount = postService.unlikeComment(commentId);
+        return Result.success(likeCount);
+    }
+
+    /**
+     * 检查用户是否已点赞评论
+     * @param commentId 评论ID
+     * @return 是否已点赞
+     */
+    @GetMapping("/comments/{commentId}/isLiked")
+    public Result<Boolean> isCommentLiked(@PathVariable Long commentId) {
+        User currentUser = userService.getCurrentUser();
+        return Result.success(postService.isCommentLiked(commentId, currentUser.getId()));
+    }
+
+    /**
+     * 管理员以指定用户身份点赞评论
+     * @param commentId 评论ID
+     * @param userId 用户ID
+     * @return 更新后的点赞数
+     */
+    @PostMapping("/admin/{userId}/comments/{commentId}/like")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<Integer> likeCommentByAdmin(
+            @PathVariable Long commentId,
+            @PathVariable Long userId) {
+        int likeCount = postService.likeCommentByAdmin(commentId, userId);
+        return Result.success(likeCount);
     }
 }

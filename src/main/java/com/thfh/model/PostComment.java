@@ -11,6 +11,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "post_comments")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PostComment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +23,7 @@ public class PostComment {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "email", "phone", "createTime", "updateTime", "lastLoginTime", "status", "roles","qualification","speciality","disability","points","birthday"})
     private User user;
@@ -32,7 +33,7 @@ public class PostComment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
-    @JsonIgnoreProperties({"comments", "title", "content", "imageUrls", "userId", "user", "likeCount", "commentCount", "shareCount", "createTime", "updateTime"})    
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "comments", "title", "content", "imageUrls", "userId", "user", "likeCount", "commentCount", "shareCount", "createTime", "updateTime", "tags"})
     private Post post;
 
     @Column(name = "parent_id")
@@ -40,11 +41,11 @@ public class PostComment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id", insertable = false, updatable = false)
-    @JsonIgnoreProperties({"parent", "children"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "parent", "children", "post", "user"})
     private PostComment parent;  // 父评论对象
 
     @OneToMany(mappedBy = "parent")
-    @JsonIgnoreProperties({"parent"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "parent", "post", "user"})
     private List<PostComment> children = new ArrayList<>();  // 子评论列表
 
     @Column(name = "level")
