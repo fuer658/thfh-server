@@ -626,6 +626,9 @@ public class PostService {
             throw new IllegalStateException("该评论有子评论，无法直接删除");
         }
 
+        // 先删除与评论相关的点赞记录
+        postCommentLikeRepository.deleteByCommentId(commentId);
+
         // 删除评论
         postCommentRepository.deleteById(commentId);
 
