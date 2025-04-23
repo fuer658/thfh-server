@@ -25,16 +25,20 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // 允许跨域的源
-        config.addAllowedOriginPattern("*");  // 允许所有来源的跨域请求，生产环境应该限制特定域名
+        // 允许所有来源的跨域请求
+        config.addAllowedOriginPattern("*");
+        
         // 允许跨域的请求头
-        config.addAllowedHeader("*");  // 允许所有请求头
+        config.addAllowedHeader("*");
+        
         // 允许跨域的请求方法
-        config.addAllowedMethod("*");  // 允许所有HTTP方法（GET, POST, PUT, DELETE等）
+        config.addAllowedMethod("*");
+        
         // 允许携带cookie
-        config.setAllowCredentials(true);  // 允许请求携带认证信息（如cookie）
+        config.setAllowCredentials(true);
+        
         // 暴露响应头
-        config.addExposedHeader("Authorization");  // 允许客户端访问Authorization响应头
+        config.addExposedHeader("Authorization");
 
         // 对所有路径应用这些CORS配置
         source.registerCorsConfiguration("/**", config);

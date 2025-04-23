@@ -64,7 +64,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * 添加跨域映射配置
-     * 允许来自http://localhost:8080的跨域请求
+     * 允许所有来源的跨域请求
      * 支持GET、POST、PUT、DELETE和OPTIONS方法
      * 允许所有请求头，允许携带凭证，并设置预检请求的有效期为3600秒
      * @param registry 跨域注册表
@@ -72,7 +72,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:8080")
+                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)

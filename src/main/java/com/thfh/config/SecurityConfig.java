@@ -22,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * Spring Security配置类
@@ -113,11 +114,24 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080"));  // 允许的源
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));  // 允许的HTTP方法
-        configuration.setAllowedHeaders(Arrays.asList("*"));  // 允许的请求头
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));  // 暴露的响应头
-        configuration.setAllowCredentials(true);  // 允许携带凭证
+        
+        // 允许所有来源的跨域请求
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
+        
+        // 允许的HTTP方法
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // 允许的请求头
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        
+        // 暴露的响应头
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        
+        // 允许携带凭证
+        configuration.setAllowCredentials(true);
+        
+        // 预检请求有效期
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);  // 对所有路径应用CORS配置
