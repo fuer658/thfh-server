@@ -308,4 +308,15 @@ public class PostController {
         int likeCount = postService.likeCommentByAdmin(commentId, userId);
         return Result.success(likeCount);
     }
+
+    /**
+     * 用户删除自己的评论
+     * @param commentId 评论ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/comments/{commentId}")
+    public Result<Void> deleteComment(@PathVariable Long commentId) {
+        postService.deleteComment(commentId);
+        return Result.success(null);
+    }
 }

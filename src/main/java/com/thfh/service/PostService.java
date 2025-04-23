@@ -768,4 +768,41 @@ public class PostService {
     public boolean isCommentLiked(Long commentId, Long userId) {
         return postCommentLikeRepository.existsByUserIdAndCommentId(userId, commentId);
     }
+
+    /**
+     * 用户删除自己的评论
+     * @param commentId 评论ID
+     */
+    @Transactional
+    public void deleteComment(Long commentId) {
+        // 获取当前用户
+        User currentUser = userService.getCurrentUser();
+        
+        // 检查评论是否存在
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("评论不存在"));
+                
+        // 检查是否是评论作者
+        if (!comment.getUserId().equals(currentUser.getId())) {
+            throw new IllegalStateException("您没有权限删除该评论");
+        }
+        
+        // 获取评论所属的动态ID
+        Long postId = comment.getPostId();
+        
+        // 检查是否有子评论
+        long childCount = postCommentRepository.countByParentId(commentId);
+        if (childCount > 0) {
+            throw new IllegalStateException("该评论有子评论，无法直接删除");
+        }
+        
+        // 先删除与评论相关的点赞记录
+        postCommentLikeRepository.deleteByCommentId(commentId);
+        
+        // 删除评论
+        postCommentRepository.deleteById(commentId);
+        
+        // 更新动态的评论计数
+        postRepository.updateCommentCount(postId, -1);
+    }
 }
