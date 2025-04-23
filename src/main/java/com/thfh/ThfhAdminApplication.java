@@ -13,7 +13,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableJpaRepositories(basePackages = "com.thfh.repository")
 @EntityScan(basePackages = "com.thfh.model")
 @EnableTransactionManagement
-@ComponentScan(basePackages = {"com.thfh.service", "com.thfh.controller", "com.thfh.config", "com.thfh.util"})
+@ComponentScan(basePackages = {"com.thfh.service", "com.thfh.controller", "com.thfh.config", "com.thfh.util", "com.thfh.repository"})
 public class ThfhAdminApplication {
 
     @Bean

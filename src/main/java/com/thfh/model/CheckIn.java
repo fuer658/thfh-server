@@ -3,7 +3,6 @@ package com.thfh.model;
 import javax.persistence.*;
 import lombok.Data;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Data

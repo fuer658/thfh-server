@@ -1,7 +1,6 @@
 package com.thfh.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageImpl;
 import java.util.ArrayList;
 
 import com.thfh.model.*;
@@ -52,9 +51,6 @@ public class PostService {
 
     @Autowired
     private PostTagRepository postTagRepository;
-
-    @Autowired
-    private PostTagService postTagService;
 
     @Autowired
     private PostCommentLikeRepository postCommentLikeRepository;
@@ -185,7 +181,7 @@ public class PostService {
     public PostComment commentPost(Long postId, String content, Long parentId) {
         User currentUser = userService.getCurrentUser();
         // 确认动态存在
-        Post post = getPost(postId);
+        getPost(postId);
 
         PostComment comment = new PostComment();
         comment.setPostId(postId);

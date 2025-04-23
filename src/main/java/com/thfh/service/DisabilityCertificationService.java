@@ -27,9 +27,6 @@ public class DisabilityCertificationService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private UserService userService;
-
     /**
      * 提交残疾人认证申请
      */

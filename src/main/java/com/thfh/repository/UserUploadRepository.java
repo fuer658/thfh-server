@@ -1,6 +1,5 @@
 package com.thfh.repository;
 
-import com.thfh.model.FileType;
 import com.thfh.model.UserUpload;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
