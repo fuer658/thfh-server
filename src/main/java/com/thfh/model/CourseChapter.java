@@ -5,6 +5,8 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 /**
  * 课程章节实体类
@@ -23,6 +25,7 @@ public class CourseChapter {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_detail_id", nullable = false)
+    @JsonBackReference
     private CourseDetail courseDetail;
 
     /**
@@ -48,6 +51,7 @@ public class CourseChapter {
      */
     @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
+    @JsonManagedReference
     private List<CourseSection> sections = new ArrayList<>();
 
     /**

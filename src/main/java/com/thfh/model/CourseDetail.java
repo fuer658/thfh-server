@@ -5,6 +5,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 /**
  * 课程详情实体类
@@ -82,6 +83,7 @@ public class CourseDetail {
      * 课程章节(一对多关系)
      */
     @OneToMany(mappedBy = "courseDetail", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<CourseChapter> chapters = new ArrayList<>();
     
     /**

@@ -1,15 +1,13 @@
 package com.thfh.controller;
 
-import com.thfh.common.ApiResponse;
+import com.thfh.common.Result;
 import com.thfh.model.*;
 import com.thfh.service.CourseDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 课程详情控制器
@@ -29,14 +27,14 @@ public class CourseDetailController {
      * @return 课程详情
      */
     @GetMapping("/{courseId}")
-    public ApiResponse<CourseDetail> getCourseDetail(@PathVariable Long courseId) {
+    public Result<CourseDetail> getCourseDetail(@PathVariable Long courseId) {
         try {
             CourseDetail courseDetail = courseDetailService.getCourseDetailByCourseId(courseId);
-            return ApiResponse.success(courseDetail);
+            return Result.success(courseDetail);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "获取课程详情失败: " + e.getMessage());
+            return Result.error("获取课程详情失败: " + e.getMessage());
         }
     }
     
@@ -48,17 +46,17 @@ public class CourseDetailController {
      * @return 更新后的课程详情
      */
     @PutMapping("/{courseId}")
-    public ApiResponse<CourseDetail> updateCourseDetail(
+    public Result<CourseDetail> updateCourseDetail(
             @PathVariable Long courseId,
             @RequestBody CourseDetail courseDetail) {
         try {
             courseDetail.setCourseId(courseId);
             CourseDetail updatedDetail = courseDetailService.saveCourseDetail(courseDetail);
-            return ApiResponse.success(updatedDetail);
+            return Result.success(updatedDetail);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "更新课程详情失败: " + e.getMessage());
+            return Result.error("更新课程详情失败: " + e.getMessage());
         }
     }
     
@@ -69,14 +67,14 @@ public class CourseDetailController {
      * @return 章节列表
      */
     @GetMapping("/{courseId}/chapters")
-    public ApiResponse<List<CourseChapter>> getChapters(@PathVariable Long courseId) {
+    public Result<List<CourseChapter>> getChapters(@PathVariable Long courseId) {
         try {
             List<CourseChapter> chapters = courseDetailService.getChaptersByCourseId(courseId);
-            return ApiResponse.success(chapters);
+            return Result.success(chapters);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "获取章节列表失败: " + e.getMessage());
+            return Result.error("获取章节列表失败: " + e.getMessage());
         }
     }
     
@@ -88,16 +86,16 @@ public class CourseDetailController {
      * @return 创建的章节
      */
     @PostMapping("/{courseId}/chapters")
-    public ApiResponse<CourseChapter> addChapter(
+    public Result<CourseChapter> addChapter(
             @PathVariable Long courseId,
             @RequestBody CourseChapter chapter) {
         try {
             CourseChapter newChapter = courseDetailService.addChapter(courseId, chapter);
-            return ApiResponse.success(newChapter);
+            return Result.success(newChapter);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "添加章节失败: " + e.getMessage());
+            return Result.error("添加章节失败: " + e.getMessage());
         }
     }
     
@@ -109,16 +107,16 @@ public class CourseDetailController {
      * @return 更新后的章节
      */
     @PutMapping("/chapters/{chapterId}")
-    public ApiResponse<CourseChapter> updateChapter(
+    public Result<CourseChapter> updateChapter(
             @PathVariable Long chapterId,
             @RequestBody CourseChapter chapter) {
         try {
             CourseChapter updatedChapter = courseDetailService.updateChapter(chapterId, chapter);
-            return ApiResponse.success(updatedChapter);
+            return Result.success(updatedChapter);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "更新章节失败: " + e.getMessage());
+            return Result.error("更新章节失败: " + e.getMessage());
         }
     }
     
@@ -129,16 +127,14 @@ public class CourseDetailController {
      * @return 操作结果
      */
     @DeleteMapping("/chapters/{chapterId}")
-    public ApiResponse<Map<String, Object>> deleteChapter(@PathVariable Long chapterId) {
+    public Result<Void> deleteChapter(@PathVariable Long chapterId) {
         try {
             courseDetailService.deleteChapter(chapterId);
-            Map<String, Object> result = new HashMap<>();
-            result.put("deleted", true);
-            return ApiResponse.success(result);
+            return Result.success(null);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "删除章节失败: " + e.getMessage());
+            return Result.error("删除章节失败: " + e.getMessage());
         }
     }
     
@@ -149,14 +145,14 @@ public class CourseDetailController {
      * @return 小节列表
      */
     @GetMapping("/chapters/{chapterId}/sections")
-    public ApiResponse<List<CourseSection>> getSections(@PathVariable Long chapterId) {
+    public Result<List<CourseSection>> getSections(@PathVariable Long chapterId) {
         try {
             List<CourseSection> sections = courseDetailService.getSectionsByChapterId(chapterId);
-            return ApiResponse.success(sections);
+            return Result.success(sections);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "获取小节列表失败: " + e.getMessage());
+            return Result.error("获取小节列表失败: " + e.getMessage());
         }
     }
     
@@ -168,16 +164,16 @@ public class CourseDetailController {
      * @return 创建的小节
      */
     @PostMapping("/chapters/{chapterId}/sections")
-    public ApiResponse<CourseSection> addSection(
+    public Result<CourseSection> addSection(
             @PathVariable Long chapterId,
             @RequestBody CourseSection section) {
         try {
             CourseSection newSection = courseDetailService.addSection(chapterId, section);
-            return ApiResponse.success(newSection);
+            return Result.success(newSection);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "添加小节失败: " + e.getMessage());
+            return Result.error("添加小节失败: " + e.getMessage());
         }
     }
     
@@ -189,16 +185,16 @@ public class CourseDetailController {
      * @return 更新后的小节
      */
     @PutMapping("/sections/{sectionId}")
-    public ApiResponse<CourseSection> updateSection(
+    public Result<CourseSection> updateSection(
             @PathVariable Long sectionId,
             @RequestBody CourseSection section) {
         try {
             CourseSection updatedSection = courseDetailService.updateSection(sectionId, section);
-            return ApiResponse.success(updatedSection);
+            return Result.success(updatedSection);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "更新小节失败: " + e.getMessage());
+            return Result.error("更新小节失败: " + e.getMessage());
         }
     }
     
@@ -209,16 +205,14 @@ public class CourseDetailController {
      * @return 操作结果
      */
     @DeleteMapping("/sections/{sectionId}")
-    public ApiResponse<Map<String, Object>> deleteSection(@PathVariable Long sectionId) {
+    public Result<Void> deleteSection(@PathVariable Long sectionId) {
         try {
             courseDetailService.deleteSection(sectionId);
-            Map<String, Object> result = new HashMap<>();
-            result.put("deleted", true);
-            return ApiResponse.success(result);
+            return Result.success(null);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "删除小节失败: " + e.getMessage());
+            return Result.error("删除小节失败: " + e.getMessage());
         }
     }
     
@@ -229,14 +223,14 @@ public class CourseDetailController {
      * @return 子小节列表
      */
     @GetMapping("/sections/{sectionId}/subsections")
-    public ApiResponse<List<CourseSubSection>> getSubSections(@PathVariable Long sectionId) {
+    public Result<List<CourseSubSection>> getSubSections(@PathVariable Long sectionId) {
         try {
             List<CourseSubSection> subSections = courseDetailService.getSubSectionsBySectionId(sectionId);
-            return ApiResponse.success(subSections);
+            return Result.success(subSections);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "获取子小节列表失败: " + e.getMessage());
+            return Result.error("获取子小节列表失败: " + e.getMessage());
         }
     }
     
@@ -248,16 +242,16 @@ public class CourseDetailController {
      * @return 创建的子小节
      */
     @PostMapping("/sections/{sectionId}/subsections")
-    public ApiResponse<CourseSubSection> addSubSection(
+    public Result<CourseSubSection> addSubSection(
             @PathVariable Long sectionId,
             @RequestBody CourseSubSection subSection) {
         try {
             CourseSubSection newSubSection = courseDetailService.addSubSection(sectionId, subSection);
-            return ApiResponse.success(newSubSection);
+            return Result.success(newSubSection);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "添加子小节失败: " + e.getMessage());
+            return Result.error("添加子小节失败: " + e.getMessage());
         }
     }
     
@@ -269,16 +263,16 @@ public class CourseDetailController {
      * @return 更新后的子小节
      */
     @PutMapping("/subsections/{subSectionId}")
-    public ApiResponse<CourseSubSection> updateSubSection(
+    public Result<CourseSubSection> updateSubSection(
             @PathVariable Long subSectionId,
             @RequestBody CourseSubSection subSection) {
         try {
             CourseSubSection updatedSubSection = courseDetailService.updateSubSection(subSectionId, subSection);
-            return ApiResponse.success(updatedSubSection);
+            return Result.success(updatedSubSection);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "更新子小节失败: " + e.getMessage());
+            return Result.error("更新子小节失败: " + e.getMessage());
         }
     }
     
@@ -289,16 +283,14 @@ public class CourseDetailController {
      * @return 操作结果
      */
     @DeleteMapping("/subsections/{subSectionId}")
-    public ApiResponse<Map<String, Object>> deleteSubSection(@PathVariable Long subSectionId) {
+    public Result<Void> deleteSubSection(@PathVariable Long subSectionId) {
         try {
             courseDetailService.deleteSubSection(subSectionId);
-            Map<String, Object> result = new HashMap<>();
-            result.put("deleted", true);
-            return ApiResponse.success(result);
+            return Result.success(null);
         } catch (EntityNotFoundException e) {
-            return ApiResponse.error(404, e.getMessage());
+            return Result.error(e.getMessage());
         } catch (Exception e) {
-            return ApiResponse.error(500, "删除子小节失败: " + e.getMessage());
+            return Result.error("删除子小节失败: " + e.getMessage());
         }
     }
 } 

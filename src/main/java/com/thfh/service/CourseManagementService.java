@@ -24,22 +24,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.criteria.Predicate;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -49,27 +41,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class CourseManagementService {
-
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
-    
-    // 允许的图片类型
-    private static final List<String> ALLOWED_IMAGE_TYPES = Arrays.asList(
-            "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp", "image/svg+xml"
-    );
-    
-    // 允许的视频类型
-    private static final List<String> ALLOWED_VIDEO_TYPES = Arrays.asList(
-            "video/mp4", "video/quicktime", "video/x-msvideo", "video/x-matroska", "video/webm", "video/ogg"
-    );
-    
-    // 允许的文档类型
-    private static final List<String> ALLOWED_DOCUMENT_TYPES = Arrays.asList(
-            "application/pdf", "application/msword", 
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "text/plain"
-    );
     
     @Value("${file.upload-dir}")
     private String baseUploadDir;

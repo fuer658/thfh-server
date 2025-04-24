@@ -3,6 +3,7 @@ package com.thfh.model;
 import lombok.Data;
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 /**
  * 课程子小节实体类
@@ -21,6 +22,7 @@ public class CourseSubSection {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "section_id", nullable = false)
+    @JsonBackReference
     private CourseSection parentSection;
 
     /**
