@@ -155,7 +155,7 @@ public class UserService {
 
         User user = new User();
         BeanUtils.copyProperties(userDTO, user, "id", "birthday", "createTime", "updateTime", "lastLoginTime");
-        
+
         // 处理生日日期
         if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
             try {
@@ -164,7 +164,7 @@ public class UserService {
                 throw new RuntimeException("生日日期格式不正确，请使用yyyy-MM-dd格式");
             }
         }
-        
+
         // 设置默认值
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setEnabled(true);
@@ -206,12 +206,12 @@ public class UserService {
 
         // 复制属性，排除敏感字段
         BeanUtils.copyProperties(userDTO, targetUser, "id", "password", "createTime", "updateTime", "lastLoginTime", "birthday");
-        
+
         // 处理密码更新
         if (userDTO.getPassword() != null && !userDTO.getPassword().trim().isEmpty()) {
             targetUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
-        
+
         // 处理生日日期
         if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
             try {
@@ -220,7 +220,7 @@ public class UserService {
                 throw new RuntimeException("生日日期格式不正确，请使用yyyy-MM-dd格式");
             }
         }
-        
+
         targetUser.setUpdateTime(LocalDateTime.now());
         targetUser = userRepository.save(targetUser);
 
@@ -283,18 +283,18 @@ public class UserService {
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         BeanUtils.copyProperties(user, dto);
-        
+
         // 转换生日日期为字符串格式
         if (user.getBirthday() != null) {
             dto.setBirthday(user.getBirthday().toString()); // LocalDate默认格式为yyyy-MM-dd
         }
-        
+
         // 转换创建时间为字符串格式
         if (user.getCreateTime() != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             dto.setCreateTime(user.getCreateTime().format(formatter));
         }
-        
+
         // 转换最后登录时间为字符串格式
         if (user.getLastLoginTime() != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -306,7 +306,7 @@ public class UserService {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             dto.setUpdateTime(user.getUpdateTime().format(formatter));
         }
-        
+
         return dto;
     }
 
@@ -359,7 +359,7 @@ public class UserService {
      * @throws RuntimeException 当用户不存在时抛出
      */
     public User getCurrentUser() {
-        org.springframework.security.core.Authentication authentication = 
+        org.springframework.security.core.Authentication authentication =
             org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
@@ -378,6 +378,17 @@ public class UserService {
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
+    }
+
+    /**
+     * 根据用户ID获取用户DTO信息
+     * @param id 用户ID
+     * @return 用户DTO对象
+     * @throws RuntimeException 当用户不存在时抛出
+     */
+    public UserDTO getUserDTOById(Long id) {
+        User user = getUserById(id);
+        return convertToDTO(user);
     }
 
     /**

@@ -76,6 +76,16 @@ public class UserController {
     }
 
     /**
+     * 根据ID获取用户信息
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    @GetMapping("/{id}")
+    public Result<UserDTO> getUserById(@PathVariable Long id) {
+        return Result.success(userService.getUserDTOById(id));
+    }
+
+    /**
      * 删除用户
      * @param id 用户ID
      * @return 操作结果

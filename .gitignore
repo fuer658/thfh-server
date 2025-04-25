@@ -51,7 +51,6 @@ logs/
 # System Files
 .DS_Store
 Thumbs.db 
-start.bat
 cursor/
 
 # Cursor specific files
