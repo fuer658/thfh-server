@@ -80,9 +80,19 @@ public class UserController {
      * @param id 用户ID
      * @return 用户信息
      */
-    @GetMapping("/{id}")
+    @GetMapping("/user-info-id/{id}")
     public Result<UserDTO> getUserById(@PathVariable Long id) {
         return Result.success(userService.getUserDTOById(id));
+    }
+
+    /**
+     * 根据用户名获取用户信息
+     * @param username 用户名
+     * @return 用户信息
+     */
+    @GetMapping("/user-info-username/{username}")
+    public Result<UserDTO> getUserByUsername(@PathVariable String username) {
+        return Result.success(userService.getUserInfo(username));
     }
 
     /**
