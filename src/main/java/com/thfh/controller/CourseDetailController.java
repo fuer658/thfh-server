@@ -157,6 +157,27 @@ public class CourseDetailController {
     }
     
     /**
+     * 获取小节详情
+     * 
+     * @param sectionId 小节ID
+     * @return 小节详情
+     */
+    @GetMapping("/sections/{sectionId}")
+    public Result<CourseSection> getSectionDetail(@PathVariable Long sectionId) {
+        try {
+            CourseSection section = courseDetailService.getSectionById(sectionId);
+            if (section.getChapter() != null) {
+                section.getChapter().setCourseDetail(null);
+            }
+            return Result.success(section);
+        } catch (EntityNotFoundException e) {
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            return Result.error("获取小节详情失败: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 添加小节到章节
      * 
      * @param chapterId 章节ID
@@ -256,7 +277,7 @@ public class CourseDetailController {
     }
     
     /**
-     * 更新课程子小节
+     * 更新子小节
      * 
      * @param subSectionId 子小节ID
      * @param subSection 子小节数据
@@ -277,7 +298,7 @@ public class CourseDetailController {
     }
     
     /**
-     * 删除课程子小节
+     * 删除子小节
      * 
      * @param subSectionId 子小节ID
      * @return 操作结果

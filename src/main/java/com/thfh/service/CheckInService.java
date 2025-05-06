@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.alibaba.fastjson.JSONObject;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -31,6 +32,23 @@ public class CheckInService {
 
     @Autowired
     private UserService userService;
+
+    /**
+     * 检查当前用户今日是否已签到
+     * @return 如果今日已签到则返回true，否则返回false
+     */
+    public boolean isCheckedInToday() {
+        User currentUser = userService.getCurrentUser();
+        Long userId = currentUser.getId();
+        
+        // 检查今日是否已签到
+        List<CheckIn> todayCheckIns = checkInRepository.findTodayCheckIn(userId);
+        boolean checkInToday = !todayCheckIns.isEmpty();
+        
+        System.out.println("用户ID: " + userId + ", 今日是否已签到: " + checkInToday);
+        
+        return checkInToday;
+    }
 
     /**
      * 用户签到
@@ -121,37 +139,59 @@ public class CheckInService {
 
     /**
      * 获取当前用户连续签到次数
-     * @return 连续签到次数
+     * @return 连续签到次数和今日是否已签到的状态
      */
-    public Result<Long> getConsecutiveCheckInCount() {
+    public Result<Object> getConsecutiveCheckInCount() {
         User currentUser = userService.getCurrentUser();
         Long userId = currentUser.getId();
+        
+        // 检查今日是否已签到
+        boolean isCheckedInToday = isCheckedInToday();
 
-        List<CheckIn> monthlyCheckIns = checkInRepository.findMonthlyCheckIns(userId);
-        if (monthlyCheckIns.isEmpty()) {
-            return Result.success(0L);
+        // 使用findRecentCheckIns代替findMonthlyCheckIns，以便能够跨月份计算连续签到次数
+        List<CheckIn> recentCheckIns = checkInRepository.findRecentCheckIns(userId);
+        if (recentCheckIns.isEmpty()) {
+            JSONObject result = new JSONObject();
+            result.put("consecutiveCount", 0);
+            result.put("isCheckedInToday", isCheckedInToday);
+            return Result.success(result.toJSONString());
         }
 
+        // 获取最近一次签到日期
+        LocalDate lastCheckInDate = recentCheckIns.get(0).getCheckInTime().toLocalDate();
         LocalDate today = LocalDate.now();
-        LocalDate lastCheckInDate = monthlyCheckIns.get(0).getCheckInTime().toLocalDate();
 
-        if (!lastCheckInDate.equals(today)) {
-            return Result.success(0L);
-        }
+        System.out.println("用户ID: " + userId + ", 最近签到日期: " + lastCheckInDate + ", 今天日期: " + today);
 
-        long consecutiveCount = 1;
-        for (int i = 1; i < monthlyCheckIns.size(); i++) {
-            LocalDate currentDate = monthlyCheckIns.get(i).getCheckInTime().toLocalDate();
-            LocalDate previousDate = monthlyCheckIns.get(i - 1).getCheckInTime().toLocalDate();
-
-            if (currentDate.plusDays(1).equals(previousDate)) {
+        // 计算连续签到天数
+        long consecutiveCount = 1; // 至少有一条记录，所以从1开始
+        
+        // 对于当前最新的签到记录，判断它是否是连续签到的起点
+        // 最近签到时间可以是今天或者是之前的某一天
+        LocalDate expectedPreviousDate = lastCheckInDate.minusDays(1);
+        
+        for (int i = 1; i < recentCheckIns.size(); i++) {
+            LocalDate checkInDate = recentCheckIns.get(i).getCheckInTime().toLocalDate();
+            
+            System.out.println("检查签到记录 " + i + ": " + checkInDate + ", 期望日期: " + expectedPreviousDate);
+            
+            // 检查是否是期望的前一天
+            if (checkInDate.equals(expectedPreviousDate)) {
                 consecutiveCount++;
+                expectedPreviousDate = expectedPreviousDate.minusDays(1);
             } else {
+                // 如果不是连续的，就退出循环
+                System.out.println("检测到非连续日期，中断计数");
                 break;
             }
         }
 
-        return Result.success(consecutiveCount);
+        System.out.println("用户ID: " + userId + ", 连续签到天数: " + consecutiveCount + ", 今日是否已签到: " + isCheckedInToday);
+        
+        JSONObject result = new JSONObject();
+        result.put("consecutiveCount", consecutiveCount);
+        result.put("isCheckedInToday", isCheckedInToday);
+        return Result.success(result.toJSONString());
     }
 
     /**

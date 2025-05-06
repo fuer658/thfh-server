@@ -8,6 +8,8 @@ import com.thfh.model.CourseSubSection;
 import com.thfh.model.Course;
 import com.thfh.repository.CourseDetailRepository;
 import com.thfh.repository.CourseRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,8 @@ import java.util.function.Supplier;
  */
 @Service
 public class CourseDetailService {
+    
+    private static final Logger log = LoggerFactory.getLogger(CourseDetailService.class);
     
     @Autowired
     private CourseDetailRepository courseDetailRepository;
@@ -201,21 +205,7 @@ public class CourseDetailService {
      */
     @Transactional
     public CourseSection updateSection(Long sectionId, CourseSection updatedSection) {
-        // 查找所有课程详情
-        List<CourseDetail> allDetails = courseDetailRepository.findAll();
-        
-        // 找到包含此小节的章节
-        CourseChapter chapter = allDetails.stream()
-                .flatMap(detail -> detail.getChapters().stream())
-                .filter(ch -> ch.getSections().stream().anyMatch(sec -> sec.getId().equals(sectionId)))
-                .findFirst()
-                .orElseThrow((Supplier<ResourceNotFoundException>) () -> new ResourceNotFoundException("找不到包含此小节的章节"));
-        
-        // 找到要更新的小节
-        CourseSection existingSection = chapter.getSections().stream()
-                .filter(sec -> sec.getId().equals(sectionId))
-                .findFirst()
-                .orElseThrow((Supplier<ResourceNotFoundException>) () -> new ResourceNotFoundException("小节不存在，ID: " + sectionId));
+        CourseSection existingSection = findSectionById(sectionId);
         
         // 更新小节属性
         existingSection.setTitle(updatedSection.getTitle());
@@ -223,13 +213,17 @@ public class CourseDetailService {
         existingSection.setVideoUrl(updatedSection.getVideoUrl());
         existingSection.setDuration(updatedSection.getDuration());
         existingSection.setIsFree(updatedSection.getIsFree());
+        existingSection.setType(updatedSection.getType());
+        existingSection.setDocumentUrl(updatedSection.getDocumentUrl());
+        existingSection.setPdfUrl(updatedSection.getPdfUrl());
+        
         if (updatedSection.getOrderIndex() != null) {
             existingSection.setOrderIndex(updatedSection.getOrderIndex());
         }
         existingSection.setUpdateTime(LocalDateTime.now());
         
         // 保存更改
-        courseDetailRepository.save(chapter.getCourseDetail());
+        courseDetailRepository.save(existingSection.getChapter().getCourseDetail());
         
         return existingSection;
     }
@@ -386,6 +380,55 @@ public class CourseDetailService {
     public List<CourseSubSection> getSubSectionsBySectionId(Long sectionId) {
         CourseSection section = findSectionById(sectionId);
         return section.getSubSections();
+    }
+    
+    /**
+     * 根据小节ID获取小节详情
+     */
+    public CourseSection getSectionById(Long sectionId) {
+        // 添加日志记录
+        log.info("开始查找小节详情，ID: {}", sectionId);
+        
+        if (sectionId == null) {
+            log.error("小节ID不能为空");
+            throw new IllegalArgumentException("小节ID不能为空");
+        }
+        
+        // 查找所有课程详情
+        List<CourseDetail> allDetails = courseDetailRepository.findAll();
+        log.info("查找到 {} 个课程详情", allDetails.size());
+        
+        try {
+            // 找到包含此小节的章节
+            CourseChapter chapter = allDetails.stream()
+                    .flatMap(detail -> detail.getChapters().stream())
+                    .filter(ch -> ch.getSections().stream().anyMatch(sec -> sec.getId().equals(sectionId)))
+                    .findFirst()
+                    .orElseThrow(() -> {
+                        log.error("找不到包含小节 ID: {} 的章节", sectionId);
+                        return new ResourceNotFoundException("找不到包含此小节的章节");
+                    });
+            
+            log.info("找到包含小节 ID: {} 的章节，章节 ID: {}", sectionId, chapter.getId());
+            
+            // 找到小节并确保加载chapter信息
+            CourseSection section = chapter.getSections().stream()
+                    .filter(sec -> sec.getId().equals(sectionId))
+                    .findFirst()
+                    .orElseThrow(() -> {
+                        log.error("小节不存在，ID: {}", sectionId);
+                        return new ResourceNotFoundException("小节不存在，ID: " + sectionId);
+                    });
+            
+            // 确保chapter信息被正确设置
+            section.setChapter(chapter);
+            
+            log.info("成功找到小节，ID: {}, 标题: {}", section.getId(), section.getTitle());
+            return section;
+        } catch (Exception e) {
+            log.error("获取小节详情失败，原因: {}", e.getMessage(), e);
+            throw e;
+        }
     }
     
     // 辅助方法

@@ -53,11 +53,20 @@ public class CheckInController {
     }
 
     /**
+     * 检查当前用户今日是否已签到
+     * @return 今日是否已签到，true表示已签到，false表示未签到
+     */
+    @GetMapping("/today-status")
+    public Result<Boolean> isCheckedInToday() {
+        return Result.success(checkInService.isCheckedInToday());
+    }
+
+    /**
      * 获取当前用户连续签到次数
-     * @return 连续签到天数
+     * @return 连续签到天数和今日是否已签到的状态
      */
     @GetMapping("/consecutive-count")
-    public Result<Long> getConsecutiveCheckInCount() {
+    public Result<Object> getConsecutiveCheckInCount() {
         return checkInService.getConsecutiveCheckInCount();
     }
 

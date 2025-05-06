@@ -41,6 +41,12 @@ public class CourseSection {
     private String description;
 
     /**
+     * 小节文字内容
+     */
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    /**
      * 小节视频URL
      */
     private String videoUrl;
@@ -61,6 +67,22 @@ public class CourseSection {
      */
     @Column(nullable = false)
     private Boolean isFree = false;
+
+    /**
+     * 小节类型（VIDEO, DOCUMENT, PDF, TEXT等）
+     */
+    @Column(nullable = false)
+    private String type = "VIDEO";
+
+    /**
+     * 文档URL（如果类型是DOCUMENT）
+     */
+    private String documentUrl;
+
+    /**
+     * PDF URL（如果类型是PDF）
+     */
+    private String pdfUrl;
 
     /**
      * 小节下的子小节列表

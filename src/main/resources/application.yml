@@ -12,6 +12,9 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+      # 临时文件清理配置
+      file-size-threshold: 2MB  # 超过2MB的文件会被写入临时目录
+      location: ./temp      # 临时文件存储目录
   
   # 配置文件上传目录
   web:
@@ -21,6 +24,10 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
+      
+  # 配置Tomcat临时目录
+  tomcat:
+    basedir: ./temp
 
 # Knife4j配置
 knife4j:

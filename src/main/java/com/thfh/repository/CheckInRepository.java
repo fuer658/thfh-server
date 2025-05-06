@@ -25,6 +25,9 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
     @Query("SELECT c FROM CheckIn c WHERE c.userId = :userId AND YEAR(c.checkInTime) = YEAR(CURRENT_DATE) AND MONTH(c.checkInTime) = MONTH(CURRENT_DATE) ORDER BY c.checkInTime DESC")
     List<CheckIn> findMonthlyCheckIns(@Param("userId") Long userId);
     
+    @Query("SELECT c FROM CheckIn c WHERE c.userId = :userId ORDER BY c.checkInTime DESC")
+    List<CheckIn> findRecentCheckIns(@Param("userId") Long userId);
+    
     Page<CheckIn> findByUserIdOrderByCheckInTimeDesc(Long userId, Pageable pageable);
     
     @Query("SELECT COUNT(c) FROM CheckIn c WHERE c.userId = :userId AND c.checkInTime BETWEEN :startDate AND :endDate")

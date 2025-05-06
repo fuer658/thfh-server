@@ -96,61 +96,92 @@ public class UserUploadService {
     }
     
     /**
+     * 获取文件扩展名
+     * @param filename 文件名
+     */
+    private String getFileExtension(String filename) {
+        return FilenameUtils.getExtension(filename);
+    }
+    
+    /**
+     * 确定上传路径
+     * @param fileType 文件类型
+     * @param userId 用户ID
+     */
+    private String determineUploadPath(String fileType, Long userId) {
+        String datePath = LocalDateTime.now().format(DATE_FORMAT);
+        return userId + "/" + fileType + "/" + datePath;
+    }
+    
+    /**
+     * 生成新文件名
+     * @param extension 文件扩展名
+     */
+    private String generateFilename(String extension) {
+        return UUID.randomUUID().toString() + "." + extension;
+    }
+    
+    /**
      * 上传文件
      * @param file 上传的文件
-     * @param category 自定义分类(可选)
-     * @param description 文件描述(可选)
-     * @param isPrivate 是否私有(可选)
-     * @return 上传文件信息
+     * @param category 分类（可选）
+     * @param description 描述（可选）
+     * @param isPrivate 是否私有（可选）
+     * @return 上传结果
      */
     @Transactional
     public UserUpload uploadFile(MultipartFile file, String category, String description, Boolean isPrivate) throws IOException {
-        // 获取当前登录用户
+        if (file.isEmpty()) {
+            throw new IOException("文件不能为空");
+        }
+        
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
-            throw new RuntimeException("未授权，请先登录");
+            throw new IOException("未授权，请先登录");
         }
         
-        Long userId = currentUser.getId();
-        
-        // 确定文件类型
         String mimeType = file.getContentType();
         String fileType = determineFileType(mimeType);
-        
-        // 获取原始文件名和扩展名
         String originalFilename = file.getOriginalFilename();
-        String extension = FilenameUtils.getExtension(originalFilename);
-        if (extension == null || extension.isEmpty()) {
-            extension = "bin"; // 默认扩展名
+        String extension = getFileExtension(originalFilename);
+        
+        String relativePath = determineUploadPath(fileType, currentUser.getId());
+        String newFilename = generateFilename(extension);
+        
+        // 构建实际目录路径
+        Path directoryPath = Paths.get(baseUploadDir, relativePath);
+        if (!Files.exists(directoryPath)) {
+            Files.createDirectories(directoryPath);
         }
         
-        // 生成新文件名（保留原始扩展名）
-        String newFilename = UUID.randomUUID().toString() + "." + extension;
+        // 构建文件完整路径
+        Path filePath = directoryPath.resolve(newFilename);
         
-        // 获取当前日期，用于创建年月日目录结构
-        String datePath = LocalDateTime.now().format(DATE_FORMAT);
-        
-        // 构建用户专属目录路径
-        // 格式：baseUploadDir/userId/fileType/YYYYMMDD/filename.ext
-        String relativePath = userId + "/" + fileType + "/" + datePath;
-        String fullPath = baseUploadDir + "/" + relativePath;
-        
-        // 创建目录
-        Path dirPath = Paths.get(fullPath);
-        if (!Files.exists(dirPath)) {
-            Files.createDirectories(dirPath);
+        // 使用try-with-resources确保流关闭
+        try {
+            // 检查并清理文件流
+            Files.copy(file.getInputStream(), filePath);
+            
+            // 尝试清理可能的临时文件
+            try {
+                // 使用Spring提供的MultipartFile接口清理临时资源
+                file.getInputStream().close();
+            } catch (Exception e) {
+                // 记录但不抛出异常，避免影响主流程
+                System.err.println("清理临时文件失败: " + e.getMessage());
+            }
+        } catch (IOException e) {
+            throw new IOException("保存文件失败: " + e.getMessage(), e);
         }
         
-        // 保存文件
-        Path filePath = dirPath.resolve(newFilename);
-        Files.copy(file.getInputStream(), filePath);
+        // 构建访问URL
+        String fileUrl = getServerUrl() + "/" + baseUploadDir + "/" + relativePath + "/" + newFilename;
+        // 修正URL，使用相对路径
+        fileUrl = fileUrl.replace("//uploads", "/uploads");
         
-        // 生成访问URL
-        String fileUrl = getServerUrl() + "/uploads/" + relativePath + "/" + newFilename;
-        
-        // 创建UserUpload实体
+        // 创建上传记录
         UserUpload upload = new UserUpload();
-        upload.setUserId(userId);
+        upload.setUserId(currentUser.getId());
         upload.setFileName(originalFilename);
         upload.setFilePath(relativePath + "/" + newFilename);
         upload.setUrl(fileUrl);
