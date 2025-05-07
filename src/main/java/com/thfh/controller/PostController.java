@@ -9,6 +9,11 @@ import com.thfh.model.User;
 import com.thfh.dto.PostCommentDTO;
 import com.thfh.service.PostService;
 import com.thfh.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +23,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
 
+/**
+ * 动态管理控制器
+ * 提供动态的发布、查询、评论、点赞、分享和删除等功能
+ */
+@Api(tags = "动态管理", description = "提供动态的发布、查询、评论、点赞、分享和删除等功能")
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
@@ -30,9 +40,16 @@ public class PostController {
     /**
      * 发布动态
      */
+    @ApiOperation(value = "发布动态", notes = "用户发布新动态，可以包含文本内容、图片和标签等")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "发布成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public Result<Post> createPost(@RequestBody Post post) {
+    public Result<Post> createPost(
+            @ApiParam(value = "动态信息", required = true) @RequestBody Post post) {
         // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
@@ -49,19 +66,32 @@ public class PostController {
     /**
      * 获取动态详情
      */
+    @ApiOperation(value = "获取动态详情", notes = "根据动态ID获取动态的详细信息")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @GetMapping("/{postId}")
-    public Result<Post> getPost(@PathVariable Long postId) {
+    public Result<Post> getPost(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         return Result.success(postService.getPost(postId));
     }
 
     /**
      * 获取用户动态列表
      */
+    @ApiOperation(value = "获取用户动态列表", notes = "获取指定用户发布的所有动态")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "用户不存在")
+    })
     @GetMapping("/user/{userId}")
     public Result<Page<Post>> getUserPosts(
-            @PathVariable Long userId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getUserPosts(userId, pageRequest));
     }
@@ -69,8 +99,16 @@ public class PostController {
     /**
      * 点赞动态
      */
+    @ApiOperation(value = "点赞动态", notes = "用户对动态进行点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "点赞成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在"),
+        @ApiResponse(code = 409, message = "已经点赞过该动态")
+    })
     @PostMapping("/{postId}/like")
-    public Result<Void> likePost(@PathVariable Long postId) {
+    public Result<Void> likePost(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.likePost(postId);
         return Result.success(null);
     }
@@ -78,8 +116,15 @@ public class PostController {
     /**
      * 取消点赞
      */
+    @ApiOperation(value = "取消点赞", notes = "用户取消对动态的点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "取消成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在或未点赞")
+    })
     @DeleteMapping("/{postId}/like")
-    public Result<Void> unlikePost(@PathVariable Long postId) {
+    public Result<Void> unlikePost(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.unlikePost(postId);
         return Result.success(null);
     }
@@ -87,10 +132,17 @@ public class PostController {
     /**
      * 评论动态
      */
+    @ApiOperation(value = "评论动态", notes = "用户对动态发表评论，支持回复其他评论")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "评论成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在或父评论不存在")
+    })
     @PostMapping("/{postId}/comments")
     public Result<PostComment> commentPost(
-            @PathVariable Long postId,
-            @RequestBody CommentRequest request) {
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
+            @ApiParam(value = "评论信息", required = true) @RequestBody CommentRequest request) {
         return Result.success(postService.commentPost(
             postId,
             request.getContent(),
@@ -101,11 +153,17 @@ public class PostController {
     /**
      * 获取动态评论列表（树状结构）
      */
+    @ApiOperation(value = "获取动态评论列表（树状结构）", notes = "获取指定动态的评论列表，以树状结构返回评论和回复")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @GetMapping("/{postId}/comments/tree")
     public Result<Page<PostCommentDTO>> getPostCommentTree(
-            @PathVariable Long postId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getPostCommentTree(postId, pageRequest));
     }
@@ -113,11 +171,17 @@ public class PostController {
     /**
      * 获取动态评论列表（扁平结构）
      */
+    @ApiOperation(value = "获取动态评论列表（扁平结构）", notes = "获取指定动态的评论列表，以扁平结构返回所有评论")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @GetMapping("/{postId}/comments")
     public Result<Page<PostCommentDTO>> getPostComments(
-            @PathVariable Long postId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getPostComments(postId, pageRequest));
     }
@@ -125,8 +189,15 @@ public class PostController {
     /**
      * 转发动态
      */
+    @ApiOperation(value = "转发动态", notes = "用户转发动态到自己的动态列表")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "转发成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @PostMapping("/{postId}/share")
-    public Result<Void> sharePost(@PathVariable Long postId) {
+    public Result<Void> sharePost(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.sharePost(postId);
         return Result.success(null);
     }
@@ -134,8 +205,16 @@ public class PostController {
     /**
      * 删除动态
      */
+    @ApiOperation(value = "删除动态", notes = "用户删除自己发布的动态")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "删除成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有权限删除该动态"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @DeleteMapping("/{postId}")
-    public Result<Void> deletePost(@PathVariable Long postId) {
+    public Result<Void> deletePost(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.deletePost(postId);
         return Result.success(null);
     }
@@ -143,18 +222,33 @@ public class PostController {
     /**
      * 更新动态
      */
+    @ApiOperation(value = "更新动态", notes = "用户更新自己发布的动态内容")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "更新成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有权限更新该动态"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @PutMapping("/{postId}")
     public Result<Post> updatePost(
-            @PathVariable Long postId,
-            @RequestBody Post post) {
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
+            @ApiParam(value = "更新的动态信息", required = true) @RequestBody Post post) {
         return Result.success(postService.updatePost(postId, post));
     }
 
     /**
      * 检查用户是否已点赞动态
      */
+    @ApiOperation(value = "检查用户是否已点赞动态", notes = "检查当前登录用户是否已经对指定动态点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "检查成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @GetMapping("/{postId}/isLiked")
-    public Result<Boolean> isLiked(@PathVariable Long postId) {
+    public Result<Boolean> isLiked(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         User currentUser = userService.getCurrentUser();
         return Result.success(postService.isLiked(postId, currentUser.getId()));
     }
@@ -162,12 +256,17 @@ public class PostController {
     /**
      * 获取所有动态列表
      */
+    @ApiOperation(value = "获取所有动态列表", notes = "获取系统中的所有动态，支持按标题和用户名筛选")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @GetMapping
     public Result<Page<PostDTO>> getAllPosts(
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) String userName,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(value = "动态标题，用于筛选") @RequestParam(required = false) String title,
+            @ApiParam(value = "用户名，用于筛选") @RequestParam(required = false) String userName,
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getAllPosts(title, userName, pageRequest));
     }
@@ -175,10 +274,15 @@ public class PostController {
     /**
      * 获取关注用户的动态列表
      */
+    @ApiOperation(value = "获取关注用户的动态列表", notes = "获取当前用户关注的所有用户发布的动态")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @GetMapping("/following")
     public Result<Page<PostDTO>> getFollowingPosts(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getFollowingPostsWithUserInfo(pageRequest));
     }
@@ -189,9 +293,19 @@ public class PostController {
      * @param post 动态内容
      * @return 创建的动态
      */
+    @ApiOperation(value = "管理员以指定用户身份发布动态", notes = "管理员可以以指定用户的身份发布动态，仅管理员可操作")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "发布成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有管理员权限"),
+        @ApiResponse(code = 404, message = "用户不存在")
+    })
     @PostMapping("/admin/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Result<Post> createPostByAdmin(@PathVariable Long userId, @RequestBody Post post) {
+    public Result<Post> createPostByAdmin(
+            @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
+            @ApiParam(value = "动态内容", required = true) @RequestBody Post post) {
         // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
@@ -210,8 +324,16 @@ public class PostController {
      * @param postId 动态ID
      * @return 操作结果
      */
+    @ApiOperation(value = "管理员删除动态", notes = "管理员可以删除任何用户的动态，仅管理员可操作")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "删除成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有管理员权限"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
     @DeleteMapping("/admin/{postId}")
-    public Result<Void> deletePostByAdmin(@PathVariable Long postId) {
+    public Result<Void> deletePostByAdmin(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.deletePostByAdmin(postId);
         return Result.success(null);
     }
@@ -219,10 +341,15 @@ public class PostController {
     /**
      * 获取用户点赞的动态列表
      */
+    @ApiOperation(value = "获取用户点赞的动态列表", notes = "获取当前登录用户点赞过的所有动态")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @GetMapping("/likes")
     public Result<Page<Post>> getUserLikedPosts(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         User currentUser = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(postService.getUserLikedPosts(currentUser.getId(), pageRequest));
@@ -235,12 +362,20 @@ public class PostController {
      * @param request 评论请求，包含评论内容和父评论ID
      * @return 创建的评论
      */
+    @ApiOperation(value = "管理员以指定用户身份评论动态", notes = "管理员可以以指定用户的身份对动态发表评论，仅管理员可操作")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "评论成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有管理员权限"),
+        @ApiResponse(code = 404, message = "动态、用户或父评论不存在")
+    })
     @PostMapping("/admin/{userId}/posts/{postId}/comments")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<PostComment> commentPostByAdmin(
-            @PathVariable Long postId,
-            @PathVariable Long userId,
-            @RequestBody CommentRequest request) {
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
+            @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
+            @ApiParam(value = "评论请求", required = true) @RequestBody CommentRequest request) {
         return Result.success(postService.commentPostByAdmin(
             postId,
             request.getContent(),
@@ -254,9 +389,17 @@ public class PostController {
      * @param commentId 评论ID
      * @return 操作结果
      */
+    @ApiOperation(value = "管理员删除评论", notes = "管理员可以删除任何用户的评论，仅管理员可操作")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "删除成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有管理员权限"),
+        @ApiResponse(code = 404, message = "评论不存在")
+    })
     @DeleteMapping("/admin/comments/{commentId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Result<Void> deleteCommentByAdmin(@PathVariable Long commentId) {
+    public Result<Void> deleteCommentByAdmin(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         postService.deleteCommentByAdmin(commentId);
         return Result.success(null);
     }
@@ -266,21 +409,34 @@ public class PostController {
      * @param commentId 评论ID
      * @return 更新后的点赞数
      */
+    @ApiOperation(value = "点赞评论", notes = "用户对评论进行点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "点赞成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "评论不存在"),
+        @ApiResponse(code = 409, message = "已经点赞过该评论")
+    })
     @PostMapping("/comments/{commentId}/like")
-    public Result<Integer> likeComment(@PathVariable Long commentId) {
-        int likeCount = postService.likeComment(commentId);
-        return Result.success(likeCount);
+    public Result<Integer> likeComment(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+        return Result.success(postService.likeComment(commentId));
     }
 
     /**
-     * 取消点赞评论
+     * 取消评论点赞
      * @param commentId 评论ID
      * @return 更新后的点赞数
      */
+    @ApiOperation(value = "取消评论点赞", notes = "用户取消对评论的点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "取消成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "评论不存在或未点赞")
+    })
     @DeleteMapping("/comments/{commentId}/like")
-    public Result<Integer> unlikeComment(@PathVariable Long commentId) {
-        int likeCount = postService.unlikeComment(commentId);
-        return Result.success(likeCount);
+    public Result<Integer> unlikeComment(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+        return Result.success(postService.unlikeComment(commentId));
     }
 
     /**
@@ -288,8 +444,15 @@ public class PostController {
      * @param commentId 评论ID
      * @return 是否已点赞
      */
+    @ApiOperation(value = "检查用户是否已点赞评论", notes = "检查当前登录用户是否已经对指定评论点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "检查成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "评论不存在")
+    })
     @GetMapping("/comments/{commentId}/isLiked")
-    public Result<Boolean> isCommentLiked(@PathVariable Long commentId) {
+    public Result<Boolean> isCommentLiked(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         User currentUser = userService.getCurrentUser();
         return Result.success(postService.isCommentLiked(commentId, currentUser.getId()));
     }
@@ -300,22 +463,37 @@ public class PostController {
      * @param userId 用户ID
      * @return 更新后的点赞数
      */
+    @ApiOperation(value = "管理员以指定用户身份点赞评论", notes = "管理员可以以指定用户的身份对评论进行点赞，仅管理员可操作")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "点赞成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有管理员权限"),
+        @ApiResponse(code = 404, message = "评论或用户不存在"),
+        @ApiResponse(code = 409, message = "该用户已经点赞过该评论")
+    })
     @PostMapping("/admin/{userId}/comments/{commentId}/like")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Integer> likeCommentByAdmin(
-            @PathVariable Long commentId,
-            @PathVariable Long userId) {
-        int likeCount = postService.likeCommentByAdmin(commentId, userId);
-        return Result.success(likeCount);
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId,
+            @ApiParam(value = "用户ID", required = true) @PathVariable Long userId) {
+        return Result.success(postService.likeCommentByAdmin(commentId, userId));
     }
 
     /**
-     * 用户删除自己的评论
+     * 删除评论
      * @param commentId 评论ID
      * @return 操作结果
      */
+    @ApiOperation(value = "删除评论", notes = "用户删除自己发布的评论")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "删除成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有权限删除该评论"),
+        @ApiResponse(code = 404, message = "评论不存在")
+    })
     @DeleteMapping("/comments/{commentId}")
-    public Result<Void> deleteComment(@PathVariable Long commentId) {
+    public Result<Void> deleteComment(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         postService.deleteComment(commentId);
         return Result.success(null);
     }

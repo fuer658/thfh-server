@@ -23,6 +23,25 @@ public interface CompanyRepository extends JpaRepository<Company, Long>, JpaSpec
      *
      * @param name 公司名称（模糊匹配，可为null）
      * @param enabled 启用状态（可为null）
+     * @param tags 标签（模糊匹配，可为null）
+     * @param pageable 分页参数
+     * @return 分页后的公司列表
+     */
+    @Query("SELECT c FROM Company c WHERE " +
+           "(:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+           "AND (:enabled IS NULL OR c.enabled = :enabled) " +
+           "AND (:tags IS NULL OR LOWER(c.tags) LIKE LOWER(CONCAT('%', :tags, '%')))")
+    Page<Company> findByCondition(
+           @Param("name") String name, 
+           @Param("enabled") Boolean enabled, 
+           @Param("tags") String tags,
+           Pageable pageable);
+           
+    /**
+     * 根据条件分页查询公司信息（不含标签）
+     *
+     * @param name 公司名称（模糊匹配，可为null）
+     * @param enabled 启用状态（可为null）
      * @param pageable 分页参数
      * @return 分页后的公司列表
      */

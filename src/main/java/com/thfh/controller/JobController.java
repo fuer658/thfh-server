@@ -4,6 +4,11 @@ import com.thfh.common.Result;
 import com.thfh.dto.JobDTO;
 import com.thfh.dto.JobQueryDTO;
 import com.thfh.service.JobService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +21,7 @@ import java.util.Map;
  * 工作/职位管理控制器
  * 提供工作/职位的增删改查、发布、关闭和状态切换等功能
  */
+@Api(tags = "职位管理", description = "提供工作/职位的增删改查、发布、关闭和状态切换等功能")
 @RestController
 @RequestMapping("/api/jobs")
 public class JobController {
@@ -27,8 +33,14 @@ public class JobController {
      * @param queryDTO 查询条件，包含公司ID、职位类型和分页信息等
      * @return 工作/职位分页列表
      */
+    @ApiOperation(value = "获取职位列表", notes = "根据查询条件获取职位分页列表，支持多种筛选条件")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @GetMapping
-    public Result<Page<JobDTO>> getJobs(JobQueryDTO queryDTO) {
+    public Result<Page<JobDTO>> getJobs(
+            @ApiParam(value = "查询条件，包含公司ID、职位类型和分页信息等") JobQueryDTO queryDTO) {
         return Result.success(jobService.getJobs(queryDTO));
     }
 
@@ -37,8 +49,15 @@ public class JobController {
      * @param jobDTO 工作/职位信息
      * @return 创建的工作/职位信息
      */
+    @ApiOperation(value = "创建新职位", notes = "创建一个新的职位，需要提供职位的详细信息")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "创建成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @PostMapping
-    public Result<JobDTO> createJob(@RequestBody @Validated JobDTO jobDTO) {
+    public Result<JobDTO> createJob(
+            @ApiParam(value = "职位信息", required = true) @RequestBody @Validated JobDTO jobDTO) {
         // 进行数据验证
         validateJobData(jobDTO);
         
@@ -58,8 +77,17 @@ public class JobController {
      * @param jobDTO 更新的工作/职位信息
      * @return 更新后的工作/职位信息
      */
+    @ApiOperation(value = "更新职位信息", notes = "根据职位ID更新职位信息")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "更新成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "职位不存在")
+    })
     @PutMapping("/{id}")
-    public Result<JobDTO> updateJob(@PathVariable Long id, @RequestBody @Validated JobDTO jobDTO) {
+    public Result<JobDTO> updateJob(
+            @ApiParam(value = "职位ID", required = true) @PathVariable Long id,
+            @ApiParam(value = "更新的职位信息", required = true) @RequestBody @Validated JobDTO jobDTO) {
         // 进行数据验证
         validateJobData(jobDTO);
         
@@ -71,8 +99,15 @@ public class JobController {
      * @param id 工作/职位ID
      * @return 操作结果
      */
+    @ApiOperation(value = "发布职位", notes = "将指定职位的状态更改为已发布")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "发布成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "职位不存在")
+    })
     @PutMapping("/{id}/publish")
-    public Result<Void> publishJob(@PathVariable Long id) {
+    public Result<Void> publishJob(
+            @ApiParam(value = "职位ID", required = true) @PathVariable Long id) {
         jobService.publishJob(id);
         return Result.success(null, "职位发布成功");
     }
@@ -82,8 +117,15 @@ public class JobController {
      * @param id 工作/职位ID
      * @return 操作结果
      */
+    @ApiOperation(value = "关闭职位", notes = "将指定职位的状态更改为已关闭")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "关闭成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "职位不存在")
+    })
     @PutMapping("/{id}/close")
-    public Result<Void> closeJob(@PathVariable Long id) {
+    public Result<Void> closeJob(
+            @ApiParam(value = "职位ID", required = true) @PathVariable Long id) {
         jobService.closeJob(id);
         return Result.success(null, "职位已关闭");
     }
@@ -93,8 +135,16 @@ public class JobController {
      * @param id 工作/职位ID
      * @return 操作结果
      */
+    @ApiOperation(value = "删除职位", notes = "根据职位ID删除职位")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "删除成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有权限删除该职位"),
+        @ApiResponse(code = 404, message = "职位不存在")
+    })
     @DeleteMapping("/{id}")
-    public Result<Void> deleteJob(@PathVariable Long id) {
+    public Result<Void> deleteJob(
+            @ApiParam(value = "职位ID", required = true) @PathVariable Long id) {
         jobService.deleteJob(id);
         return Result.success(null, "职位删除成功");
     }
@@ -104,8 +154,15 @@ public class JobController {
      * @param id 工作/职位ID
      * @return 操作结果
      */
+    @ApiOperation(value = "切换职位状态", notes = "启用或禁用职位")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "操作成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "职位不存在")
+    })
     @PutMapping("/{id}/toggle-status")
-    public Result<Void> toggleJobStatus(@PathVariable Long id) {
+    public Result<Void> toggleJobStatus(
+            @ApiParam(value = "职位ID", required = true) @PathVariable Long id) {
         jobService.toggleJobStatus(id);
         return Result.success(null, "职位状态切换成功");
     }
@@ -115,8 +172,15 @@ public class JobController {
      * @param id 职位ID
      * @return 包含各状态申请数量的统计数据
      */
+    @ApiOperation(value = "获取职位申请数量统计", notes = "获取指定职位的各状态申请数量统计")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "职位不存在")
+    })
     @GetMapping("/{id}/application-counts")
-    public Result<Map<String, Long>> getJobApplicationCounts(@PathVariable Long id) {
+    public Result<Map<String, Long>> getJobApplicationCounts(
+            @ApiParam(value = "职位ID", required = true) @PathVariable Long id) {
         return Result.success(jobService.getJobApplicationCounts(id));
     }
     
