@@ -32,22 +32,22 @@ public class CourseDetail {
     private String fullDescription;
 
     /**
-     * 学习目标
+     * 第几次开课
+     */
+    @Column(nullable = false)
+    private Integer sessionNumber = 1;
+
+    /**
+     * 当前课时
+     */
+    @Column(nullable = false)
+    private Integer currentLesson = 0;
+
+    /**
+     * 开发团队
      */
     @Column(length = 1000)
-    private String learningObjectives;
-
-    /**
-     * 适合人群
-     */
-    @Column(length = 500)
-    private String targetAudience;
-
-    /**
-     * 先修要求
-     */
-    @Column(length = 500)
-    private String prerequisites;
+    private String developmentTeam;
 
     /**
      * 课程章节（JSON格式存储课程大纲）
