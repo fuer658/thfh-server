@@ -2,6 +2,8 @@ package com.thfh.dto;
 
 import com.thfh.model.User;
 import lombok.Data;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.springframework.beans.BeanUtils;
 
 /**
@@ -9,20 +11,24 @@ import org.springframework.beans.BeanUtils;
  * 只包含用户基本信息，用于列表展示等场景
  */
 @Data
+@ApiModel(value = "简化用户信息", description = "包含用户的基本信息，用于列表展示等场景")
 public class SimpleUserDTO {
     /**
      * 用户ID
      */
+    @ApiModelProperty(value = "用户ID", notes = "唯一标识", example = "1")
     private Long id;
     
     /**
      * 用户真实姓名
      */
+    @ApiModelProperty(value = "真实姓名", example = "张三")
     private String realName;
     
     /**
      * 用户头像URL
      */
+    @ApiModelProperty(value = "头像URL", example = "https://example.com/avatar.jpg")
     private String avatar;
     
     /**

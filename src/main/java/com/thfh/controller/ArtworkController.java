@@ -12,6 +12,11 @@ import com.thfh.service.AdminService;
 import com.thfh.service.ArtworkService;
 import com.thfh.service.ArtworkScoreService;
 import com.thfh.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.ApiResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,6 +34,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * 作品管理控制器
+ * 提供作品相关的API接口，包括作品发布、评分、查询、删除和编辑等功能
+ */
+@Api(tags = "作品管理", description = "作品相关的API接口，包括作品发布、评分、查询、删除和编辑等功能")
 @RestController
 @RequestMapping("/api/artworks")
 public class ArtworkController {
@@ -51,10 +61,16 @@ public class ArtworkController {
      * @param user 当前登录用户
      * @return 创建的作品
      */
+    @ApiOperation(value = "发布作品", notes = "发布新的作品")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "发布成功"),
+            @ApiResponse(code = 400, message = "请求参数错误"),
+            @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @PostMapping
     public Result<Void> createArtwork(
-            @Valid @RequestBody Artwork artwork,
-            @AuthenticationPrincipal User user) {
+            @ApiParam(value = "作品信息", required = true) @Valid @RequestBody Artwork artwork,
+            @ApiParam(hidden = true) @AuthenticationPrincipal User user) {
         artwork.setCreator(user);
         artwork.setCreateTime(LocalDateTime.now());
         artwork.setEnabled(true);
@@ -69,11 +85,18 @@ public class ArtworkController {
      * @param user 当前登录用户
      * @return 评分结果
      */
+    @ApiOperation(value = "为作品评分", notes = "为指定作品进行评分")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "评分成功"),
+            @ApiResponse(code = 400, message = "请求参数错误"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @PostMapping("/{artworkId}/score")
     public Result<Void> scoreArtwork(
-            @PathVariable Long artworkId,
-            @Valid @RequestBody ArtworkScoreDTO scoreDTO,
-            Authentication authentication) {
+            @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
+            @ApiParam(value = "评分信息", required = true) @Valid @RequestBody ArtworkScoreDTO scoreDTO,
+            @ApiParam(hidden = true) Authentication authentication) {
         User user = userService.getCurrentUser();
         Artwork artwork = artworkService.getArtworkById(artworkId)
                 .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
@@ -86,8 +109,13 @@ public class ArtworkController {
      * @param artworkId 作品ID
      * @return 评分信息
      */
+    @ApiOperation(value = "获取作品的评分信息", notes = "获取指定作品的平均评分和评分人数")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @GetMapping("/{artworkId}/score")
-    public Result<Map<String, Object>> getArtworkScore(@PathVariable Long artworkId) {
+    public Result<Map<String, Object>> getArtworkScore(@ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId) {
         Map<String, Object> scoreInfo = new HashMap<>();
         scoreInfo.put("averageScore", artworkScoreService.getArtworkAverageScore(artworkId));
         scoreInfo.put("scoreCount", artworkScoreService.getArtworkScoreCount(artworkId));
@@ -103,13 +131,17 @@ public class ArtworkController {
      * @param enabled 是否启用（可选）
      * @return 作品列表
      */
+    @ApiOperation(value = "获取作品列表", notes = "根据查询条件获取作品分页列表，支持按标题、学生ID和启用状态筛选")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功")
+    })
     @GetMapping
     public Result<Page<ArtworkDTO>> getArtworks(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) Long studentId,
-            @RequestParam(required = false) Boolean enabled) {
+            @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "作品标题（可选）") @RequestParam(required = false) String title,
+            @ApiParam(value = "学生ID（可选）") @RequestParam(required = false) Long studentId,
+            @ApiParam(value = "是否启用（可选）") @RequestParam(required = false) Boolean enabled) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Artwork> artworkPage = artworkService.getArtworks(title, studentId, enabled, pageRequest);
         
@@ -153,13 +185,18 @@ public class ArtworkController {
      * @param size 每页数量
      * @return 我的作品列表
      */
+    @ApiOperation(value = "获取我的作品列表", notes = "获取当前用户发布的作品分页列表，支持按作品类型和启用状态筛选")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功"),
+            @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @GetMapping("/my")
     public Result<Page<Artwork>> getMyArtworks(
-            Authentication authentication,
-            @RequestParam(required = false) ArtworkType type,
-            @RequestParam(required = false) Boolean enabled,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(hidden = true) Authentication authentication,
+            @ApiParam(value = "作品类型（可选）") @RequestParam(required = false) ArtworkType type,
+            @ApiParam(value = "是否启用（可选）") @RequestParam(required = false) Boolean enabled,
+            @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         User user = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         
@@ -183,10 +220,17 @@ public class ArtworkController {
      * @param user 当前登录用户
      * @return 删除结果
      */
+    @ApiOperation(value = "删除作品", notes = "根据作品ID删除作品，仅作品创建者可操作")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "删除成功"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 403, message = "没有权限删除该作品"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @DeleteMapping("/{artworkId}")
     public Result<Void> deleteArtwork(
-            @PathVariable Long artworkId,
-            Authentication authentication) {
+            @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
+            @ApiParam(hidden = true) Authentication authentication) {
         User user = userService.getCurrentUser();
         Artwork artwork = artworkService.getArtworkById(artworkId)
                 .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
@@ -205,10 +249,17 @@ public class ArtworkController {
      * @param artworkId 作品ID
      * @return 删除结果
      */
+    @ApiOperation(value = "管理员删除作品", notes = "管理员根据作品ID删除作品")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "删除成功"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 403, message = "没有管理员权限"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @DeleteMapping("/admin/{artworkId}")
     public Result<Void> adminDeleteArtwork(
-            @PathVariable Long artworkId,
-            Authentication authentication) {
+            @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
+            @ApiParam(hidden = true) Authentication authentication) {
         String username = authentication.getName();
         
         // 验证当前用户是否为管理员
@@ -230,10 +281,16 @@ public class ArtworkController {
      * @param tagName 标签名称
      * @return 操作结果
      */
+    @ApiOperation(value = "添加新标签", notes = "添加新的作品标签")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "添加成功"),
+            @ApiResponse(code = 400, message = "请求参数错误"),
+            @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @PostMapping("/tags")
     public Result<Void> addTag(
-            @Valid @RequestBody TagDTO tagDTO,
-            Authentication authentication) {
+            @ApiParam(value = "标签信息", required = true) @Valid @RequestBody TagDTO tagDTO,
+            @ApiParam(hidden = true) Authentication authentication) {
         artworkService.addTag(tagDTO.getTagName());
         return Result.success(null);
     }
@@ -243,10 +300,16 @@ public class ArtworkController {
      * @param tagId 标签ID
      * @return 操作结果
      */
+    @ApiOperation(value = "删除标签", notes = "根据标签ID删除作品标签")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "删除成功"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 404, message = "标签不存在")
+    })
     @DeleteMapping("/tags/{tagId}")
     public Result<Void> removeTag(
-            @PathVariable Long tagId,
-            Authentication authentication) {
+            @ApiParam(value = "标签ID", required = true) @PathVariable Long tagId,
+            @ApiParam(hidden = true) Authentication authentication) {
         artworkService.removeTag(tagId);
         return Result.success(null);
     }
@@ -257,11 +320,19 @@ public class ArtworkController {
      * @param updateDTO 更新的作品信息
      * @return 更新结果
      */
+    @ApiOperation(value = "管理员编辑作品", notes = "管理员根据作品ID编辑作品信息")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "更新成功"),
+            @ApiResponse(code = 400, message = "请求参数错误"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 403, message = "没有管理员权限"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @PutMapping("/admin/{artworkId}")
     public Result<Void> adminUpdateArtwork(
-            @PathVariable Long artworkId,
-            @Valid @RequestBody ArtworkUpdateDTO updateDTO,
-            Authentication authentication) {
+            @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
+            @ApiParam(value = "更新的作品信息", required = true) @Valid @RequestBody ArtworkUpdateDTO updateDTO,
+            @ApiParam(hidden = true) Authentication authentication) {
         String username = authentication.getName();
         
         // 验证当前用户是否为管理员
@@ -284,10 +355,16 @@ public class ArtworkController {
      * @param recommended 是否推荐（0-不推荐，1-推荐）
      * @return 更新结果
      */
+    @ApiOperation(value = "修改作品推荐状态", notes = "修改作品的推荐状态")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "更新成功"),
+            @ApiResponse(code = 400, message = "请求参数错误"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @PutMapping("/{artworkId}/recommend")
     public Result<Void> updateArtworkRecommendation(
-            @PathVariable Long artworkId,
-            @RequestParam(defaultValue = "0") Integer recommended) {
+            @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
+            @ApiParam(value = "是否推荐（0-不推荐，1-推荐）", defaultValue = "0") @RequestParam(defaultValue = "0") Integer recommended) {
         artworkService.updateArtworkRecommendation(artworkId, recommended == 1);
         return Result.success(null);
     }
@@ -297,8 +374,13 @@ public class ArtworkController {
      * @param artworkId 作品ID
      * @return 作品详情
      */
+    @ApiOperation(value = "获取作品详情", notes = "根据作品ID获取作品详细信息")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @GetMapping("/{artworkId}")
-    public Result<ArtworkDTO> getArtworkDetail(@PathVariable Long artworkId) {
+    public Result<ArtworkDTO> getArtworkDetail(@ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId) {
         // 增加浏览量
         artworkService.incrementViewCount(artworkId);
         
@@ -339,10 +421,16 @@ public class ArtworkController {
      * @param price 新价格
      * @return 更新结果
      */
+    @ApiOperation(value = "修改商业作品价格", notes = "修改商业作品的价格")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "更新成功"),
+            @ApiResponse(code = 400, message = "请求参数错误"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
     @PutMapping("/{artworkId}/price")
     public Result<Void> updateArtworkPrice(
-            @PathVariable Long artworkId,
-            @RequestParam BigDecimal price) {
+            @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
+            @ApiParam(value = "新价格", required = true) @RequestParam BigDecimal price) {
         artworkService.updateArtworkPrice(artworkId, price);
         return Result.success(null);
     }

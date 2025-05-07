@@ -2,6 +2,8 @@ package com.thfh.dto;
 
 import com.thfh.model.JobStatus;
 import lombok.Data;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -10,109 +12,131 @@ import java.time.LocalDateTime;
  * 用于在不同层之间传输工作岗位信息
  */
 @Data
+@ApiModel(value = "工作岗位信息", description = "包含工作岗位的详细信息")
 public class JobDTO {
     /**
      * 工作岗位ID，唯一标识
      */
+    @ApiModelProperty(value = "岗位ID", notes = "唯一标识", example = "1")
     private Long id;
     
     /**
      * 工作岗位标题
      */
+    @ApiModelProperty(value = "岗位标题", required = true, example = "软件工程师")
     private String title;
     
     /**
      * 工作岗位详细描述
      */
+    @ApiModelProperty(value = "岗位描述", example = "负责公司产品的开发和维护")
     private String description;
     
     /**
      * 发布公司ID
      */
+    @ApiModelProperty(value = "公司ID", example = "100")
     private Long companyId;
     
     /**
      * 发布公司名称
      */
+    @ApiModelProperty(value = "公司名称", example = "某某科技有限公司")
     private String companyName;
     
     /**
      * 职位分类ID
      */
+    @ApiModelProperty(value = "分类ID", example = "5")
     private Long categoryId;
     
     /**
      * 职位分类名称
      */
+    @ApiModelProperty(value = "分类名称", example = "技术开发")
     private String categoryName;
     
     /**
      * 工作地点
      */
+    @ApiModelProperty(value = "工作地点", example = "北京市海淀区")
     private String location;
     
     /**
      * 薪资范围下限
      */
+    @ApiModelProperty(value = "薪资下限", example = "10000")
     private BigDecimal salaryMin;
     
     /**
      * 薪资范围上限
      */
+    @ApiModelProperty(value = "薪资上限", example = "20000")
     private BigDecimal salaryMax;
     
     /**
      * 岗位要求
      */
+    @ApiModelProperty(value = "岗位要求", example = "熟悉Java编程，有2年以上工作经验")
     private String requirements;
     
     /**
      * 工作福利
      */
+    @ApiModelProperty(value = "工作福利", example = "五险一金，节日福利")
     private String benefits;
     
     /**
      * 残障人士支持措施
      */
+    @ApiModelProperty(value = "残障支持措施", example = "配备轮椅通道，提供辅助设备")
     private String disabilitySupport;
     
     /**
      * 联系人姓名
      */
+    @ApiModelProperty(value = "联系人姓名", example = "李先生")
     private String contactPerson;
     
     /**
      * 联系人电话
      */
+    @ApiModelProperty(value = "联系人电话", example = "13900001234")
     private String contactPhone;
     
     /**
      * 联系人邮箱
      */
+    @ApiModelProperty(value = "联系人邮箱", example = "hr@example.com")
     private String contactEmail;
     
     /**
      * 岗位状态（如：草稿、已发布、已关闭等）
      */
+    @ApiModelProperty(value = "岗位状态", notes = "如草稿、已发布、已关闭等", example = "PUBLISHED")
     private JobStatus status;
     
     /**
      * 岗位浏览次数
      */
+    @ApiModelProperty(value = "浏览次数", example = "1024")
     private Integer viewCount;
     
     /**
      * 岗位申请次数
      */
+    @ApiModelProperty(value = "申请次数", example = "56")
     private Integer applyCount;
     
     /**
      * 岗位是否启用
      */
+    @ApiModelProperty(value = "是否启用", example = "true")
     private Boolean enabled;
     
     /**
      * 岗位创建时间
      */
+    @ApiModelProperty(value = "创建时间", example = "2023-01-01 10:00:00")
     private LocalDateTime createTime;
 } 

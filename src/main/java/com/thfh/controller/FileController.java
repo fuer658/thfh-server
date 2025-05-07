@@ -2,6 +2,11 @@ package com.thfh.controller;
 
 import com.thfh.model.User;
 import com.thfh.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +26,7 @@ import java.util.stream.Collectors;
  * 支持自定义存储路径和文件名
  * 支持获取用户文件和删除文件
  */
+@Api(tags = "文件管理", description = "提供文件上传、查询、删除等功能，支持图片、视频等多种类型文件")
 @RestController
 @RequestMapping("/api")
 public class FileController {
@@ -168,11 +174,18 @@ public class FileController {
      * @param customFileName 自定义文件名（可选，不包含扩展名）
      * @return 上传结果，包含文件访问URL
      */
+    @ApiOperation(value = "上传通用文件", notes = "上传各种类型的文件，支持自定义存储路径和文件名")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "上传成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "path", required = false) String customPath,
-            @RequestParam(value = "filename", required = false) String customFileName) {
+            @ApiParam(value = "上传的文件", required = true) @RequestParam("file") MultipartFile file,
+            @ApiParam(value = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath,
+            @ApiParam(value = "自定义文件名（可选，不包含扩展名）", required = false) @RequestParam(value = "filename", required = false) String customFileName) {
         try {
             // 获取当前登录用户
             User currentUser = userService.getCurrentUser();
@@ -216,11 +229,18 @@ public class FileController {
      * @param customFileName 自定义文件名（可选，不包含扩展名）
      * @return 上传结果，包含视频访问URL
      */
+    @ApiOperation(value = "上传视频文件", notes = "专门用于上传视频文件，支持大文件上传，仅支持MP4、MOV、AVI、MKV格式")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "上传成功"),
+        @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
     @PostMapping("/upload/video")
     public ResponseEntity<?> uploadVideo(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "path", required = false) String customPath,
-            @RequestParam(value = "filename", required = false) String customFileName) {
+            @ApiParam(value = "上传的视频文件", required = true) @RequestParam("file") MultipartFile file,
+            @ApiParam(value = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath,
+            @ApiParam(value = "自定义文件名（可选，不包含扩展名）", required = false) @RequestParam(value = "filename", required = false) String customFileName) {
         try {
             // 获取当前登录用户
             User currentUser = userService.getCurrentUser();
@@ -273,11 +293,15 @@ public class FileController {
     }
 
     /**
-     * 获取当前用户的文件列表
-     * 需要用户认证
+     * 获取当前用户上传的所有文件列表
      * 
-     * @return 文件列表
+     * @return 用户文件列表，包含URL、原始文件名等信息
      */
+    @ApiOperation(value = "获取用户文件列表", notes = "获取当前登录用户上传的所有文件列表")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
     @GetMapping("/files")
     public ResponseEntity<?> getUserFiles() {
         // 获取当前登录用户
@@ -291,28 +315,39 @@ public class FileController {
             return ResponseEntity.status(401).body(error);
         }
         
-        List<FileInfo> files = userFiles.getOrDefault(currentUser.getId(), new ArrayList<>());
+        List<Map<String, Object>> filesList = new ArrayList<>();
+        List<FileInfo> files = userFiles.get(currentUser.getId());
         
-        List<Map<String, Object>> fileList = files.stream()
+        if (files != null) {
+            filesList = files.stream()
                 .map(FileInfo::toMap)
                 .collect(Collectors.toList());
+        }
         
         Map<String, Object> data = new HashMap<>();
         data.put("code", 200);
-        data.put("files", fileList);
-        data.put("message", "获取成功");
+        data.put("files", filesList);
+        data.put("totalCount", filesList.size());
         return ResponseEntity.ok(data);
     }
 
     /**
      * 删除文件
-     * 需要用户认证
      * 
      * @param filePath 文件路径
-     * @return 操作结果
+     * @return 删除结果
      */
+    @ApiOperation(value = "删除文件", notes = "删除指定文件，需要提供文件路径")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "删除成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "文件不存在"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
     @DeleteMapping("/files")
-    public ResponseEntity<?> deleteFile(@RequestParam("path") String filePath) {
+    public ResponseEntity<?> deleteFile(
+            @ApiParam(value = "文件路径", required = true) @RequestParam("path") String filePath) {
         try {
             // 获取当前登录用户
             User currentUser = userService.getCurrentUser();
@@ -325,25 +360,28 @@ public class FileController {
                 return ResponseEntity.status(401).body(error);
             }
             
-            Long userId = currentUser.getId();
-            
-            // 检查文件是否属于当前用户
-            List<FileInfo> userFileList = userFiles.get(userId);
-            if (userFileList == null || !userFileList.stream().anyMatch(file -> file.path.equals(filePath))) {
+            // 尝试从用户文件列表中移除
+            boolean removed = removeFileFromUserFiles(currentUser.getId(), filePath);
+            if (!removed) {
                 Map<String, Object> error = new HashMap<>();
-                error.put("code", 403);
-                error.put("message", "无权删除此文件");
-                return ResponseEntity.badRequest().body(error);
+                error.put("code", 404);
+                error.put("message", "文件不存在或您没有权限删除");
+                return ResponseEntity.status(404).body(error);
             }
             
-            // 删除物理文件
-            Path fileFullPath = Paths.get(uploadDir, filePath);
-            if (Files.exists(fileFullPath)) {
-                Files.delete(fileFullPath);
+            // 构建完整文件路径
+            Path fullPath = Paths.get(uploadDir, filePath);
+            
+            // 检查文件是否存在
+            if (!Files.exists(fullPath)) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("code", 200);
+                data.put("message", "文件记录已删除，但文件不存在于磁盘");
+                return ResponseEntity.ok(data);
             }
             
-            // 从用户文件列表中移除
-            removeFileFromUserFiles(userId, filePath);
+            // 删除文件
+            Files.delete(fullPath);
             
             Map<String, Object> data = new HashMap<>();
             data.put("code", 200);
@@ -355,7 +393,7 @@ public class FileController {
             Map<String, Object> error = new HashMap<>();
             error.put("code", 500);
             error.put("message", "文件删除失败: " + e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.status(500).body(error);
         }
     }
 }
