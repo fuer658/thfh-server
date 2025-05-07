@@ -24,7 +24,7 @@ public class JwtInterceptor implements HandlerInterceptor {
     /**
      * 请求预处理方法
      * 在Controller处理请求之前执行
-     * 验证请求中的JWT令牌，并将用户名存入请求属性
+     * 验证请求中的JWT令牌，并将用户名和用户ID存入请求属性
      * 
      * @param request HTTP请求对象
      * @param response HTTP响应对象
@@ -56,6 +56,13 @@ public class JwtInterceptor implements HandlerInterceptor {
         // 将用户名存入request，供后续处理使用
         String username = jwtUtil.getUsernameFromToken(token);
         request.setAttribute("username", username);
+        
+        // 直接从token中获取用户ID并存入request
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId != null) {
+            request.setAttribute("userId", userId);
+        }
+        
         return true;
     }
 } 

@@ -21,6 +21,20 @@ public class JwtUtil {
         claims.put("username", username);
         return createToken(claims);
     }
+    
+    /**
+     * 生成带有用户ID的JWT令牌
+     * 
+     * @param username 用户名
+     * @param userId 用户ID
+     * @return JWT令牌字符串
+     */
+    public String generateToken(String username, Long userId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", username);
+        claims.put("userId", userId);
+        return createToken(claims);
+    }
 
     private String createToken(Map<String, Object> claims) {
         return Jwts.builder()
@@ -37,6 +51,24 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.get("username", String.class);
+    }
+    
+    /**
+     * 从JWT令牌中提取用户ID
+     * 
+     * @param token JWT令牌
+     * @return 用户ID，如果不存在则返回null
+     */
+    public Long getUserIdFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(jwtConfig.getSecret())
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.get("userId", Long.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public boolean validateToken(String token) {

@@ -332,8 +332,8 @@ public class UserService {
         user.setLastLoginTime(LocalDateTime.now());
         userRepository.save(user);
 
-        // 生成token
-        String token = jwtUtil.generateToken(user.getUsername());
+        // 生成包含用户ID的token
+        String token = jwtUtil.generateToken(user.getUsername(), user.getId());
 
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);

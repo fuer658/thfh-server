@@ -57,7 +57,7 @@ public class AuthService {
             result.put("userType", "admin");
             return result;
         } catch (RuntimeException e) {
-            // 管理员登录失败，尝试用户登录
+            // 如果不是管理员，尝试普通用户登录
             User user = userRepository.findByUsername(loginDTO.getUsername())
                     .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
 
@@ -73,12 +73,12 @@ public class AuthService {
             user.setLastLoginTime(LocalDateTime.now());
             userRepository.save(user);
 
-            // 生成token
-            String token = jwtUtil.generateToken(user.getUsername());
+            // 生成包含用户ID的token
+            String token = jwtUtil.generateToken(user.getUsername(), user.getId());
 
             Map<String, Object> result = new HashMap<>();
             result.put("token", token);
-            result.put("userType", user.getUserType());
+            result.put("userType", user.getUserType().name());
             return result;
         }
     }
