@@ -50,6 +50,9 @@ public class Company {
     private String promotionProspects; // 晋升待遇
 
     private String jobRequirements; // 岗位要求
+    
+    @Column(length = 500)
+    private String tags; // 公司标签，多个标签以逗号分隔
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("company")

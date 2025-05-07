@@ -62,9 +62,10 @@ public class CompanyController {
      * @param pageable 分页信息
      * @param name 公司名称(可选)
      * @param enabled 状态(可选)
+     * @param tags 标签(可选)
      * @return 企业分页列表
      */
-    @ApiOperation(value = "获取企业列表", notes = "根据条件获取企业分页列表，支持按名称和状态筛选")
+    @ApiOperation(value = "获取企业列表", notes = "根据条件获取企业分页列表，支持按名称、状态和标签筛选")
     @ApiResponses({
         @ApiResponse(code = 200, message = "获取成功"),
         @ApiResponse(code = 401, message = "未授权，请先登录")
@@ -73,13 +74,24 @@ public class CompanyController {
     public Result<Page<Company>> list(
             @ApiParam(value = "分页信息") Pageable pageable,
             @ApiParam(value = "公司名称(可选)") @RequestParam(required = false) String name,
-            @ApiParam(value = "状态(可选)") @RequestParam(required = false) Boolean enabled) {
-        Page<Company> companies = companyRepository.findByCondition(
-            name != null && !name.trim().isEmpty() ? name : null,
-            enabled,
-            pageable
-        );
-        return Result.success(companies);
+            @ApiParam(value = "状态(可选)") @RequestParam(required = false) Boolean enabled,
+            @ApiParam(value = "标签(可选)") @RequestParam(required = false) String tags) {
+        if (tags != null && !tags.trim().isEmpty()) {
+            Page<Company> companies = companyRepository.findByCondition(
+                name != null && !name.trim().isEmpty() ? name : null,
+                enabled,
+                tags,
+                pageable
+            );
+            return Result.success(companies);
+        } else {
+            Page<Company> companies = companyRepository.findByCondition(
+                name != null && !name.trim().isEmpty() ? name : null,
+                enabled,
+                pageable
+            );
+            return Result.success(companies);
+        }
     }
 
     /**
@@ -133,6 +145,7 @@ public class CompanyController {
             updatedCompany.setEmployeeBenefits(company.getEmployeeBenefits());
             updatedCompany.setPromotionProspects(company.getPromotionProspects());
             updatedCompany.setJobRequirements(company.getJobRequirements()); // 添加岗位要求字段
+            updatedCompany.setTags(company.getTags()); // 添加标签字段
             updatedCompany.setUpdateTime(LocalDateTime.now());
             return Result.success(companyRepository.save(updatedCompany));
         }
