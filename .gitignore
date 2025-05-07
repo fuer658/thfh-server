@@ -53,5 +53,7 @@ logs/
 Thumbs.db 
 cursor/
 
+uploads/
+
 # Cursor specific files
 .cursor/rules/

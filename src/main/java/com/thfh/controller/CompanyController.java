@@ -129,6 +129,10 @@ public class CompanyController {
             updatedCompany.setAddress(company.getAddress());
             updatedCompany.setWorkStartTime(company.getWorkStartTime());
             updatedCompany.setWorkEndTime(company.getWorkEndTime());
+            updatedCompany.setCompanyTreatment(company.getCompanyTreatment());
+            updatedCompany.setEmployeeBenefits(company.getEmployeeBenefits());
+            updatedCompany.setPromotionProspects(company.getPromotionProspects());
+            updatedCompany.setJobRequirements(company.getJobRequirements()); // 添加岗位要求字段
             updatedCompany.setUpdateTime(LocalDateTime.now());
             return Result.success(companyRepository.save(updatedCompany));
         }

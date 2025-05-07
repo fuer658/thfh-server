@@ -43,7 +43,15 @@ public class Company {
     @Column(nullable = false)
     private LocalDateTime updateTime = LocalDateTime.now();
 
+    private String companyTreatment; // 公司待遇
+
+    private String employeeBenefits; // 员工福利
+
+    private String promotionProspects; // 晋升待遇
+
+    private String jobRequirements; // 岗位要求
+
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("company")
     private List<CompanyAlbumCategory> albumCategories;
-} 
+}
