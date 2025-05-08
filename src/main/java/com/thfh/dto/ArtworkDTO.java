@@ -67,6 +67,9 @@ public class ArtworkDTO {
     @ApiModelProperty(value = "点赞次数", example = "230")
     private Integer likeCount;
     
+    @ApiModelProperty(value = "浏览量", example = "450")
+    private Integer viewCount;
+    
     @ApiModelProperty(value = "创建时间", example = "2023-01-01 10:00:00")
     private LocalDateTime createTime;
     
