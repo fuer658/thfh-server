@@ -29,22 +29,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    /**
-     * 用户登录
-     * @param loginDTO 登录信息，包含用户名和密码
-     * @return 登录结果，包含token和用户信息
-     */
-    @ApiOperation(value = "用户登录", notes = "通过用户名和密码进行登录，返回token和用户类型信息")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "登录成功"),
-        @ApiResponse(code = 400, message = "请求参数错误"),
-        @ApiResponse(code = 401, message = "用户名或密码错误")
-    })
-    @PostMapping("/login")
-    public Result<Map<String, Object>> login(
-            @ApiParam(value = "登录信息", required = true) @Valid @RequestBody LoginDTO loginDTO) {
-        return Result.success(userService.login(loginDTO));
-    }
 
     /**
      * 获取当前登录用户信息
