@@ -145,6 +145,7 @@ public class CompanyController {
             updatedCompany.setEmployeeBenefits(company.getEmployeeBenefits());
             updatedCompany.setPromotionProspects(company.getPromotionProspects());
             updatedCompany.setJobRequirements(company.getJobRequirements()); // 添加岗位要求字段
+            updatedCompany.setSalary(company.getSalary()); // 添加薪资字段
             updatedCompany.setTags(company.getTags()); // 添加标签字段
             updatedCompany.setUpdateTime(LocalDateTime.now());
             return Result.success(companyRepository.save(updatedCompany));

@@ -51,6 +51,8 @@ public class Company {
 
     private String jobRequirements; // 岗位要求
     
+    private String salary; // 薪资范围
+    
     @Column(length = 500)
     private String tags; // 公司标签，多个标签以逗号分隔
 
