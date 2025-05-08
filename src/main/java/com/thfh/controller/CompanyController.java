@@ -147,6 +147,7 @@ public class CompanyController {
             updatedCompany.setJobRequirements(company.getJobRequirements()); // 添加岗位要求字段
             updatedCompany.setSalary(company.getSalary()); // 添加薪资字段
             updatedCompany.setTags(company.getTags()); // 添加标签字段
+            updatedCompany.setPositions(company.getPositions()); // 添加招聘岗位字段
             updatedCompany.setUpdateTime(LocalDateTime.now());
             return Result.success(companyRepository.save(updatedCompany));
         }

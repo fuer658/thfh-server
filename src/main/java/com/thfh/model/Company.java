@@ -55,6 +55,9 @@ public class Company {
     
     @Column(length = 500)
     private String tags; // 公司标签，多个标签以逗号分隔
+    
+    @Column(length = 500)
+    private String positions; // 招聘岗位，多个岗位以逗号分隔
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("company")
