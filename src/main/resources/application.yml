@@ -1,5 +1,6 @@
 server:
   port: 8085
+  host: localhost
   
 # 文件上传路径配置
 file:
@@ -53,3 +54,10 @@ cainiao:
   api:
     url: https://api.cainiao.com/logistics/track
     key: your_api_key_here
+
+# 全局日志配置
+logging:
+  level:
+    root: INFO
+    com.thfh: INFO
+    org.springframework: WARN

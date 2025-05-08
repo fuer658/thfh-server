@@ -4,6 +4,7 @@ import com.thfh.dto.DisabilityCertificationDTO;
 import com.thfh.model.DisabilityCertification;
 import com.thfh.service.DisabilityCertificationService;
 import com.thfh.common.Result;
+import com.thfh.util.ServerUrlUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -47,15 +48,8 @@ public class DisabilityCertificationController {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    @Value("${server.port}")
-    private String serverPort;
-
-    /**
-     * 获取服务器URL
-     */
-    private String getServerUrl() {
-        return "http://localhost:" + serverPort;
-    }
+    @Autowired
+    private ServerUrlUtil serverUrlUtil;
 
     /**
      * 提交残疾人认证申请（支持文件上传）
@@ -92,7 +86,7 @@ public class DisabilityCertificationController {
                 Files.copy(file.getInputStream(), filePath);
 
                 // 设置文件URL
-                String fileUrl = getServerUrl() + "/uploads/" + filename;
+                String fileUrl = serverUrlUtil.getFileUrl(filename);
                 request.setCertificateImage(fileUrl);
             } else if (request.getCertificateFile() != null && !request.getCertificateFile().isEmpty()) {
                 // 如果通过DTO中的certificateFile上传文件
@@ -114,7 +108,7 @@ public class DisabilityCertificationController {
                 Files.copy(certificateFile.getInputStream(), filePath);
 
                 // 设置文件URL
-                String fileUrl = getServerUrl() + "/uploads/" + filename;
+                String fileUrl = serverUrlUtil.getFileUrl(filename);
                 request.setCertificateImage(fileUrl);
             }
             
