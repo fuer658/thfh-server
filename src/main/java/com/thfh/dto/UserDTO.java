@@ -8,6 +8,10 @@ import org.springframework.beans.BeanUtils;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
 /**
  * 用户数据传输对象
  * 用于在不同层之间传输用户信息，避免直接暴露实体类
@@ -25,36 +29,43 @@ public class UserDTO {
      * 用户名，用于登录
      */
     @ApiModelProperty(value = "用户名", required = true, notes = "用于登录系统", example = "user123")
+    @NotBlank(message = "用户名不能为空")
+    @Size(min = 4, max = 20, message = "用户名长度必须在4到20之间")
     private String username;
     
     /**
      * 密码，用于登录验证
      */
-    @ApiModelProperty(value = "密码", notes = "创建用户时必填，更新用户时可不填", example = "password123")
+    @ApiModelProperty(value = "密码", notes = "创建用户时必须提供密码，更新时不需要", example = "password123")
+    @Size(min = 6, max = 20, message = "密码长度必须在6到20之间")
     private String password;
     
     /**
      * 用户真实姓名
      */
     @ApiModelProperty(value = "真实姓名", example = "张三")
+    @Size(max = 50, message = "姓名长度不能超过50个字符")
     private String realName;
     
     /**
      * 用户类型，如普通用户、残障人士、企业用户等
      */
-    @ApiModelProperty(value = "用户类型", notes = "STUDENT(学员)或TEACHER(教员)", example = "STUDENT")
+    @ApiModelProperty(value = "用户类型", notes = "STUDENT(学员)、TEACHER(教员)或ENTERPRISE(企业人员)", example = "STUDENT")
     private UserType userType;
     
     /**
      * 用户手机号码
      */
     @ApiModelProperty(value = "手机号码", example = "13800138000")
+    @Size(max = 20, message = "手机号码长度不能超过20个字符")
     private String phone;
     
     /**
      * 用户电子邮箱
      */
     @ApiModelProperty(value = "电子邮箱", example = "user@example.com")
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 50, message = "邮箱长度不能超过50个字符")
     private String email;
     
     /**
@@ -73,6 +84,7 @@ public class UserDTO {
      * 用户个人介绍
      */
     @ApiModelProperty(value = "个人介绍", notes = "限制100字以内", example = "这是我的个人介绍")
+    @Size(max = 200, message = "个人简介长度不能超过200个字符")
     private String introduction;
     
     /**
@@ -103,7 +115,7 @@ public class UserDTO {
      * 地区
      */
     @ApiModelProperty(value = "地区", example = "北京市")
-    private  String Locate;
+    private String locate;
     
     /**
      * 账号是否启用
@@ -134,6 +146,42 @@ public class UserDTO {
      */
     @ApiModelProperty(value = "用户生日", example = "1990-01-01")
     private String birthday;
+    
+    /**
+     * 补签卡数量
+     */
+    @ApiModelProperty(value = "补签卡数量", notes = "学员特有字段")
+    private Integer makeupCards;
+    
+    /**
+     * 经验值
+     */
+    @ApiModelProperty(value = "经验值")
+    private Integer experience;
+    
+    /**
+     * 用户等级
+     */
+    @ApiModelProperty(value = "用户等级")
+    private Integer level;
+    
+    /**
+     * 企业ID
+     */
+    @ApiModelProperty(value = "企业ID", notes = "企业人员特有字段，关联的公司ID")
+    private Long companyId;
+    
+    /**
+     * 企业名称
+     */
+    @ApiModelProperty(value = "企业名称", notes = "企业人员特有字段，关联的公司名称")
+    private String companyName;
+    
+    /**
+     * 公司详细信息
+     */
+    @ApiModelProperty(value = "公司详细信息", notes = "企业用户注册时用于传递公司详情")
+    private CompanyDetails companyDetails;
     
     /**
      * 将User实体对象转换为UserDTO对象

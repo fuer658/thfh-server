@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
@@ -16,6 +17,7 @@ import java.util.List;
  * 继承自JpaRepository，自动提供基本的CRUD操作
  * 实现JpaSpecificationExecutor接口，支持复杂条件查询
  */
+@Repository
 public interface CompanyRepository extends JpaRepository<Company, Long>, JpaSpecificationExecutor<Company> {
     
     /**
@@ -67,4 +69,11 @@ public interface CompanyRepository extends JpaRepository<Company, Long>, JpaSpec
      */
     @Query("SELECT c FROM Company c WHERE c.enabled = true")
     List<Company> findAllEnabled();
+
+    /**
+     * 根据公司名称查找公司
+     * @param name 公司名称
+     * @return 匹配的公司对象，如果不存在则返回null
+     */
+    Company findByName(String name);
 }

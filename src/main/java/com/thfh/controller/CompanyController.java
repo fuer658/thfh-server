@@ -139,15 +139,7 @@ public class CompanyController {
             updatedCompany.setScale(company.getScale());
             updatedCompany.setWebsite(company.getWebsite());
             updatedCompany.setAddress(company.getAddress());
-            updatedCompany.setWorkStartTime(company.getWorkStartTime());
-            updatedCompany.setWorkEndTime(company.getWorkEndTime());
-            updatedCompany.setCompanyTreatment(company.getCompanyTreatment());
-            updatedCompany.setEmployeeBenefits(company.getEmployeeBenefits());
-            updatedCompany.setPromotionProspects(company.getPromotionProspects());
-            updatedCompany.setJobRequirements(company.getJobRequirements()); // 添加岗位要求字段
-            updatedCompany.setSalary(company.getSalary()); // 添加薪资字段
-            updatedCompany.setTags(company.getTags()); // 添加标签字段
-            updatedCompany.setPositions(company.getPositions()); // 添加招聘岗位字段
+            updatedCompany.setTags(company.getTags()); // 保留标签字段
             updatedCompany.setUpdateTime(LocalDateTime.now());
             return Result.success(companyRepository.save(updatedCompany));
         }

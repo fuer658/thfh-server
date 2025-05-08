@@ -30,10 +30,6 @@ public class Company {
 
     private String address; // 公司地址
 
-    private String workStartTime; // 上班时间
-
-    private String workEndTime; // 下班时间
-
     @Column(nullable = false)
     private Boolean enabled = true;
 
@@ -43,21 +39,8 @@ public class Company {
     @Column(nullable = false)
     private LocalDateTime updateTime = LocalDateTime.now();
 
-    private String companyTreatment; // 公司待遇
-
-    private String employeeBenefits; // 员工福利
-
-    private String promotionProspects; // 晋升待遇
-
-    private String jobRequirements; // 岗位要求
-    
-    private String salary; // 薪资范围
-    
     @Column(length = 500)
     private String tags; // 公司标签，多个标签以逗号分隔
-    
-    @Column(length = 500)
-    private String positions; // 招聘岗位，多个岗位以逗号分隔
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("company")

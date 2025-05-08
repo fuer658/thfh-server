@@ -54,10 +54,28 @@ public class Job {
     private String contactPhone; // 联系电话
 
     private String contactEmail; // 联系邮箱
+    
+    private String workStartTime; // 上班时间 (从Company移动过来)
+    
+    private String workEndTime; // 下班时间 (从Company移动过来)
+
+    private String companyTreatment; // 公司待遇 (从Company移动过来)
+
+    private String employeeBenefits; // 员工福利 (从Company移动过来)
+
+    private String promotionProspects; // 晋升待遇 (从Company移动过来)
+
+    private String jobRequirements; // 岗位要求 (从Company移动过来)
+
+    @Column(length = 500)
+    private String positions; // 招聘岗位，多个岗位以逗号分隔 (从Company移动过来)
+    
+    @Column(length = 500)
+    private String tags; // 职位标签，多个标签以逗号分隔，用于前端展示
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private JobStatus status; // 职位状态
+    private JobStatus status = JobStatus.DRAFT; // 职位状态：草稿、已发布、已关闭
 
     private Integer viewCount = 0; // 浏览次数
 

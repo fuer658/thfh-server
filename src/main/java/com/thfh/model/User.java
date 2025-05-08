@@ -28,7 +28,7 @@ public class User {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserType userType; // STUDENT(学员) 或 TEACHER(教员)
+    private UserType userType; // STUDENT(学员)、TEACHER(教员)或ENTERPRISE(企业人员)
 
     @Column(length = 50)
     private String phone;
@@ -53,6 +53,11 @@ public class User {
     private String disability; // 残疾类型
     private Integer points = 0; // 积分
     private Integer makeupCards = 0; // 补签卡数量
+
+    // 企业人员特有字段
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company; // 关联的公司
 
     @Column(nullable = false)
     private Integer experience = 0; // 经验值

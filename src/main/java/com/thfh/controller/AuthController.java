@@ -2,6 +2,7 @@ package com.thfh.controller;
 
 import com.thfh.common.Result;
 import com.thfh.dto.LoginDTO;
+import com.thfh.dto.UserDTO;
 import com.thfh.service.AuthService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,6 +42,23 @@ public class AuthController {
     public Result<Map<String, Object>> login(
             @ApiParam(value = "登录信息", required = true) @Valid @RequestBody LoginDTO loginDTO) {
         return Result.success(authService.login(loginDTO));
+    }
+    
+    /**
+     * 用户注册
+     * @param userDTO 用户信息，包含用户名、密码、用户类型等
+     * @return 注册结果，包含注册成功的用户信息
+     */
+    @ApiOperation(value = "用户注册", notes = "提供用户基本信息进行注册，企业用户需要提供公司信息")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "注册成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 409, message = "用户名已存在")
+    })
+    @PostMapping("/register")
+    public Result<UserDTO> register(
+            @ApiParam(value = "用户信息", required = true) @Valid @RequestBody UserDTO userDTO) {
+        return Result.success(authService.register(userDTO), "注册成功");
     }
 
     /**

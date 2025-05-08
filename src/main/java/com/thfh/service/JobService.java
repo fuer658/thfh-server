@@ -95,8 +95,25 @@ public class JobService {
      */
     @Transactional
     public JobDTO createJob(JobDTO jobDTO) {
-        Company company = companyRepository.findById(jobDTO.getCompanyId())
-                .orElseThrow(() -> new RuntimeException("公司不存在"));
+        Company company = null;
+        
+        // 优先使用companyId查找公司
+        if (jobDTO.getCompanyId() != null) {
+            company = companyRepository.findById(jobDTO.getCompanyId())
+                    .orElse(null);
+        }
+        
+        // 如果companyId不存在或无法找到公司，则使用公司名称查找
+        if (company == null && jobDTO.getCompanyName() != null && !jobDTO.getCompanyName().isEmpty()) {
+            company = companyRepository.findByName(jobDTO.getCompanyName());
+            
+            // 如果找不到匹配的公司，则抛出异常
+            if (company == null) {
+                throw new RuntimeException("无法找到匹配的公司，请确认公司信息或先创建公司");
+            }
+        } else if (company == null) {
+            throw new RuntimeException("公司ID和公司名称不能同时为空");
+        }
 
         Job job = new Job();
         BeanUtils.copyProperties(jobDTO, job);
@@ -107,6 +124,13 @@ public class JobService {
             JobCategory category = jobCategoryRepository.findById(jobDTO.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("职位分类不存在"));
             job.setCategory(category);
+        }
+        
+        // 如果没有设置tags，尝试使用公司的tags
+        if (job.getTags() == null || job.getTags().isEmpty()) {
+            if (company.getTags() != null && !company.getTags().isEmpty()) {
+                job.setTags(company.getTags());
+            }
         }
         
         job.setStatus(JobStatus.DRAFT);
@@ -160,6 +184,13 @@ public class JobService {
             job.setCategory(category);
         } else {
             job.setCategory(null);
+        }
+        
+        // 如果没有设置tags，尝试使用公司的tags
+        if (job.getTags() == null || job.getTags().isEmpty()) {
+            if (company.getTags() != null && !company.getTags().isEmpty()) {
+                job.setTags(company.getTags());
+            }
         }
 
         // 7. 如果状态为空，设置为草稿状态
@@ -239,9 +270,9 @@ public class JobService {
     }
 
     /**
-     * 将职位实体对象转换为DTO对象
-     * @param job 职位实体对象
-     * @return 转换后的职位DTO对象
+     * 将Job实体转换为JobDTO
+     * @param job Job实体
+     * @return JobDTO对象
      */
     private JobDTO convertToDTO(Job job) {
         JobDTO dto = new JobDTO();
@@ -253,6 +284,14 @@ public class JobService {
         if (job.getCategory() != null) {
             dto.setCategoryId(job.getCategory().getId());
             dto.setCategoryName(job.getCategory().getName());
+        }
+        
+        // 确保tags字段被复制
+        if (job.getTags() != null) {
+            dto.setTags(job.getTags());
+        } else if (job.getCompany() != null && job.getCompany().getTags() != null) {
+            // 如果Job没有标签，尝试使用Company的标签
+            dto.setTags(job.getCompany().getTags());
         }
         
         return dto;

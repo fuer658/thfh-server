@@ -286,7 +286,8 @@ public class UserService {
 
         // 转换生日日期为字符串格式
         if (user.getBirthday() != null) {
-            dto.setBirthday(user.getBirthday().toString()); // LocalDate默认格式为yyyy-MM-dd
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            dto.setBirthday(user.getBirthday().format(formatter));
         }
 
         // 转换创建时间为字符串格式

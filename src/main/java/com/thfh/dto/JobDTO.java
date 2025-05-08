@@ -111,6 +111,42 @@ public class JobDTO {
     private String contactEmail;
     
     /**
+     * 公司待遇（从Company移动过来）
+     */
+    @ApiModelProperty(value = "公司待遇", example = "年终奖金，绩效奖金")
+    private String companyTreatment;
+    
+    /**
+     * 员工福利（从Company移动过来）
+     */
+    @ApiModelProperty(value = "员工福利", example = "团队建设，生日礼品")
+    private String employeeBenefits;
+    
+    /**
+     * 晋升前景（从Company移动过来）
+     */
+    @ApiModelProperty(value = "晋升前景", example = "定期绩效评估，晋升机会")
+    private String promotionProspects;
+    
+    /**
+     * 岗位详细要求（从Company移动过来）
+     */
+    @ApiModelProperty(value = "岗位详细要求", example = "需具备良好的团队合作精神")
+    private String jobRequirements;
+    
+    /**
+     * 招聘岗位，多个岗位以逗号分隔（从Company移动过来）
+     */
+    @ApiModelProperty(value = "招聘岗位", example = "前端开发工程师,后端开发工程师")
+    private String positions;
+    
+    /**
+     * 职位标签，多个标签以逗号分隔，用于前端展示
+     */
+    @ApiModelProperty(value = "职位标签", example = "五险一金,年终奖,弹性工作")
+    private String tags;
+    
+    /**
      * 岗位状态（如：草稿、已发布、已关闭等）
      */
     @ApiModelProperty(value = "岗位状态", notes = "如草稿、已发布、已关闭等", example = "PUBLISHED")

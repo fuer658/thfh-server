@@ -2,7 +2,8 @@ package com.thfh.model;
 
 public enum UserType {
     STUDENT("学员"),
-    TEACHER("教员");
+    TEACHER("教员"),
+    ENTERPRISE("企业人员");
 
     private final String description;
 
