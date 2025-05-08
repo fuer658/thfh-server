@@ -1,7 +1,6 @@
 package com.thfh.controller;
 
 import com.thfh.common.Result;
-import com.thfh.dto.LoginDTO;
 import com.thfh.dto.UserDTO;
 import com.thfh.dto.UserQueryDTO;
 import com.thfh.service.UserService;
@@ -15,8 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import java.util.Map;
 
 /**
  * 用户管理控制器
