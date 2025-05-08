@@ -1,12 +1,15 @@
 package com.thfh.dto;
 
 import com.thfh.model.Gender;
+import com.thfh.model.InterestType;
 import com.thfh.model.User;
 import com.thfh.model.UserType;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+
+import java.util.List;
 
 /**
  * 用户数据传输对象
@@ -134,6 +137,12 @@ public class UserDTO {
      */
     @ApiModelProperty(value = "用户生日", example = "1990-01-01")
     private String birthday;
+    
+    /**
+     * 用户兴趣列表
+     */
+    @ApiModelProperty(value = "用户兴趣", notes = "用户的兴趣爱好类型列表")
+    private List<InterestType> interests;
     
     /**
      * 将User实体对象转换为UserDTO对象
