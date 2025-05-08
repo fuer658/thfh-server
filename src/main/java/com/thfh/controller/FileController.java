@@ -48,8 +48,20 @@ public class FileController {
         "video/x-matroska"
     );
 
+    // 允许的图片文件类型
+    private static final List<String> ALLOWED_IMAGE_TYPES = Arrays.asList(
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/bmp",
+        "image/webp"
+    );
+
     // 最大视频文件大小（100MB）
     private static final long MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+    
+    // 最大图片文件大小（10MB）
+    private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
     // 存储用户文件信息的Map，key为用户ID，value为文件信息列表
     private final Map<Long, List<FileInfo>> userFiles = new HashMap<>();
@@ -102,6 +114,16 @@ public class FileController {
     private boolean isValidVideoType(MultipartFile file) {
         String contentType = file.getContentType();
         return contentType != null && ALLOWED_VIDEO_TYPES.contains(contentType.toLowerCase());
+    }
+
+    /**
+     * 验证文件是否为允许的图片类型
+     * @param file 上传的文件
+     * @return 是否为允许的图片类型
+     */
+    private boolean isValidImageType(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase());
     }
 
     /**
@@ -393,6 +415,109 @@ public class FileController {
             Map<String, Object> error = new HashMap<>();
             error.put("code", 500);
             error.put("message", "文件删除失败: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    /**
+     * 批量上传图片文件
+     * 支持同时上传多张图片，验证图片类型和大小，可自定义存储路径
+     * 需要用户认证
+     * 
+     * @param files 上传的图片文件数组
+     * @param customPath 自定义存储路径（可选）
+     * @return 上传结果，包含所有图片的访问URL
+     */
+    @ApiOperation(value = "批量上传图片", notes = "支持同时上传多张图片，仅支持JPG、PNG、GIF、BMP、WEBP格式，单张图片不超过10MB")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "上传成功"),
+        @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
+    @PostMapping("/upload/images")
+    public ResponseEntity<?> uploadMultipleImages(
+            @ApiParam(value = "上传的图片文件数组", required = true) @RequestParam("files") MultipartFile[] files,
+            @ApiParam(value = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath) {
+        
+        try {
+            // 获取当前登录用户
+            User currentUser = userService.getCurrentUser();
+            
+            // 检查用户是否已认证
+            if (currentUser == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("code", 401);
+                error.put("message", "未授权，请先登录");
+                return ResponseEntity.status(401).body(error);
+            }
+            
+            // 检查是否有文件上传
+            if (files == null || files.length == 0) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("code", 400);
+                error.put("message", "请选择要上传的图片");
+                return ResponseEntity.badRequest().body(error);
+            }
+            
+            List<Map<String, Object>> uploadedFiles = new ArrayList<>();
+            List<String> errorMessages = new ArrayList<>();
+            
+            for (MultipartFile file : files) {
+                // 跳过空文件
+                if (file.isEmpty()) {
+                    continue;
+                }
+                
+                // 验证文件类型
+                if (!isValidImageType(file)) {
+                    errorMessages.add(file.getOriginalFilename() + ": 不支持的文件类型，仅支持JPG、PNG、GIF、BMP、WEBP格式的图片");
+                    continue;
+                }
+                
+                // 验证文件大小
+                if (file.getSize() > MAX_IMAGE_SIZE) {
+                    errorMessages.add(file.getOriginalFilename() + ": 图片大小不能超过10MB");
+                    continue;
+                }
+                
+                try {
+                    // 使用UUID作为文件名
+                    FileInfo fileInfo = saveFile(file, customPath, null);
+                    
+                    // 添加到用户文件列表
+                    addFileToUserFiles(currentUser.getId(), fileInfo);
+                    
+                    // 添加到上传成功列表
+                    Map<String, Object> fileData = new HashMap<>();
+                    fileData.put("url", fileInfo.url);
+                    fileData.put("path", fileInfo.path);
+                    fileData.put("originalFilename", fileInfo.originalFilename);
+                    fileData.put("size", fileInfo.size);
+                    uploadedFiles.add(fileData);
+                } catch (IOException e) {
+                    errorMessages.add(file.getOriginalFilename() + ": 上传失败 - " + e.getMessage());
+                }
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 200);
+            response.put("message", "图片上传完成");
+            response.put("success", uploadedFiles.size());
+            response.put("failed", errorMessages.size());
+            response.put("files", uploadedFiles);
+            
+            if (!errorMessages.isEmpty()) {
+                response.put("errors", errorMessages);
+            }
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("code", 500);
+            error.put("message", "图片上传失败: " + e.getMessage());
             return ResponseEntity.status(500).body(error);
         }
     }

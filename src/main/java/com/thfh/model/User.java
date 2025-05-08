@@ -83,6 +83,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JobApplication> jobApplications = new ArrayList<>();
     
+    // 添加与UserInterest的一对多关联
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserInterest> userInterests = new ArrayList<>();
+    
     /**
      * 更新实体的updateTime
      */

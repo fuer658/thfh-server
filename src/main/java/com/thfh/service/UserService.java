@@ -3,9 +3,12 @@ package com.thfh.service;
 import com.thfh.dto.UserDTO;
 import com.thfh.dto.UserQueryDTO;
 import com.thfh.dto.LoginDTO;
+import com.thfh.model.InterestType;
 import com.thfh.model.User;
+import com.thfh.model.UserInterest;
 import com.thfh.model.UserType;
 import com.thfh.model.Gender;
+import com.thfh.repository.UserInterestRepository;
 import com.thfh.repository.UserRepository;
 import com.thfh.util.JwtUtil;
 import org.springframework.beans.BeanUtils;
@@ -24,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 用户服务类
@@ -40,6 +44,9 @@ public class UserService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserInterestRepository userInterestRepository;
 
     /**
      * 根据查询条件获取用户列表
@@ -306,6 +313,15 @@ public class UserService {
         if (user.getUpdateTime() != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             dto.setUpdateTime(user.getUpdateTime().format(formatter));
+        }
+        
+        // 获取用户兴趣
+        List<UserInterest> userInterests = userInterestRepository.findByUser(user);
+        if (userInterests != null && !userInterests.isEmpty()) {
+            List<InterestType> interests = userInterests.stream()
+                    .map(UserInterest::getInterestType)
+                    .collect(Collectors.toList());
+            dto.setInterests(interests);
         }
 
         return dto;

@@ -1,6 +1,7 @@
 package com.thfh.dto;
 
 import com.thfh.model.Gender;
+import com.thfh.model.InterestType;
 import com.thfh.model.User;
 import com.thfh.model.UserType;
 import lombok.Data;
@@ -11,6 +12,8 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
+import java.util.List;
 
 /**
  * 用户数据传输对象
@@ -152,37 +155,43 @@ public class UserDTO {
      */
     @ApiModelProperty(value = "补签卡数量", notes = "学员特有字段")
     private Integer makeupCards;
-    
+
     /**
      * 经验值
      */
     @ApiModelProperty(value = "经验值")
     private Integer experience;
-    
+
     /**
      * 用户等级
      */
     @ApiModelProperty(value = "用户等级")
     private Integer level;
-    
+
     /**
      * 企业ID
      */
     @ApiModelProperty(value = "企业ID", notes = "企业人员特有字段，关联的公司ID")
     private Long companyId;
-    
+
     /**
      * 企业名称
      */
     @ApiModelProperty(value = "企业名称", notes = "企业人员特有字段，关联的公司名称")
     private String companyName;
-    
+
     /**
      * 公司详细信息
      */
     @ApiModelProperty(value = "公司详细信息", notes = "企业用户注册时用于传递公司详情")
     private CompanyDetails companyDetails;
-    
+
+    /**
+     * 用户兴趣列表
+     */
+    @ApiModelProperty(value = "用户兴趣", notes = "用户的兴趣爱好类型列表")
+    private List<InterestType> interests;
+
     /**
      * 将User实体对象转换为UserDTO对象
      * 
