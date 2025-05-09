@@ -296,4 +296,16 @@ public class JobService {
         
         return dto;
     }
+
+    /**
+     * 根据ID获取职位信息
+     * 
+     * @param id 职位ID
+     * @return 职位实体对象
+     * @throws RuntimeException 当职位不存在时抛出
+     */
+    public Job getJobById(Long id) {
+        return jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("职位不存在，ID: " + id));
+    }
 }

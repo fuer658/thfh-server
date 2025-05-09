@@ -1,13 +1,12 @@
 package com.thfh.service;
 
+import com.thfh.dto.CompanyDetails;
 import com.thfh.dto.UserDTO;
 import com.thfh.dto.UserQueryDTO;
 import com.thfh.dto.LoginDTO;
-import com.thfh.model.InterestType;
-import com.thfh.model.User;
-import com.thfh.model.UserInterest;
-import com.thfh.model.UserType;
-import com.thfh.model.Gender;
+import com.thfh.exception.ResourceNotFoundException;
+import com.thfh.model.*;
+import com.thfh.repository.CompanyRepository;
 import com.thfh.repository.UserInterestRepository;
 import com.thfh.repository.UserRepository;
 import com.thfh.util.JwtUtil;
@@ -15,6 +14,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -47,6 +47,9 @@ public class UserService {
 
     @Autowired
     private UserInterestRepository userInterestRepository;
+
+    @Autowired
+    private CompanyRepository companyRepository;
 
     /**
      * 根据查询条件获取用户列表
@@ -282,12 +285,12 @@ public class UserService {
     }
 
     /**
-     * 将用户实体对象转换为DTO对象
-     * 处理日期和时间格式转换
+     * 将User实体对象转换为UserDTO对象
+     * 
      * @param user 用户实体对象
-     * @return 转换后的用户DTO对象
+     * @return 转换后的UserDTO对象
      */
-    private UserDTO convertToDTO(User user) {
+    public UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         BeanUtils.copyProperties(user, dto);
 
@@ -367,7 +370,29 @@ public class UserService {
     public UserDTO getUserInfo(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
-        return convertToDTO(user);
+        UserDTO userDTO = convertToDTO(user);
+        
+        // 如果是企业用户，添加公司信息
+        if (UserType.ENTERPRISE.equals(user.getUserType()) && user.getCompany() != null) {
+            Company company = user.getCompany();
+            userDTO.setCompanyId(company.getId());
+            userDTO.setCompanyName(company.getName());
+            userDTO.setCompanyDetails(new CompanyDetails());
+            userDTO.getCompanyDetails().setIndustry(company.getIndustry());
+            userDTO.getCompanyDetails().setAddress(company.getAddress());
+            userDTO.getCompanyDetails().setWebsite(company.getWebsite());
+        }
+        
+        // 获取用户兴趣
+        List<UserInterest> userInterests = userInterestRepository.findByUser(user);
+        if (userInterests != null && !userInterests.isEmpty()) {
+            List<InterestType> interests = userInterests.stream()
+                    .map(UserInterest::getInterestType)
+                    .collect(Collectors.toList());
+            userDTO.setInterests(interests);
+        }
+        
+        return userDTO;
     }
 
     /**
@@ -421,5 +446,40 @@ public class UserService {
         currentUser.setIntroduction(introduction);
         currentUser.setUpdateTime(LocalDateTime.now());
         userRepository.save(currentUser);
+    }
+
+    /**
+     * 根据公司ID查找企业用户
+     * 
+     * @param companyId 公司ID
+     * @return 该公司的所有企业用户列表
+     */
+    public List<User> findUsersByCompanyId(Long companyId) {
+        if (companyId == null) {
+            throw new IllegalArgumentException("公司ID不能为空");
+        }
+        // 验证公司是否存在
+        if (!companyRepository.existsById(companyId)) {
+            throw new ResourceNotFoundException("找不到ID为 " + companyId + " 的公司");
+        }
+        return userRepository.findByCompanyId(companyId);
+    }
+
+    /**
+     * 根据公司ID查找企业用户(分页)
+     * 
+     * @param companyId 公司ID
+     * @param pageable 分页参数
+     * @return 分页后的企业用户列表
+     */
+    public Page<User> findUsersByCompanyId(Long companyId, Pageable pageable) {
+        if (companyId == null) {
+            throw new IllegalArgumentException("公司ID不能为空");
+        }
+        // 验证公司是否存在
+        if (!companyRepository.existsById(companyId)) {
+            throw new ResourceNotFoundException("找不到ID为 " + companyId + " 的公司");
+        }
+        return userRepository.findByCompanyId(companyId, pageable);
     }
 }

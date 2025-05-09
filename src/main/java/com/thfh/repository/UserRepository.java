@@ -6,8 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -47,4 +50,23 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     long countByUserType(UserType userType);
 
     long countByUserTypeAndEnabled(UserType userType, Boolean enabled);
+    
+    /**
+     * 根据公司ID查找企业用户
+     * 
+     * @param companyId 公司ID
+     * @return 该公司的所有企业用户列表
+     */
+    @Query("SELECT u FROM User u WHERE u.company.id = :companyId AND u.userType = 'ENTERPRISE'")
+    List<User> findByCompanyId(@Param("companyId") Long companyId);
+    
+    /**
+     * 根据公司ID查找企业用户(分页)
+     * 
+     * @param companyId 公司ID
+     * @param pageable 分页参数
+     * @return 分页后的企业用户列表
+     */
+    @Query("SELECT u FROM User u WHERE u.company.id = :companyId AND u.userType = 'ENTERPRISE'")
+    Page<User> findByCompanyId(@Param("companyId") Long companyId, Pageable pageable);
 }

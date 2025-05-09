@@ -3,7 +3,12 @@ package com.thfh.controller;
 import com.thfh.common.Result;
 import com.thfh.dto.JobDTO;
 import com.thfh.dto.JobQueryDTO;
+import com.thfh.dto.UserDTO;
+import com.thfh.exception.ResourceNotFoundException;
+import com.thfh.model.Job;
+import com.thfh.model.User;
 import com.thfh.service.JobService;
+import com.thfh.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -15,7 +20,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 工作/职位管理控制器
@@ -27,6 +34,9 @@ import java.util.Map;
 public class JobController {
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private UserService userService;
 
     /**
      * 获取工作/职位列表
@@ -182,6 +192,45 @@ public class JobController {
     public Result<Map<String, Long>> getJobApplicationCounts(
             @ApiParam(value = "职位ID", required = true) @PathVariable Long id) {
         return Result.success(jobService.getJobApplicationCounts(id));
+    }
+
+    /**
+     * 获取职位关联的企业用户
+     * 
+     * @param jobId 职位ID
+     * @return 该职位关联的企业用户列表
+     */
+    @ApiOperation(value = "获取职位关联的企业用户", notes = "通过职位ID获取该职位所属公司的企业用户列表")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "查询成功"),
+        @ApiResponse(code = 404, message = "职位不存在"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
+    @GetMapping("/{jobId}/company-users")
+    public Result<List<UserDTO>> getJobCompanyUsers(
+            @ApiParam(value = "职位ID", required = true) @PathVariable Long jobId) {
+        try {
+            // 获取职位信息
+            Job job = jobService.getJobById(jobId);
+            if (job == null) {
+                return Result.error(404, "职位不存在");
+            }
+            
+            // 获取公司ID
+            Long companyId = job.getCompany().getId();
+            
+            // 获取企业用户列表
+            List<User> users = userService.findUsersByCompanyId(companyId);
+            List<UserDTO> userDTOs = users.stream()
+                    .map(user -> userService.convertToDTO(user))
+                    .collect(Collectors.toList());
+                    
+            return Result.success(userDTOs);
+        } catch (ResourceNotFoundException e) {
+            return Result.error(404, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "查询企业用户失败: " + e.getMessage());
+        }
     }
     
     /**

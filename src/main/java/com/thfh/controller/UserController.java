@@ -3,6 +3,8 @@ package com.thfh.controller;
 import com.thfh.common.Result;
 import com.thfh.dto.UserDTO;
 import com.thfh.dto.UserQueryDTO;
+import com.thfh.exception.ResourceNotFoundException;
+import com.thfh.model.User;
 import com.thfh.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -11,9 +13,13 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 用户管理控制器
@@ -192,5 +198,70 @@ public class UserController {
             @ApiParam(value = "用户ID", required = true) @PathVariable Long id) {
         userService.toggleUserStatus(id);
         return Result.success(null);
+    }
+
+    /**
+     * 根据公司ID查找企业用户
+     * 
+     * @param companyId 公司ID
+     * @return 该公司的所有企业用户列表
+     */
+    @ApiOperation(value = "根据公司ID查找企业用户", notes = "通过公司ID查找属于该公司的所有企业类型用户")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "查询成功"),
+        @ApiResponse(code = 400, message = "参数错误"),
+        @ApiResponse(code = 404, message = "公司不存在"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
+    @GetMapping("/findByCompany/{companyId}")
+    public Result<List<UserDTO>> findUsersByCompanyId(
+            @ApiParam(value = "公司ID", required = true) @PathVariable Long companyId) {
+        try {
+            List<User> users = userService.findUsersByCompanyId(companyId);
+            List<UserDTO> userDTOs = users.stream()
+                    .map(user -> userService.convertToDTO(user))
+                    .collect(Collectors.toList());
+            return Result.success(userDTOs);
+        } catch (IllegalArgumentException e) {
+            return Result.error(400, e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            return Result.error(404, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "查询用户失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据公司ID分页查找企业用户
+     * 
+     * @param companyId 公司ID
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 分页后的企业用户列表
+     */
+    @ApiOperation(value = "根据公司ID分页查找企业用户", notes = "通过公司ID分页查找属于该公司的所有企业类型用户")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "查询成功"),
+        @ApiResponse(code = 400, message = "参数错误"),
+        @ApiResponse(code = 404, message = "公司不存在"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
+    @GetMapping("/findByCompany/{companyId}/page")
+    public Result<Page<UserDTO>> findUsersByCompanyIdPage(
+            @ApiParam(value = "公司ID", required = true) @PathVariable Long companyId,
+            @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int pageNum,
+            @ApiParam(value = "每页大小", defaultValue = "10") @RequestParam(defaultValue = "10") int pageSize) {
+        try {
+            Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
+            Page<User> userPage = userService.findUsersByCompanyId(companyId, pageable);
+            Page<UserDTO> userDTOPage = userPage.map(user -> userService.convertToDTO(user));
+            return Result.success(userDTOPage);
+        } catch (IllegalArgumentException e) {
+            return Result.error(400, e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            return Result.error(404, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "查询用户失败: " + e.getMessage());
+        }
     }
 }

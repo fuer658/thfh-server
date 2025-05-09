@@ -35,8 +35,9 @@ public class JwtInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String token = request.getHeader("Authorization");
         
-        // 登录接口不需要验证
-        if (request.getRequestURI().equals("/api/auth/login")) {
+        // 登录和注册接口不需要验证
+        if (request.getRequestURI().equals("/api/auth/login") || 
+            request.getRequestURI().equals("/api/auth/register")) {
             return true;
         }
 

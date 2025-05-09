@@ -38,6 +38,13 @@ public class Result<T> {
         result.setMessage(message);
         return result;
     }
+    
+    public static <T> Result<T> error(int code, String message) {
+        Result<T> result = new Result<>();
+        result.setCode(code);
+        result.setMessage(message);
+        return result;
+    }
 
     public static <T> Result<T> unauthorized(String message) {
         Result<T> result = new Result<>();
