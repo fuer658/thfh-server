@@ -1,5 +1,6 @@
 package com.thfh.controller;
 
+import com.thfh.dto.CreateOrderDTO;
 import com.thfh.dto.LogisticsDTO;
 import com.thfh.dto.OrderQueryDTO;
 import com.thfh.model.Order;
@@ -12,8 +13,11 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -27,6 +31,26 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+
+    /**
+     * 创建订单
+     * @param createOrderDTO 创建订单请求参数
+     * @return 创建的订单信息
+     */
+    @ApiOperation(value = "创建订单", notes = "根据艺术品ID创建新的订单")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "创建成功"),
+        @ApiResponse(code = 400, message = "参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "艺术品不存在")
+    })
+    @PostMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<Order> createOrder(
+            @Valid @RequestBody @ApiParam(value = "创建订单请求参数", required = true) CreateOrderDTO createOrderDTO) {
+        Order order = orderService.createOrder(createOrderDTO);
+        return Result.success(order, "订单创建成功");
+    }
 
     /**
      * 获取订单列表
