@@ -1,6 +1,5 @@
 package com.thfh.service;
 
-import com.thfh.dto.CartItemDTO;
 import com.thfh.dto.ShoppingCartDTO;
 import com.thfh.model.ShoppingCart;
 

@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * 艺术作品数据访问接口
  * 提供对艺术作品(Artwork)实体的数据库操作功能
@@ -104,4 +106,13 @@ public interface ArtworkRepository extends JpaRepository<Artwork, Long> {
      * @return 分页后的作品列表
      */
     Page<Artwork> findByTitleContainingAndCreatorIdAndEnabled(String title, Long creatorId, Boolean enabled, Pageable pageable);
+
+    /**
+     * 根据多个创作者ID查询已启用的作品，支持分页
+     * 
+     * @param creatorIds 创作者ID列表
+     * @param pageable 分页参数
+     * @return 分页后的作品列表
+     */
+    Page<Artwork> findByCreatorIdInAndEnabledTrue(List<Long> creatorIds, Pageable pageable);
 }

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -301,5 +302,15 @@ public class ArtworkService {
         } else {
             return artworkRepository.findAll(pageable);
         }
+    }
+
+    /**
+     * 获取指定创作者列表的作品
+     * @param creatorIds 创作者ID列表
+     * @param pageable 分页参数
+     * @return 作品分页列表
+     */
+    public Page<Artwork> getArtworksByCreatorIds(List<Long> creatorIds, Pageable pageable) {
+        return artworkRepository.findByCreatorIdInAndEnabledTrue(creatorIds, pageable);
     }
 }

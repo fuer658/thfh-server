@@ -4,6 +4,7 @@ import com.thfh.common.Result;
 import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.ArtworkScoreDTO;
 import com.thfh.dto.ArtworkUpdateDTO;
+import com.thfh.dto.FollowDTO;
 import com.thfh.dto.ShoppingCartDTO;
 import com.thfh.dto.TagDTO;
 import com.thfh.model.Artwork;
@@ -14,6 +15,7 @@ import com.thfh.service.ArtworkService;
 import com.thfh.service.ArtworkScoreService;
 import com.thfh.service.ShoppingCartService;
 import com.thfh.service.UserService;
+import com.thfh.service.FollowService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -35,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * 作品管理控制器
@@ -59,6 +62,9 @@ public class ArtworkController {
 
     @Autowired
     private ShoppingCartService shoppingCartService;
+
+    @Autowired
+    private FollowService followService;
 
     /**
      * 发布作品
@@ -468,5 +474,70 @@ public class ArtworkController {
         User user = userService.getCurrentUser();
         ShoppingCartDTO cart = shoppingCartService.addToCart(user.getId(), artworkId, quantity);
         return Result.success(cart, "已添加到购物车");
+    }
+
+    /**
+     * 获取已关注用户的作品列表
+     * @param authentication 认证信息
+     * @param page 页码
+     * @param size 每页数量
+     * @return 关注用户的作品列表
+     */
+    @ApiOperation(value = "获取已关注用户的作品列表", notes = "获取当前用户关注的所有用户的作品列表")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功"),
+            @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/following")
+    public Result<Page<ArtworkDTO>> getFollowingUserArtworks(
+            @ApiParam(hidden = true) Authentication authentication,
+            @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
+        User user = userService.getCurrentUser();
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        
+        // 获取已关注的用户ID列表
+        List<Long> followingIds = followService.getFollowingList(user.getId())
+                                             .stream()
+                                             .map(FollowDTO::getFollowedId)
+                                             .collect(Collectors.toList());
+        
+        if (followingIds.isEmpty()) {
+            // 如果没有关注任何用户，返回空页面
+            return Result.success(Page.empty());
+        }
+        
+        // 获取所有已关注用户的作品
+        Page<Artwork> artworkPage = artworkService.getArtworksByCreatorIds(followingIds, pageRequest);
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = artworkPage.map(artwork -> {
+            ArtworkDTO dto = new ArtworkDTO();
+            BeanUtils.copyProperties(artwork, dto, "creator", "tags");
+            
+            // 设置创建者信息
+            if (artwork.getCreator() != null) {
+                dto.setCreatorId(artwork.getCreator().getId());
+                dto.setCreatorName(artwork.getCreator().getUsername());
+                dto.setCreatorAvatar(artwork.getCreator().getAvatar());
+            }
+            
+            // 转换标签
+            if (artwork.getTags() != null) {
+                Set<TagDTO> tagDTOs = artwork.getTags().stream()
+                    .map(tag -> {
+                        TagDTO tagDTO = new TagDTO();
+                        tagDTO.setId(tag.getId());
+                        tagDTO.setTagName(tag.getName());
+                        return tagDTO;
+                    })
+                    .collect(Collectors.toSet());
+                dto.setTags(tagDTOs);
+            }
+            
+            return dto;
+        });
+        
+        return Result.success(dtoPage);
     }
 }
