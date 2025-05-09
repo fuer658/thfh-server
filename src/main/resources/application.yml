@@ -4,7 +4,7 @@ server:
   
 # 文件上传路径配置
 file:
-  upload-dir: ./uploads
+  upload-dir: /www/wwwroot/files
 
 spring:
   profiles:
