@@ -2,6 +2,7 @@ package com.thfh.controller;
 
 import com.thfh.model.User;
 import com.thfh.service.UserService;
+import com.thfh.util.ServerUrlUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -33,12 +34,12 @@ public class FileController {
 
     @Value("${file.upload-dir}")
     private String uploadDir;
-
-    @Value("${server.port}")
-    private String serverPort;
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private ServerUrlUtil serverUrlUtil;
 
     // 允许的视频文件类型
     private static final List<String> ALLOWED_VIDEO_TYPES = Arrays.asList(
@@ -99,14 +100,6 @@ public class FileController {
     }
 
     /**
-     * 获取服务器URL
-     * @return 服务器URL地址
-     */
-    private String getServerUrl() {
-        return "http://localhost:" + serverPort;
-    }
-
-    /**
      * 验证文件是否为允许的视频类型
      * @param file 上传的文件
      * @return 是否为允许的视频类型
@@ -158,7 +151,7 @@ public class FileController {
 
         // 构建相对路径和完整URL
         String relativePath = (customPath != null ? customPath + "/" : "") + filename;
-        String fileUrl = getServerUrl() + "/uploads/" + relativePath;
+        String fileUrl = serverUrlUtil.getFileUrl(relativePath);
 
         return new FileInfo(relativePath, fileUrl, originalFilename, file.getSize(), file.getContentType());
     }

@@ -19,3 +19,13 @@ spring:
         '[format_sql]': false
         jdbc:
           '[time_zone]': GMT+8
+
+# 日志配置
+logging:
+  level:
+    org.hibernate.SQL: ERROR
+    org.hibernate.type.descriptor.sql.BasicBinder: ERROR
+    org.hibernate.type.descriptor.sql: ERROR
+    org.springframework.transaction: ERROR
+    org.hibernate: ERROR
+    com.zaxxer.hikari: ERROR

@@ -1,6 +1,7 @@
 package com.thfh.service;
 
 import com.thfh.model.User;
+import com.thfh.util.ServerUrlUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -47,18 +48,11 @@ public class CourseFileService {
     @Value("${file.upload-dir}")
     private String baseUploadDir;
     
-    @Value("${server.port}")
-    private String serverPort;
-    
     @Autowired
     private UserService userService;
     
-    /**
-     * 获取服务器URL
-     */
-    private String getServerUrl() {
-        return "http://localhost:" + serverPort;
-    }
+    @Autowired
+    private ServerUrlUtil serverUrlUtil;
     
     /**
      * 上传课程相关文件（图片、视频、材料等）
@@ -143,6 +137,6 @@ public class CourseFileService {
         Files.copy(file.getInputStream(), filePath);
         
         // 生成访问URL
-        return getServerUrl() + "/uploads/" + relativePath + "/" + newFilename;
+        return serverUrlUtil.getFileUrl(relativePath + "/" + newFilename);
     }
 } 

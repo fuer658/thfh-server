@@ -4,6 +4,7 @@ import com.thfh.model.FileType;
 import com.thfh.model.User;
 import com.thfh.model.UserUpload;
 import com.thfh.repository.UserUploadRepository;
+import com.thfh.util.ServerUrlUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,9 +51,6 @@ public class UserUploadService {
     
     @Value("${file.upload-dir}")
     private String baseUploadDir;
-
-    @Value("${server.port}")
-    private String serverPort;
     
     @Autowired
     private UserUploadRepository userUploadRepository;
@@ -60,12 +58,8 @@ public class UserUploadService {
     @Autowired
     private UserService userService;
     
-    /**
-     * 获取服务器URL
-     */
-    private String getServerUrl() {
-        return "http://localhost:" + serverPort;
-    }
+    @Autowired
+    private ServerUrlUtil serverUrlUtil;
     
     /**
      * 获取文件类型
@@ -175,9 +169,7 @@ public class UserUploadService {
         }
         
         // 构建访问URL
-        String fileUrl = getServerUrl() + "/" + baseUploadDir + "/" + relativePath + "/" + newFilename;
-        // 修正URL，使用相对路径
-        fileUrl = fileUrl.replace("//uploads", "/uploads");
+        String fileUrl = serverUrlUtil.getFileUrl(relativePath + "/" + newFilename);
         
         // 创建上传记录
         UserUpload upload = new UserUpload();
