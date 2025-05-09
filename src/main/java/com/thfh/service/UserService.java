@@ -482,4 +482,13 @@ public class UserService {
         }
         return userRepository.findByCompanyId(companyId, pageable);
     }
+
+    /**
+     * 检查指定ID的用户是否存在
+     * @param id 用户ID
+     * @return 用户是否存在
+     */
+    public boolean existsById(Long id) {
+        return userRepository.existsById(id);
+    }
 }
