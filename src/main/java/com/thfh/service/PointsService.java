@@ -72,6 +72,21 @@ public class PointsService {
             currentPoints = 0;
         }
         student.setPoints(currentPoints + adjustDTO.getPoints());
+        
+        // 如果需要同时调整经验值
+        if (Boolean.TRUE.equals(adjustDTO.getIncludeExperience()) && adjustDTO.getExperienceAmount() != null) {
+            Integer currentExperience = student.getExperience();
+            if (currentExperience == null) {
+                currentExperience = 0;
+            }
+            student.setExperience(currentExperience + adjustDTO.getExperienceAmount());
+            
+            // 使用UserService中的方法计算新等级
+            int newExperience = student.getExperience();
+            int newLevel = userService.calculateUserLevel(newExperience);
+            student.setLevel(newLevel);
+        }
+        
         userRepository.save(student);
 
         return convertToDTO(record);

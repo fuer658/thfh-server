@@ -56,9 +56,11 @@ public class PointsController {
      *                - studentId：学员ID，必填，用于指定要调整积分的学员
      *                - points：调整的积分数量，必填，正数表示增加积分，负数表示扣减积分
      *                - description：调整说明，必填，用于记录积分调整的原因和备注
+     *                - includeExperience：是否同时调整经验值，可选，默认为false
+     *                - experienceAmount：调整的经验值数量，当includeExperience为true时有效
      * @return 积分调整记录，包含调整后的积分信息
      */
-    @ApiOperation(value = "调整用户积分", notes = "管理员调整学员积分，支持增加或扣减积分")
+    @ApiOperation(value = "调整用户积分", notes = "管理员调整学员积分，支持增加或扣减积分，并可同时调整用户经验值")
     @ApiResponses({
         @ApiResponse(code = 200, message = "调整成功"),
         @ApiResponse(code = 400, message = "请求参数错误"),
