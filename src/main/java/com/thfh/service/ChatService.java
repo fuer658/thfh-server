@@ -142,9 +142,6 @@ public class ChatService {
         
         // 查询每个会话的未读消息数量
         for (ChatConversationDTO conversation : conversationsMap.values()) {
-            User otherUser = userRepository.findById(conversation.getUserId())
-                    .orElseThrow(() -> new RuntimeException("用户不存在"));
-            
             long unreadCount = chatMessageRepository.countByReceiverAndReadFalse(currentUser);
             conversation.setUnreadCount((int) unreadCount);
         }

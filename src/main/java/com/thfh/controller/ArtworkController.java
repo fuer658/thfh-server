@@ -32,7 +32,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -623,7 +622,7 @@ public class ArtworkController {
         log.debug("获取用户ID={}的作品列表: 页码={}, 大小={}, 启用状态={}", userId, page, size, enabled);
         
         // 验证用户是否存在
-        User user = userService.getUserById(userId);
+        userService.getUserById(userId);
                 
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         

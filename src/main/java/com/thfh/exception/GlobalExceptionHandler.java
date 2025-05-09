@@ -234,7 +234,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
-        HttpStatus httpStatus = errorCode.getHttpStatus();
         log.debug("业务异常: {}, 错误码: {}", e.getMessage(), errorCode.getCode());
         return Result.error(errorCode.getCode(), e.getMessage());
     }

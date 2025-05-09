@@ -5,7 +5,6 @@ import com.thfh.dto.ShoppingCartDTO;
 import com.thfh.model.User;
 import com.thfh.service.ShoppingCartService;
 import com.thfh.service.UserService;
-import com.thfh.service.AdminService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -32,9 +31,6 @@ public class ShoppingCartController {
 
     @Autowired
     private ShoppingCartService shoppingCartService;
-    
-    @Autowired
-    private AdminService adminService;
 
     /**
      * 获取当前用户的购物车
