@@ -32,6 +32,6 @@ public class ServerUrlUtil {
      */
     public String getFileUrl(String relativePath) {
         // 使用Nginx配置的文件服务器URL
-        return "http://" + serverHost + "/files/" + relativePath;
+        return getServerBaseUrl() + "/uploads/" + relativePath;
     }
 } 

@@ -1,10 +1,10 @@
 server:
   port: 8085
-  host: localhost
+  host: 8.138.226.198
   
 # 文件上传路径配置
 file:
-  upload-dir: /www/wwwroot/files
+  upload-dir: ./uploads
 
 spring:
   profiles:
