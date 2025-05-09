@@ -325,11 +325,32 @@ public class PostService {
         if (!post.getUserId().equals(currentUser.getId())) {
             throw new IllegalStateException("您没有权限更新该动态");
         }
-
+        
+        // 更新基本内容
         post.setTitle(updatedPost.getTitle());
         post.setContent(updatedPost.getContent());
-        post.setImageUrls(updatedPost.getImageUrls());
-
+        
+        // 更新图片URL
+        if (updatedPost.getImageUrls() != null) {
+            post.setImageUrls(updatedPost.getImageUrls());
+        }
+        
+        // 更新标签（如果提供了新的标签ID集合）
+        if (updatedPost.getTagIds() != null && !updatedPost.getTagIds().isEmpty()) {
+            // 清除旧标签
+            post.getTags().clear();
+            
+            // 添加新标签
+            for (Long tagId : updatedPost.getTagIds()) {
+                PostTag tag = postTagRepository.findById(tagId)
+                        .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
+                post.getTags().add(tag);
+            }
+        }
+        
+        // 记录日志
+        log.info("用户 {} 更新了动态 {}", currentUser.getUsername(), postId);
+        
         return postRepository.save(post);
     }
 

@@ -234,7 +234,8 @@ public class PostController {
     public Result<Post> updatePost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
             @ApiParam(value = "更新的动态信息", required = true) @RequestBody Post post) {
-        return Result.success(postService.updatePost(postId, post));
+        Post updatedPost = postService.updatePost(postId, post);
+        return Result.success(updatedPost);
     }
 
     /**

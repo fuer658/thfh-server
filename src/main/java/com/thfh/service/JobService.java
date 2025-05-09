@@ -133,7 +133,13 @@ public class JobService {
             }
         }
         
-        job.setStatus(JobStatus.DRAFT);
+        // 如果前端传递了状态，则使用前端传递的状态，否则默认为草稿状态
+        if (jobDTO.getStatus() == null) {
+            job.setStatus(JobStatus.DRAFT);
+        } else {
+            job.setStatus(jobDTO.getStatus()); // 使用前端传递的状态
+        }
+        
         job = jobRepository.save(job);
 
         return convertToDTO(job);

@@ -133,7 +133,13 @@ public class CourseManagementService {
         BeanUtils.copyProperties(courseDTO, course);
         
         // 设置必要的默认值
-        course.setStatus(CourseStatus.DRAFT); // 新创建的课程默认为草稿状态
+        // 如果前端传递了状态，则使用前端传递的状态，否则默认为草稿状态
+        if (courseDTO.getStatus() == null) {
+            course.setStatus(CourseStatus.DRAFT); // 新创建的课程默认为草稿状态
+        } else {
+            course.setStatus(courseDTO.getStatus()); // 使用前端传递的状态
+        }
+        
         course.setTeacher(teacher);
         course.setLikeCount(0);
         course.setFavoriteCount(0);
