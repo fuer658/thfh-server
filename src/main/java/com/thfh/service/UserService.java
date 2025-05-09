@@ -17,6 +17,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.criteria.Predicate;
@@ -50,6 +53,13 @@ public class UserService {
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    // 用户等级经验值常量
+    public static final int LEVEL_1_TO_2_EXP = 100;
+    public static final int LEVEL_2_TO_3_EXP = 300;
+    public static final int LEVEL_3_TO_4_EXP = 600;
+    public static final int LEVEL_4_TO_5_EXP = 1200;
+    public static final int MAX_LEVEL = 5;
 
     /**
      * 根据查询条件获取用户列表
@@ -396,19 +406,18 @@ public class UserService {
     }
 
     /**
-     * 获取当前登录用户信息
-     * @return 当前登录用户实体对象，如果未登录则返回null
-     * @throws RuntimeException 当用户不存在时抛出
+     * 获取当前登录用户
+     * @return 当前登录用户，如果未登录则返回null
      */
     public User getCurrentUser() {
-        org.springframework.security.core.Authentication authentication =
-            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+                authentication instanceof AnonymousAuthenticationToken) {
             return null;
         }
+        
         String username = authentication.getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        return userRepository.findByUsername(username).orElse(null);
     }
 
     /**
@@ -481,5 +490,68 @@ public class UserService {
             throw new ResourceNotFoundException("找不到ID为 " + companyId + " 的公司");
         }
         return userRepository.findByCompanyId(companyId, pageable);
+    }
+
+    /**
+     * 根据经验值计算用户等级，使用与APP端一致的计算方式
+     * @param experience 用户经验值
+     * @return 用户等级 (1-5)
+     */
+    public int calculateUserLevel(int experience) {
+        if (experience < LEVEL_1_TO_2_EXP) {
+            return 1;
+        } else if (experience < LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP) {
+            return 2;
+        } else if (experience < LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP + LEVEL_3_TO_4_EXP) {
+            return 3;
+        } else if (experience < LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP + LEVEL_3_TO_4_EXP + LEVEL_4_TO_5_EXP) {
+            return 4;
+        } else {
+            return 5;
+        }
+    }
+
+    /**
+     * 获取升级到下一等级所需的总经验值
+     * @param currentLevel 当前等级
+     * @return 下一等级所需的总经验值，如果已经是最高等级则返回-1
+     */
+    public int getExperienceForNextLevel(int currentLevel) {
+        switch (currentLevel) {
+            case 1:
+                return LEVEL_1_TO_2_EXP;
+            case 2:
+                return LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP;
+            case 3:
+                return LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP + LEVEL_3_TO_4_EXP;
+            case 4:
+                return LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP + LEVEL_3_TO_4_EXP + LEVEL_4_TO_5_EXP;
+            case 5:
+                return -1; // 已经是最高等级
+            default:
+                return LEVEL_1_TO_2_EXP; // 默认返回一级到二级的经验值
+        }
+    }
+
+    /**
+     * 获取当前等级的起始经验值
+     * @param level 用户等级
+     * @return 该等级的起始经验值
+     */
+    public int getBaseExperienceForLevel(int level) {
+        switch (level) {
+            case 1:
+                return 0;
+            case 2:
+                return LEVEL_1_TO_2_EXP;
+            case 3:
+                return LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP;
+            case 4:
+                return LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP + LEVEL_3_TO_4_EXP;
+            case 5:
+                return LEVEL_1_TO_2_EXP + LEVEL_2_TO_3_EXP + LEVEL_3_TO_4_EXP + LEVEL_4_TO_5_EXP;
+            default:
+                return 0;
+        }
     }
 }

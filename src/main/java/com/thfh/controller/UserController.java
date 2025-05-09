@@ -18,7 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -263,5 +265,63 @@ public class UserController {
         } catch (Exception e) {
             return Result.error(500, "查询用户失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 获取用户经验值信息
+     * @return 用户经验值信息，包含当前经验值、用户等级和升级所需经验值
+     */
+    @ApiOperation(value = "获取用户经验值信息", notes = "获取当前登录用户的经验值、等级和升级所需经验值")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/experience")
+    public Result<Map<String, Object>> getUserExperience() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        
+        Map<String, Object> experienceInfo = new HashMap<>();
+        int currentExperience = currentUser.getExperience() != null ? currentUser.getExperience() : 0;
+        int currentLevel = currentUser.getLevel() != null ? currentUser.getLevel() : 1;
+        
+        experienceInfo.put("experience", currentExperience);
+        experienceInfo.put("level", currentLevel);
+        
+        // 使用APP端的升级经验值计算 (通过UserService实现)
+        
+        // 获取下一级所需的总经验值
+        int nextLevelExperience = userService.getExperienceForNextLevel(currentLevel);
+
+        // 计算还需要的经验值
+        int requiredExperience = 0;
+        if (currentLevel < UserService.MAX_LEVEL) {
+            requiredExperience = nextLevelExperience - currentExperience;
+            if (requiredExperience < 0) {
+                requiredExperience = 0;
+            }
+        }
+        
+        // 获取当前等级的起始经验值
+        int baseExperience = userService.getBaseExperienceForLevel(currentLevel);
+
+        // 计算当前等级进度百分比
+        int levelProgress = 0;
+        if (currentLevel < UserService.MAX_LEVEL) {
+            int levelExp = nextLevelExperience - baseExperience;
+            int currentLevelExp = currentExperience - baseExperience;
+            levelProgress = (int) (((float) currentLevelExp / levelExp) * 100);
+        } else {
+            levelProgress = 100; // 最高等级进度为100%
+        }
+        
+        experienceInfo.put("requiredExperience", requiredExperience);
+        experienceInfo.put("nextLevelExperience", nextLevelExperience);
+        experienceInfo.put("baseExperience", baseExperience);
+        experienceInfo.put("levelProgress", levelProgress);
+        
+        return Result.success(experienceInfo);
     }
 }

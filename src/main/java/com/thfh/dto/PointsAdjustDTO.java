@@ -28,4 +28,16 @@ public class PointsAdjustDTO {
      */
     @ApiModelProperty(value = "调整原因", required = true, example = "活动奖励")
     private String description;
+    
+    /**
+     * 是否同时调整经验值
+     */
+    @ApiModelProperty(value = "是否同时调整经验值", notes = "true表示需要同时调整经验值", example = "true")
+    private Boolean includeExperience = false;
+    
+    /**
+     * 调整的经验值数量
+     */
+    @ApiModelProperty(value = "经验值数量", notes = "当includeExperience为true时有效", example = "200")
+    private Integer experienceAmount;
 } 
