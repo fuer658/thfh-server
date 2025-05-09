@@ -5,6 +5,7 @@ import com.thfh.model.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,13 @@ import org.springframework.stereotype.Repository;
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     boolean existsByUserIdAndPostId(Long userId, Long postId);
     void deleteByUserIdAndPostId(Long userId, Long postId);
+    
+    /**
+     * 根据帖子ID删除所有点赞记录
+     * @param postId 帖子ID
+     */
+    @Modifying
+    void deleteByPostId(Long postId);
     
     /**
      * 获取用户点赞的动态列表

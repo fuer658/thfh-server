@@ -311,7 +311,26 @@ public class PostService {
             throw new IllegalStateException("您没有权限删除该动态");
         }
 
+        // 删除动态前先清除所有关联数据
+        // 1. 删除所有评论点赞记录
+        List<PostComment> comments = postCommentRepository.findByPostIdOrderByLevelAscCreateTimeDesc(postId, Pageable.unpaged()).getContent();
+        for (PostComment comment : comments) {
+            postCommentLikeRepository.deleteByCommentId(comment.getId());
+        }
+        
+        // 2. 删除所有评论
+        postCommentRepository.deleteAll(comments);
+        
+        // 3. 删除所有点赞记录
+        postLikeRepository.deleteByPostId(postId);
+        
+        // 4. 删除所有分享记录
+        postShareRepository.deleteByPostId(postId);
+        
+        // 5. 最后删除动态本身
         postRepository.deleteById(postId);
+        
+        log.info("用户 {} 删除了动态 {}", currentUser.getUsername(), postId);
     }
 
     /**
@@ -483,8 +502,26 @@ public class PostService {
             throw new IllegalArgumentException("动态不存在");
         }
 
-        // 管理员可以删除任何动态
+        // 删除动态前先清除所有关联数据
+        // 1. 删除所有评论点赞记录
+        List<PostComment> comments = postCommentRepository.findByPostIdOrderByLevelAscCreateTimeDesc(postId, Pageable.unpaged()).getContent();
+        for (PostComment comment : comments) {
+            postCommentLikeRepository.deleteByCommentId(comment.getId());
+        }
+        
+        // 2. 删除所有评论
+        postCommentRepository.deleteAll(comments);
+        
+        // 3. 删除所有点赞记录
+        postLikeRepository.deleteByPostId(postId);
+        
+        // 4. 删除所有分享记录
+        postShareRepository.deleteByPostId(postId);
+        
+        // 5. 最后删除动态本身
         postRepository.deleteById(postId);
+        
+        log.info("管理员 {} 删除了动态 {}", username, postId);
     }
 
     /**
