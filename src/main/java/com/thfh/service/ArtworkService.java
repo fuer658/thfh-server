@@ -45,12 +45,14 @@ public class ArtworkService {
             throw new IllegalArgumentException("作品类型不能为空");
         }
         
-        // 设置当前登录用户为作品创建者
-        User currentUser = userService.getCurrentUser();
-        if (currentUser == null) {
-            throw new IllegalStateException("用户未登录");
+        // 确保作品有创建者
+        if (artwork.getCreator() == null) {
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                throw new IllegalStateException("用户未登录");
+            }
+            artwork.setCreator(currentUser);
         }
-        artwork.setCreator(currentUser);
         
         // 保存标签
         if (artwork.getTags() != null && !artwork.getTags().isEmpty()) {

@@ -86,9 +86,17 @@ public class ArtworkController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Result<Artwork> createArtwork(
+    public Result<ArtworkDTO> createArtwork(
             @ApiParam(value = "作品信息", required = true) @Valid @RequestBody Artwork artwork,
             @ApiParam(hidden = true) @AuthenticationPrincipal User user) {
+        // 判断用户是否为空，如果为空则通过service获取当前用户
+        if (user == null) {
+            user = userService.getCurrentUser();
+            if (user == null) {
+                return Result.unauthorized("用户未登录或会话已过期，请重新登录");
+            }
+        }
+        
         log.info("用户 {} 正在创建新作品", user.getUsername());
         
         artwork.setCreator(user);
@@ -97,7 +105,10 @@ public class ArtworkController {
         Artwork createdArtwork = artworkService.createArtwork(artwork);
         
         log.info("用户 {} 成功创建作品: {}", user.getUsername(), createdArtwork.getId());
-        return Result.success(createdArtwork, "作品发布成功");
+        
+        // 将实体转换为DTO后返回，避免懒加载问题
+        ArtworkDTO artworkDTO = convertToArtworkDTO(createdArtwork);
+        return Result.success(artworkDTO, "作品发布成功");
     }
 
     /**
