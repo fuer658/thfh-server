@@ -4,7 +4,7 @@ server:
   
 # 文件上传路径配置
 file:
-  upload-dir: ./uploads
+  upload-dir: /www/wwwroot/files
 
 spring:
   profiles:
@@ -21,10 +21,12 @@ spring:
   web:
     resources:
       static-locations: classpath:/static/,file:${file.upload-dir}
+      add-mappings: false  # 禁用资源映射，保证404能被异常处理器捕获
   # 解决Springfox与Spring Boot 2.7.0的兼容性问题
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
+    throw-exception-if-no-handler-found: true  # 启用404异常处理
       
   # 配置Tomcat临时目录
   tomcat:

@@ -493,6 +493,15 @@ public class UserService {
     }
 
     /**
+     * 检查指定ID的用户是否存在
+     * @param id 用户ID
+     * @return 用户是否存在
+     */
+    public boolean existsById(Long id) {
+        return userRepository.existsById(id);
+    }
+
+    /**
      * 根据经验值计算用户等级，使用与APP端一致的计算方式
      * @param experience 用户经验值
      * @return 用户等级 (1-5)
