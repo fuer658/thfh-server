@@ -315,4 +315,14 @@ public class ArtworkService {
     public Page<Artwork> getArtworksByCreatorIds(List<Long> creatorIds, Pageable pageable) {
         return artworkRepository.findByCreatorIdInAndEnabledTrue(creatorIds, pageable);
     }
+
+    /**
+     * 根据用户ID获取作品列表
+     * @param userId 用户ID
+     * @param pageable 分页参数
+     * @return 作品分页列表
+     */
+    public Page<Artwork> getArtworksByUserId(Long userId, Pageable pageable) {
+        return artworkRepository.findByCreatorId(userId, pageable);
+    }
 }

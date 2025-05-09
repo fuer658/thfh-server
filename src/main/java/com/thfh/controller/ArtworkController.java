@@ -597,6 +597,48 @@ public class ArtworkController {
         
         return Result.success(dtoPage);
     }
+
+    /**
+     * 根据用户ID获取作品列表
+     * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
+     * @param enabled 是否启用（可选）
+     * @return 作品列表
+     */
+    @ApiOperation(value = "获取指定用户的作品列表", notes = "根据用户ID获取作品分页列表，支持按启用状态筛选")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功"),
+            @ApiResponse(code = 404, message = "用户不存在")
+    })
+    @GetMapping("/user/{userId}")
+    public Result<Page<ArtworkDTO>> getUserArtworks(
+            @ApiParam(value = "用户ID", required = true) 
+            @PathVariable @Positive(message = "用户ID必须为正数") Long userId,
+            @ApiParam(value = "是否启用（可选）") @RequestParam(required = false) Boolean enabled,
+            @ApiParam(value = "页码", defaultValue = "1") 
+            @RequestParam(defaultValue = "1") @PositiveOrZero(message = "页码必须大于或等于0") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") 
+            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size) {
+        log.debug("获取用户ID={}的作品列表: 页码={}, 大小={}, 启用状态={}", userId, page, size, enabled);
+        
+        // 验证用户是否存在
+        User user = userService.getUserById(userId);
+                
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        
+        Page<Artwork> artworks;
+        if (enabled != null) {
+            artworks = artworkService.getUserArtworksByEnabled(userId, enabled, pageRequest);
+        } else {
+            artworks = artworkService.getArtworksByUserId(userId, pageRequest);
+        }
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworks);
+        
+        return Result.success(dtoPage);
+    }
     
     /**
      * 将Artwork转换为ArtworkDTO
