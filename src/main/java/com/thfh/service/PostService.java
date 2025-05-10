@@ -865,4 +865,52 @@ public class PostService {
         // 更新动态的评论计数
         postRepository.updateCommentCount(postId, -1);
     }
+
+    // =================== 新增DTO转换方法 ===================
+    /**
+     * Post转PostDTO
+     */
+    public PostDTO toPostDTO(Post post) {
+        return convertToDTO(post);
+    }
+
+    /**
+     * 根据ID获取PostDTO
+     */
+    public PostDTO getPostDTO(Long postId) {
+        Post post = getPost(postId);
+        return convertToDTO(post);
+    }
+
+    /**
+     * 获取用户点赞的动态DTO分页
+     */
+    public Page<PostDTO> getUserLikedPostsDTO(Long userId, Pageable pageable) {
+        Page<Post> posts = getUserLikedPosts(userId, pageable);
+        return posts.map(this::convertToDTO);
+    }
+
+    /**
+     * 评论动态并返回DTO
+     */
+    public PostCommentDTO commentPostDTO(Long postId, String content, Long parentId) {
+        PostComment comment = commentPost(postId, content, parentId);
+        return convertToCommentDTO(comment);
+    }
+
+    /**
+     * 管理员以指定用户身份评论动态并返回DTO
+     */
+    public PostCommentDTO commentPostByAdminDTO(Long postId, String content, Long parentId, Long userId) {
+        PostComment comment = commentPostByAdmin(postId, content, parentId, userId);
+        return convertToCommentDTO(comment);
+    }
+
+    /**
+     * 获取用户动态DTO分页
+     */
+    public Page<PostDTO> getUserPostsDTO(Long userId, Pageable pageable) {
+        Page<Post> posts = getUserPosts(userId, pageable);
+        return posts.map(this::convertToDTO);
+    }
 }

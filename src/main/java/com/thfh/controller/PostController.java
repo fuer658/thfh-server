@@ -49,19 +49,16 @@ public class PostController {
     })
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public Result<Post> createPost(
+    public Result<PostDTO> createPost(
             @ApiParam(value = "动态信息", required = true) @Valid @RequestBody Post post) {
-        // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
-
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
                 postService.addTag(createdPost.getId(), tagId);
             }
         }
-
-        return Result.success(createdPost);
+        return Result.success(postService.toPostDTO(createdPost));
     }
 
     /**
@@ -74,9 +71,9 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在")
     })
     @GetMapping("/{postId}")
-    public Result<Post> getPost(
+    public Result<PostDTO> getPost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
-        return Result.success(postService.getPost(postId));
+        return Result.success(postService.getPostDTO(postId));
     }
 
     /**
@@ -89,12 +86,12 @@ public class PostController {
         @ApiResponse(code = 404, message = "用户不存在")
     })
     @GetMapping("/user/{userId}")
-    public Result<Page<Post>> getUserPosts(
+    public Result<Page<PostDTO>> getUserPosts(
             @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
             @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return Result.success(postService.getUserPosts(userId, pageRequest));
+        return Result.success(postService.getUserPostsDTO(userId, pageRequest));
     }
 
     /**
@@ -108,6 +105,7 @@ public class PostController {
         @ApiResponse(code = 409, message = "已经点赞过该动态")
     })
     @PostMapping("/{postId}/like")
+    @PreAuthorize("hasRole('USER')")
     public Result<Void> likePost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.likePost(postId);
@@ -124,6 +122,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在或未点赞")
     })
     @DeleteMapping("/{postId}/like")
+    @PreAuthorize("hasRole('USER')")
     public Result<Void> unlikePost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.unlikePost(postId);
@@ -141,10 +140,11 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在或父评论不存在")
     })
     @PostMapping("/{postId}/comments")
-    public Result<PostComment> commentPost(
+    @PreAuthorize("hasRole('USER')")
+    public Result<PostCommentDTO> commentPost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
             @ApiParam(value = "评论信息", required = true) @Valid @RequestBody CommentRequest request) {
-        return Result.success(postService.commentPost(
+        return Result.success(postService.commentPostDTO(
             postId,
             request.getContent(),
             request.getParentId()
@@ -197,6 +197,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在")
     })
     @PostMapping("/{postId}/share")
+    @PreAuthorize("hasRole('USER')")
     public Result<Void> sharePost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.sharePost(postId);
@@ -214,6 +215,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在")
     })
     @DeleteMapping("/{postId}")
+    @PreAuthorize("hasRole('USER')")
     public Result<Void> deletePost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.deletePost(postId);
@@ -232,11 +234,12 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在")
     })
     @PutMapping("/{postId}")
-    public Result<Post> updatePost(
+    @PreAuthorize("hasRole('USER')")
+    public Result<PostDTO> updatePost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
-            @ApiParam(value = "更新的动态信息", required = true) @RequestBody Post post) {
+            @ApiParam(value = "更新的动态信息", required = true) @Valid @RequestBody Post post) {
         Post updatedPost = postService.updatePost(postId, post);
-        return Result.success(updatedPost);
+        return Result.success(postService.toPostDTO(updatedPost));
     }
 
     /**
@@ -249,6 +252,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在")
     })
     @GetMapping("/{postId}/isLiked")
+    @PreAuthorize("hasRole('USER')")
     public Result<Boolean> isLiked(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         User currentUser = userService.getCurrentUser();
@@ -305,20 +309,17 @@ public class PostController {
     })
     @PostMapping("/admin/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Result<Post> createPostByAdmin(
+    public Result<PostDTO> createPostByAdmin(
             @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
-            @ApiParam(value = "动态内容", required = true) @RequestBody Post post) {
-        // 如果有标签ID列表，为动态添加标签
+            @ApiParam(value = "动态内容", required = true) @Valid @RequestBody Post post) {
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
-
         if (tagIds != null && !tagIds.isEmpty()) {
             for (Long tagId : tagIds) {
                 postService.addTag(createdPost.getId(), tagId);
             }
         }
-
-        return Result.success(createdPost);
+        return Result.success(postService.toPostDTO(createdPost));
     }
 
     /**
@@ -334,6 +335,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "动态不存在")
     })
     @DeleteMapping("/admin/{postId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> deletePostByAdmin(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId) {
         postService.deletePostByAdmin(postId);
@@ -349,12 +351,13 @@ public class PostController {
         @ApiResponse(code = 401, message = "未授权，请先登录")
     })
     @GetMapping("/likes")
-    public Result<Page<Post>> getUserLikedPosts(
+    @PreAuthorize("hasRole('USER')")
+    public Result<Page<PostDTO>> getUserLikedPosts(
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
             @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         User currentUser = userService.getCurrentUser();
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        return Result.success(postService.getUserLikedPosts(currentUser.getId(), pageRequest));
+        return Result.success(postService.getUserLikedPostsDTO(currentUser.getId(), pageRequest));
     }
 
     /**
@@ -374,11 +377,11 @@ public class PostController {
     })
     @PostMapping("/admin/{userId}/posts/{postId}/comments")
     @PreAuthorize("hasRole('ADMIN')")
-    public Result<PostComment> commentPostByAdmin(
+    public Result<PostCommentDTO> commentPostByAdmin(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
             @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
-            @ApiParam(value = "评论请求", required = true) @RequestBody CommentRequest request) {
-        return Result.success(postService.commentPostByAdmin(
+            @ApiParam(value = "评论请求", required = true) @Valid @RequestBody CommentRequest request) {
+        return Result.success(postService.commentPostByAdminDTO(
             postId,
             request.getContent(),
             request.getParentId(),
@@ -419,6 +422,7 @@ public class PostController {
         @ApiResponse(code = 409, message = "已经点赞过该评论")
     })
     @PostMapping("/comments/{commentId}/like")
+    @PreAuthorize("hasRole('USER')")
     public Result<Integer> likeComment(
             @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         return Result.success(postService.likeComment(commentId));
@@ -436,6 +440,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "评论不存在或未点赞")
     })
     @DeleteMapping("/comments/{commentId}/like")
+    @PreAuthorize("hasRole('USER')")
     public Result<Integer> unlikeComment(
             @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         return Result.success(postService.unlikeComment(commentId));
@@ -453,6 +458,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "评论不存在")
     })
     @GetMapping("/comments/{commentId}/isLiked")
+    @PreAuthorize("hasRole('USER')")
     public Result<Boolean> isCommentLiked(
             @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         User currentUser = userService.getCurrentUser();
@@ -494,6 +500,7 @@ public class PostController {
         @ApiResponse(code = 404, message = "评论不存在")
     })
     @DeleteMapping("/comments/{commentId}")
+    @PreAuthorize("hasRole('USER')")
     public Result<Void> deleteComment(
             @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         postService.deleteComment(commentId);
