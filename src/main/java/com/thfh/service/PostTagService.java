@@ -48,7 +48,9 @@ public class PostTagService {
      * @return 标签列表
      */
     public List<PostTag> getAllTags() {
-        return postTagRepository.findAll();
+        List<PostTag> tags = postTagRepository.findAll();
+        tags.forEach(tag -> tag.setHotness(getTagHotness(tag.getId())));
+        return tags;
     }
     
     /**
@@ -58,7 +60,9 @@ public class PostTagService {
      * @return 标签对象
      */
     public Optional<PostTag> getTagById(Long id) {
-        return postTagRepository.findById(id);
+        Optional<PostTag> tagOpt = postTagRepository.findById(id);
+        tagOpt.ifPresent(tag -> tag.setHotness(getTagHotness(id)));
+        return tagOpt;
     }
     
     /**
@@ -142,5 +146,27 @@ public class PostTagService {
         tag.setName(updatedTag.getName());
         tag.setDescription(updatedTag.getDescription());
         return postTagRepository.save(tag);
+    }
+    
+    /**
+     * 统计标签热度（所有关联动态的浏览量之和）
+     */
+    public Long getTagHotness(Long tagId) {
+        List<Post> posts = postRepository.findByTagsId(tagId, Pageable.unpaged()).getContent();
+        return posts.stream().mapToLong(post -> post.getViewCount() == null ? 0L : post.getViewCount()).sum();
+    }
+    
+    /**
+     * 获取热门标签（按热度降序排列，仅返回已启用标签）
+     */
+    public List<PostTag> getTopHotTags(int limit) {
+        List<PostTag> tags = postTagRepository.findAll();
+        tags.removeIf(tag -> tag.getEnabled() == null || !tag.getEnabled());
+        tags.forEach(tag -> tag.setHotness(getTagHotness(tag.getId())));
+        tags.sort((a, b) -> Long.compare(b.getHotness(), a.getHotness()));
+        if (tags.size() > limit) {
+            return tags.subList(0, limit);
+        }
+        return tags;
     }
 } 

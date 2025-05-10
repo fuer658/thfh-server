@@ -198,4 +198,17 @@ public class PostTagController {
         return Result.success(postTagService.setTagEnabled(id, enabled)
             .orElseThrow(() -> new IllegalArgumentException("标签不存在")));
     }
+    
+    /**
+     * 获取热门标签
+     */
+    @ApiOperation(value = "获取热门标签", notes = "按热度降序返回前N个热门标签（默认10个）")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/hot")
+    public Result<List<PostTag>> getHotTags(@RequestParam(value = "limit", required = false, defaultValue = "10") int limit) {
+        return Result.success(postTagService.getTopHotTags(limit));
+    }
 } 

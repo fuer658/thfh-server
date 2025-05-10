@@ -28,6 +28,10 @@ public class PostTag {
     @ApiModelProperty(value = "是否启用", example = "true")
     private Boolean enabled = true;
 
+    @ApiModelProperty(value = "热度（所有关联动态的浏览量之和）", example = "1000")
+    @Transient // 不持久化，动态计算
+    private Long hotness = 0L;
+
     // 默认构造函数
     public PostTag() {}
 
@@ -35,5 +39,13 @@ public class PostTag {
     public PostTag(String name) {
         this.name = name;
         this.enabled = true;
+    }
+
+    public Long getHotness() {
+        return hotness;
+    }
+
+    public void setHotness(Long hotness) {
+        this.hotness = hotness;
     }
 } 

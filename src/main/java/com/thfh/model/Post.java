@@ -55,6 +55,10 @@ public class Post {
     @ApiModelProperty(value = "分享数量", example = "5")
     private Integer shareCount = 0;
 
+    @Column(name = "view_count")
+    @ApiModelProperty(value = "浏览量", example = "100")
+    private Long viewCount = 0L;
+
     @CreationTimestamp
     @Column(name = "create_time", nullable = false)
     @ApiModelProperty(value = "创建时间", example = "2023-01-01T12:00:00")
