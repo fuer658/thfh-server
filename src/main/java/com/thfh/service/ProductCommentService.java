@@ -188,6 +188,44 @@ public class ProductCommentService {
     }
 
     /**
+     * 用户对自己评论追加追评
+     */
+    public ProductCommentDTO appendProductComment(Long commentId, String content, List<String> images) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "未授权，请先登录");
+        }
+        ProductComment mainComment = productCommentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "评论不存在"));
+        if (!mainComment.getUserId().equals(currentUser.getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "没有权限追加评论");
+        }
+        if (mainComment.getAppendCommentId() != null) {
+            throw new BusinessException(ErrorCode.CONFLICT, "该评论已追评");
+        }
+        if (mainComment.getParentId() != null) {
+            throw new BusinessException(ErrorCode.PARAMETER_ERROR, "只允许对一级评论追评");
+        }
+        if (content == null || content.trim().isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMETER_ERROR, "追评内容不能为空");
+        }
+        // 创建追评评论
+        ProductComment append = new ProductComment();
+        append.setProductId(mainComment.getProductId());
+        append.setUserId(currentUser.getId());
+        append.setContent(content);
+        append.setParentId(mainComment.getId()); // 追评的parentId指向主评论
+        append.setCreateTime(java.time.LocalDateTime.now());
+        append.setLikeCount(0);
+        append.setImages(images);
+        append = productCommentRepository.save(append);
+        // 更新主评论的appendCommentId
+        mainComment.setAppendCommentId(append.getId());
+        productCommentRepository.save(mainComment);
+        return toDTO(append);
+    }
+
+    /**
      * 实体转DTO
      */
     private ProductCommentDTO toDTO(ProductComment comment) {
@@ -199,6 +237,13 @@ public class ProductCommentService {
             dto.setUserName(user.getUsername());
             dto.setUserNickname(user.getRealName());
             dto.setUserAvatar(user.getAvatar());
+        }
+        // 仅一级评论返回追评内容
+        if (comment.getParentId() == null && comment.getAppendCommentId() != null) {
+            ProductComment append = productCommentRepository.findById(comment.getAppendCommentId()).orElse(null);
+            if (append != null) {
+                dto.setAppendComment(toDTO(append));
+            }
         }
         return dto;
     }

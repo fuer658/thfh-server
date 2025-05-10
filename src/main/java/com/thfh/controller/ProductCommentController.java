@@ -192,4 +192,41 @@ public class ProductCommentController {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         return Result.success(productCommentService.getCommentsByUser(currentUser.getId(), pageRequest));
     }
+
+    /**
+     * 追加商品评论（追评）
+     */
+    @ApiOperation(value = "追加商品评论（追评）", notes = "用户对自己已发布的商品评论进行追加评论，每条评论仅允许追评一次")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "追评成功", response = Result.class),
+        @ApiResponse(code = 400, message = "请求参数错误", response = Result.class),
+        @ApiResponse(code = 401, message = "未授权，请先登录", response = Result.class),
+        @ApiResponse(code = 403, message = "没有权限追加评论", response = Result.class),
+        @ApiResponse(code = 404, message = "评论不存在", response = Result.class),
+        @ApiResponse(code = 409, message = "该评论已追评", response = Result.class)
+    })
+    @PostMapping("/comments/{commentId}/append")
+    @PreAuthorize("hasRole('USER')")
+    public Result<ProductCommentDTO> appendProductComment(
+            @ApiParam(value = "主评论ID", required = true, example = "1") @PathVariable Long commentId,
+            @ApiParam(value = "追评内容", required = true) @Valid @RequestBody ProductCommentDTO request) {
+        User currentUser = userService.getCurrentUser();
+        ProductCommentDTO mainComment = productCommentService.findById(commentId);
+        if (mainComment == null) {
+            return Result.error("评论不存在");
+        }
+        if (!mainComment.getUserId().equals(currentUser.getId())) {
+            return Result.error("没有权限追加评论");
+        }
+        if (mainComment.getAppendComment() != null) {
+            return Result.error("该评论已追评");
+        }
+        if (mainComment.getParentId() != null) {
+            return Result.error("只允许对一级评论追评");
+        }
+        if (request.getContent() == null || request.getContent().trim().isEmpty()) {
+            return Result.error("追评内容不能为空");
+        }
+        return Result.success(productCommentService.appendProductComment(commentId, request.getContent(), request.getImages()));
+    }
 } 

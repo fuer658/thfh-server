@@ -44,6 +44,12 @@ public class ProductComment {
     @Column(name = "image_url", length = 512)
     private List<String> images;
 
+    /**
+     * 追评ID，指向本表主键，仅一级评论可有追评
+     */
+    @ApiModelProperty("追评ID")
+    private Long appendCommentId;
+
     public Long getId() {
         return id;
     }
@@ -102,6 +108,14 @@ public class ProductComment {
 
     public void setImages(List<String> images) {
         this.images = images;
+    }
+
+    public Long getAppendCommentId() {
+        return appendCommentId;
+    }
+
+    public void setAppendCommentId(Long appendCommentId) {
+        this.appendCommentId = appendCommentId;
     }
 
     // getter/setter 省略，可用lombok

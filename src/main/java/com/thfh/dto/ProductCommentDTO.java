@@ -45,6 +45,9 @@ public class ProductCommentDTO {
     @ApiModelProperty(value = "评论图片URL列表，最多9张")
     private List<String> images;
 
+    @ApiModelProperty(value = "追评内容，仅一级评论包含该字段")
+    private ProductCommentDTO appendComment;
+
     public Long getParentId() {
         return parentId;
     }
@@ -95,6 +98,22 @@ public class ProductCommentDTO {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public ProductCommentDTO getAppendComment() {
+        return appendComment;
+    }
+
+    public void setAppendComment(ProductCommentDTO appendComment) {
+        this.appendComment = appendComment;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     // getter/setter 省略，可用lombok
