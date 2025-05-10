@@ -4,6 +4,7 @@ import com.thfh.model.ChatMessage;
 import com.thfh.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.param.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -40,4 +41,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     
     // 统计某用户未读消息数量
     Long countByReceiverAndReadFalse(User receiver);
+    
+    // 统计两个用户之间的未读消息数量
+    @Query("SELECT COUNT(m) FROM ChatMessage m WHERE " +
+           "m.receiver = :receiver AND m.sender.id = :senderId AND m.read = false")
+    Long countUnreadMessagesBetweenUsers(@Param("receiver") User receiver, @Param("senderId") Long senderId);
 } 
