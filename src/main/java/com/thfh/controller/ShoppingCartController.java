@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.constraints.Positive;
+import com.thfh.exception.ResourceNotFoundException;
 
 /**
  * 购物车控制器
@@ -44,6 +45,7 @@ public class ShoppingCartController {
         @ApiResponse(code = 401, message = "未授权，请先登录")
     })
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     public Result<ShoppingCartDTO> getCart(
             @ApiParam(hidden = true) Authentication authentication) {
         User user = userService.getCurrentUser();
@@ -67,9 +69,10 @@ public class ShoppingCartController {
         @ApiResponse(code = 404, message = "作品不存在")
     })
     @PostMapping("/add")
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     public Result<ShoppingCartDTO> addToCart(
-            @ApiParam(value = "作品ID", required = true) @RequestParam Long artworkId,
-            @ApiParam(value = "数量", defaultValue = "1") @RequestParam(defaultValue = "1") Integer quantity,
+            @ApiParam(value = "作品ID", required = true) @RequestParam @Positive(message = "作品ID必须为正数") Long artworkId,
+            @ApiParam(value = "数量", defaultValue = "1") @RequestParam(defaultValue = "1") @Positive(message = "数量必须大于0") Integer quantity,
             @ApiParam(hidden = true) Authentication authentication) {
         User user = userService.getCurrentUser();
         ShoppingCartDTO cart = shoppingCartService.addToCart(user.getId(), artworkId, quantity);
@@ -92,9 +95,10 @@ public class ShoppingCartController {
         @ApiResponse(code = 404, message = "购物车项不存在")
     })
     @PutMapping("/update")
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     public Result<ShoppingCartDTO> updateItemQuantity(
-            @ApiParam(value = "购物车项ID", required = true) @RequestParam Long cartItemId,
-            @ApiParam(value = "新数量", required = true) @RequestParam Integer quantity,
+            @ApiParam(value = "购物车项ID", required = true) @RequestParam @Positive(message = "购物车项ID必须为正数") Long cartItemId,
+            @ApiParam(value = "新数量", required = true) @RequestParam @Positive(message = "数量必须大于0") Integer quantity,
             @ApiParam(hidden = true) Authentication authentication) {
         User user = userService.getCurrentUser();
         ShoppingCartDTO cart = shoppingCartService.updateItemQuantity(user.getId(), cartItemId, quantity);
@@ -115,8 +119,9 @@ public class ShoppingCartController {
         @ApiResponse(code = 404, message = "购物车项不存在")
     })
     @DeleteMapping("/remove")
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     public Result<ShoppingCartDTO> removeFromCart(
-            @ApiParam(value = "购物车项ID", required = true) @RequestParam Long cartItemId,
+            @ApiParam(value = "购物车项ID", required = true) @RequestParam @Positive(message = "购物车项ID必须为正数") Long cartItemId,
             @ApiParam(hidden = true) Authentication authentication) {
         User user = userService.getCurrentUser();
         ShoppingCartDTO cart = shoppingCartService.removeFromCart(user.getId(), cartItemId);
@@ -135,6 +140,7 @@ public class ShoppingCartController {
         @ApiResponse(code = 401, message = "未授权，请先登录")
     })
     @DeleteMapping("/clear")
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     public Result<ShoppingCartDTO> clearCart(
             @ApiParam(hidden = true) Authentication authentication) {
         User user = userService.getCurrentUser();
@@ -144,12 +150,9 @@ public class ShoppingCartController {
 
     /**
      * 管理员获取指定用户的购物车
-     * 
-     * @param userId 用户ID
-     * @param authentication 认证信息
-     * @return 指定用户的购物车信息
+     * 仅ROLE_ADMIN可访问，用户不存在时抛出404异常
      */
-    @ApiOperation(value = "管理员获取指定用户的购物车", notes = "管理员根据用户ID获取指定用户的购物车信息")
+    @ApiOperation(value = "管理员获取指定用户的购物车", notes = "管理员根据用户ID获取指定用户的购物车信息，仅ROLE_ADMIN可访问")
     @ApiResponses({
         @ApiResponse(code = 200, message = "获取成功"),
         @ApiResponse(code = 401, message = "未授权，请先登录"),
@@ -159,29 +162,21 @@ public class ShoppingCartController {
     @GetMapping("/admin/user/{userId}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<ShoppingCartDTO> getCartByUserId(
-            @ApiParam(value = "用户ID", required = true) 
+            @ApiParam(value = "用户ID", required = true)
             @PathVariable @Positive(message = "用户ID必须为正数") Long userId,
             @ApiParam(hidden = true) Authentication authentication) {
-        
-        // 验证用户是否存在
         if (!userService.existsById(userId)) {
-            return Result.error(HttpStatus.NOT_FOUND.value(), "用户不存在，ID: " + userId);
+            throw new ResourceNotFoundException("用户不存在，ID: " + userId);
         }
-        
         ShoppingCartDTO cart = shoppingCartService.getCartByUserId(userId);
         return Result.success(cart);
     }
-    
+
     /**
      * 管理员为指定用户添加作品到购物车
-     * 
-     * @param userId 用户ID
-     * @param artworkId 作品ID
-     * @param quantity 数量
-     * @param authentication 认证信息
-     * @return 更新后的购物车
+     * 仅ROLE_ADMIN可访问，参数校验更严谨
      */
-    @ApiOperation(value = "管理员为用户添加作品到购物车", notes = "管理员将作品添加到指定用户的购物车中")
+    @ApiOperation(value = "管理员为用户添加作品到购物车", notes = "管理员将作品添加到指定用户的购物车中，仅ROLE_ADMIN可访问")
     @ApiResponses({
         @ApiResponse(code = 200, message = "添加成功"),
         @ApiResponse(code = 400, message = "请求参数错误"),
@@ -192,17 +187,14 @@ public class ShoppingCartController {
     @PostMapping("/admin/user/{userId}/add")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<ShoppingCartDTO> adminAddToCart(
-            @ApiParam(value = "用户ID", required = true) 
+            @ApiParam(value = "用户ID", required = true)
             @PathVariable @Positive(message = "用户ID必须为正数") Long userId,
-            @ApiParam(value = "作品ID", required = true) @RequestParam Long artworkId,
-            @ApiParam(value = "数量", defaultValue = "1") @RequestParam(defaultValue = "1") Integer quantity,
+            @ApiParam(value = "作品ID", required = true) @RequestParam @Positive(message = "作品ID必须为正数") Long artworkId,
+            @ApiParam(value = "数量", defaultValue = "1") @RequestParam(defaultValue = "1") @Positive(message = "数量必须大于0") Integer quantity,
             @ApiParam(hidden = true) Authentication authentication) {
-        
-        // 验证用户是否存在
         if (!userService.existsById(userId)) {
-            return Result.error(HttpStatus.NOT_FOUND.value(), "用户不存在，ID: " + userId);
+            throw new ResourceNotFoundException("用户不存在，ID: " + userId);
         }
-        
         ShoppingCartDTO cart = shoppingCartService.addToCart(userId, artworkId, quantity);
         return Result.success(cart);
     }
