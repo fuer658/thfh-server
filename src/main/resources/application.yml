@@ -1,6 +1,10 @@
 server:
   port: 8085
   host: 8.138.226.198
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
   
 # 文件上传路径配置
 file:
