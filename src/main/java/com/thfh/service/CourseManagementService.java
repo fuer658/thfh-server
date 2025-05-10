@@ -434,10 +434,11 @@ public class CourseManagementService {
      * @param id 课程ID
      * @return 课程详情
      */
+    @Transactional
     public CourseDTO getCourseDetail(Long id) {
+        courseRepository.increaseViewCountById(id);
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("课程不存在"));
-        
         // 如果课程状态为草稿，只有课程创建者可以查看
         if (course.getStatus() == CourseStatus.DRAFT) {
             User currentUser = userService.getCurrentUser();
@@ -445,7 +446,6 @@ public class CourseManagementService {
                 throw new RuntimeException("该课程尚未发布，无法查看");
             }
         }
-        
         // 转换为DTO并返回
         return convertToDTO(course);
     }

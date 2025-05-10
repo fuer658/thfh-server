@@ -3,6 +3,9 @@ package com.thfh.repository;
 import com.thfh.model.Course;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * 课程数据访问接口
@@ -20,4 +23,12 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
      * @return 如果课程已存在返回true，否则返回false
      */
     boolean existsByTitleAndTeacherId(String title, Long teacherId);
+
+    /**
+     * 浏览量自增
+     * @param id 课程ID
+     */
+    @Modifying
+    @Query("update Course c set c.viewCount = c.viewCount + 1 where c.id = :id")
+    int increaseViewCountById(@Param("id") Long id);
 } 

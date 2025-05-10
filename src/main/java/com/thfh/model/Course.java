@@ -70,6 +70,9 @@ public class Course {
     @ApiModelProperty(value = "学习人数", example = "200")
     private Integer studentCount = 0; // 学习人数
 
+    @ApiModelProperty(value = "浏览量", example = "100")
+    private Integer viewCount = 0; // 浏览量
+
     @Column(nullable = false)
     @ApiModelProperty(value = "是否启用", example = "true", required = true)
     private Boolean enabled = true;

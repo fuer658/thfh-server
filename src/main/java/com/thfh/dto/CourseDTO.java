@@ -127,4 +127,10 @@ public class CourseDTO {
      */
     @ApiModelProperty(value = "创建时间", example = "2023-01-01 10:00:00")
     private String createTime;
+    
+    /**
+     * 课程浏览量
+     */
+    @ApiModelProperty(value = "浏览量", example = "100")
+    private Integer viewCount;
 } 
