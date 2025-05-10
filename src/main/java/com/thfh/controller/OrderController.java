@@ -189,4 +189,26 @@ public class OrderController {
         orderService.payOrder(id);
         return Result.success(null, "支付成功");
     }
+
+    /**
+     * 获取当前登录用户的订单分页
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param status 订单状态（可选）
+     * @return 订单DTO分页
+     */
+    @ApiOperation(value = "获取当前用户订单", notes = "获取当前登录用户的订单分页列表，仅普通用户可用")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<Page<OrderDTO>> getMyOrders(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String status) {
+        Page<OrderDTO> page = orderService.getOrdersByCurrentUser(pageNum, pageSize, status);
+        return Result.success(page);
+    }
 } 

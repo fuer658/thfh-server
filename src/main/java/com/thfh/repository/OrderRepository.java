@@ -82,4 +82,21 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     void updateLogistics(@Param("id") Long id,
                          @Param("company") String company,
                          @Param("number") String number);
+
+    /**
+     * 根据用户ID分页查询订单
+     * @param userId 用户ID
+     * @param pageable 分页参数
+     * @return 订单分页列表
+     */
+    Page<Order> findByUserId(Long userId, Pageable pageable);
+
+    /**
+     * 根据用户ID和状态分页查询订单
+     * @param userId 用户ID
+     * @param status 订单状态
+     * @param pageable 分页参数
+     * @return 订单分页列表
+     */
+    Page<Order> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
 }

@@ -269,4 +269,27 @@ public class OrderService {
         order.setUpdateTime(LocalDateTime.now());
         orderRepository.save(order);
     }
+
+    /**
+     * 获取当前登录用户的订单分页
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param status 订单状态（可选）
+     * @return 订单DTO分页
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderDTO> getOrdersByCurrentUser(int pageNum, int pageSize, String status) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        PageRequest pageRequest = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime"));
+        Page<Order> orderPage;
+        if (status != null && !status.isEmpty()) {
+            orderPage = orderRepository.findByUserIdAndStatus(currentUser.getId(), status, pageRequest);
+        } else {
+            orderPage = orderRepository.findByUserId(currentUser.getId(), pageRequest);
+        }
+        return toOrderDTOPage(orderPage);
+    }
 } 
