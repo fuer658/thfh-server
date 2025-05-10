@@ -165,7 +165,6 @@ public class OrderController {
         @ApiResponse(code = 404, message = "订单不存在")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<Void> deleteOrder(
         @ApiParam(value = "订单ID", required = true) @PathVariable Long id) {
         orderService.deleteOrder(id);
@@ -185,7 +184,6 @@ public class OrderController {
         @ApiResponse(code = 404, message = "订单不存在")
     })
     @PostMapping("/{id}/pay")
-    @PreAuthorize("hasRole('ROLE_USER')")
     public Result<Void> payOrder(
         @ApiParam(value = "订单ID", required = true) @PathVariable Long id) {
         orderService.payOrder(id);
