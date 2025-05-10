@@ -3,6 +3,7 @@ package com.thfh.controller;
 import com.thfh.common.Result;
 import com.thfh.dto.LoginDTO;
 import com.thfh.dto.UserDTO;
+import com.thfh.dto.JwtVerifyRequest;
 import com.thfh.service.AuthService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -89,5 +90,21 @@ public class AuthController {
             @ApiParam(value = "HTTP请求对象", hidden = true) HttpServletRequest request) {
         String username = (String) request.getAttribute("username");
         return Result.success(authService.getUserInfo(username));
+    }
+
+    /**
+     * 校验JWT Token是否有效
+     * @param request 包含token字段的请求体
+     * @return Result<Boolean> 有效true，无效false
+     */
+    @ApiOperation(value = "校验JWT Token", notes = "校验前端传递的JWT Token是否有效")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "校验成功"),
+        @ApiResponse(code = 400, message = "请求参数错误")
+    })
+    @PostMapping("/verify-jwt")
+    public Result<Boolean> verifyJwtToken(@Valid @RequestBody JwtVerifyRequest request) {
+        boolean valid = authService.verifyJwtToken(request.getToken());
+        return Result.success(valid, valid ? "Token有效" : "Token无效或已过期");
     }
 }

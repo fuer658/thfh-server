@@ -228,4 +228,13 @@ public class AuthService {
         
         return userDTO;
     }
+
+    /**
+     * 校验JWT Token是否有效
+     * @param token 前端传递的JWT Token
+     * @return 有效返回true，无效返回false
+     */
+    public boolean verifyJwtToken(String token) {
+        return jwtUtil.validateToken(token);
+    }
 }
