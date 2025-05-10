@@ -355,6 +355,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleException(Exception e) {
         log.error("服务器内部错误", e);
-        return Result.error(ErrorCode.SYSTEM_ERROR.getCode(), "服务器内部错误，请联系管理员");
+        String message = e.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            message = "服务器内部错误，请联系管理员";
+        }
+        return Result.error(ErrorCode.SYSTEM_ERROR.getCode(), message);
     }
 } 
