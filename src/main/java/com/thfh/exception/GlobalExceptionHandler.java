@@ -347,14 +347,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理所有其他异常
-     * @param e 异常
-     * @return 错误响应
+     * 捕获所有未处理的异常，返回详细错误信息
      */
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Result<Void> handleException(Exception e) {
-        log.error("服务器内部错误", e);
-        return Result.error(ErrorCode.SYSTEM_ERROR.getCode(), "服务器内部错误，请联系管理员");
+    public Result<?> handleException(Exception e) {
+        // 记录异常日志（可选）
+        e.printStackTrace();
+        // 返回详细错误信息到前端
+        return Result.error(e.getMessage());
     }
 } 

@@ -29,3 +29,8 @@ logging:
     org.springframework.transaction: ERROR
     org.hibernate: ERROR
     com.zaxxer.hikari: ERROR
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
