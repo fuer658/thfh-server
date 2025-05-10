@@ -1,6 +1,8 @@
 package com.thfh.repository;
 
 import com.thfh.model.Course;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -31,4 +33,11 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
     @Modifying
     @Query("update Course c set c.viewCount = c.viewCount + 1 where c.id = :id")
     int increaseViewCountById(@Param("id") Long id);
+
+    /**
+     * 分页查询热门课程，按指定字段降序排序
+     * @param pageable 分页和排序参数
+     * @return 课程分页列表
+     */
+    Page<Course> findAllByStatusAndEnabledTrue(com.thfh.model.CourseStatus status, Pageable pageable);
 } 

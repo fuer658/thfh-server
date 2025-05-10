@@ -306,4 +306,26 @@ public class CourseController {
             @ApiParam(value = "课程ID", required = true) @PathVariable Long id) {
         return Result.success(courseManagementService.publishCourse(id));
     }
+
+    /**
+     * 获取热门课程分页列表
+     * @param page 页码（从1开始，默认1）
+     * @param size 每页数量（默认10）
+     * @param sortBy 排序字段（viewCount/likeCount/favoriteCount/studentCount），默认viewCount
+     * @return 分页后的热门课程列表
+     */
+    @ApiOperation(value = "获取热门课程", notes = "分页获取热门课程，支持按浏览量、点赞数、收藏数、学习人数排序")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/hot")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('USER') or hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
+    public Result<Page<CourseDTO>> getHotCourses(
+            @ApiParam(value = "页码", example = "1") @RequestParam(defaultValue = "1") Integer page,
+            @ApiParam(value = "每页数量", example = "10") @RequestParam(defaultValue = "10") Integer size,
+            @ApiParam(value = "排序字段", example = "viewCount") @RequestParam(defaultValue = "viewCount") String sortBy
+    ) {
+        return Result.success(courseManagementService.getHotCourses(page, size, sortBy));
+    }
 }

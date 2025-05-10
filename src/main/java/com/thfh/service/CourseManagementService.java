@@ -492,6 +492,27 @@ public class CourseManagementService {
     }
 
     /**
+     * 获取热门课程分页列表
+     * @param page 页码（从1开始）
+     * @param size 每页数量
+     * @param sortBy 排序字段（viewCount/likeCount/favoriteCount/studentCount），默认viewCount
+     * @return 分页后的热门课程DTO列表
+     */
+    public Page<CourseDTO> getHotCourses(int page, int size, String sortBy) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+        if (sortBy == null || sortBy.isEmpty()) sortBy = "viewCount";
+        // 只允许指定字段
+        if (!sortBy.equals("viewCount") && !sortBy.equals("likeCount") && !sortBy.equals("favoriteCount") && !sortBy.equals("studentCount")) {
+            sortBy = "viewCount";
+        }
+        Pageable pageable = PageRequest.of(page - 1, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, sortBy));
+        // 只查已发布且启用的课程
+        Page<Course> coursePage = courseRepository.findAllByStatusAndEnabledTrue(CourseStatus.PUBLISHED, pageable);
+        return coursePage.map(this::convertToDTO);
+    }
+
+    /**
      * 将Course实体转换为CourseDTO
      * @param course 课程实体
      * @return 课程DTO对象
