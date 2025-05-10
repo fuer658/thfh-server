@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -34,10 +35,13 @@ public class ArtworkLikeController {
 
     /**
      * 添加点赞
+     * 幂等性：重复点赞不会报错，只会记录一次
+     * 注意：artworkId需为正数，且作品必须存在
      * @param artworkId 作品ID
      * @param authentication 认证信息
      * @return 操作结果
      */
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     @ApiOperation(value = "添加点赞", notes = "为指定作品添加点赞")
     @ApiResponses({
             @ApiResponse(code = 200, message = "点赞成功"),
@@ -48,17 +52,25 @@ public class ArtworkLikeController {
     public Result<Void> addLike(
             @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
             @ApiParam(hidden = true) Authentication authentication) {
+        if (artworkId == null || artworkId <= 0) {
+            return Result.error("参数错误：artworkId非法");
+        }
         User user = userService.getCurrentUser();
+        if (user == null) {
+            return Result.unauthorized("未登录");
+        }
         artworkLikeService.addLike(artworkId, user);
         return Result.success(null);
     }
 
     /**
      * 取消点赞
+     * 幂等性：未点赞时取消不会报错
      * @param artworkId 作品ID
      * @param authentication 认证信息
      * @return 操作结果
      */
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     @ApiOperation(value = "取消点赞", notes = "取消对指定作品的点赞")
     @ApiResponses({
             @ApiResponse(code = 200, message = "取消点赞成功"),
@@ -69,18 +81,26 @@ public class ArtworkLikeController {
     public Result<Void> removeLike(
             @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
             @ApiParam(hidden = true) Authentication authentication) {
+        if (artworkId == null || artworkId <= 0) {
+            return Result.error("参数错误：artworkId非法");
+        }
         User user = userService.getCurrentUser();
+        if (user == null) {
+            return Result.unauthorized("未登录");
+        }
         artworkLikeService.removeLike(artworkId, user);
         return Result.success(null);
     }
 
     /**
      * 获取用户点赞的作品列表
+     * 注意：分页参数需为正数，Artwork返回字段需避免懒加载序列化
      * @param authentication 认证信息
      * @param page 页码
      * @param size 每页大小
      * @return 点赞的作品分页列表
      */
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     @ApiOperation(value = "获取用户点赞的作品列表", notes = "获取当前用户点赞的作品分页列表")
     @ApiResponses({
             @ApiResponse(code = 200, message = "获取成功"),
@@ -91,9 +111,16 @@ public class ArtworkLikeController {
             @ApiParam(hidden = true) Authentication authentication,
             @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
             @ApiParam(value = "每页大小", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
+        if (page <= 0 || size <= 0) {
+            return Result.error("参数错误：分页参数需为正数");
+        }
         User user = userService.getCurrentUser();
+        if (user == null) {
+            return Result.unauthorized("未登录");
+        }
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "likeTime"));
         Page<Artwork> artworkPage = artworkLikeService.getUserLikes(user.getId(), pageRequest);
+        // 建议Artwork实体避免懒加载字段序列化
         return Result.success(artworkPage);
     }
 
@@ -103,6 +130,7 @@ public class ArtworkLikeController {
      * @param authentication 认证信息
      * @return 是否已点赞
      */
+    @PreAuthorize("hasRole('USER') or hasRole('ROLE_USER')")
     @ApiOperation(value = "检查作品是否已点赞", notes = "检查当前用户是否已点赞指定作品")
     @ApiResponses({
             @ApiResponse(code = 200, message = "获取成功"),
@@ -113,7 +141,13 @@ public class ArtworkLikeController {
     public Result<Boolean> checkLike(
             @ApiParam(value = "作品ID", required = true) @PathVariable Long artworkId,
             @ApiParam(hidden = true) Authentication authentication) {
+        if (artworkId == null || artworkId <= 0) {
+            return Result.error("参数错误：artworkId非法");
+        }
         User user = userService.getCurrentUser();
+        if (user == null) {
+            return Result.unauthorized("未登录");
+        }
         return Result.success(artworkLikeService.isLiked(artworkId, user.getId()));
     }
 }
