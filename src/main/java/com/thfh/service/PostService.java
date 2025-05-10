@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.thfh.exception.BusinessException;
+import com.thfh.exception.ErrorCode;
+
 @Slf4j
 
 @Service
@@ -68,7 +71,7 @@ public class PostService {
         if (post.getTagIds() != null && !post.getTagIds().isEmpty()) {
             for (Long tagId : post.getTagIds()) {
                 PostTag tag = postTagRepository.findById(tagId)
-                        .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
+                        .orElseThrow(() -> new BusinessException(ErrorCode.PARAMETER_ERROR, "标签不存在: " + tagId));
                 savedPost.getTags().add(tag);
             }
             savedPost = postRepository.save(savedPost);
@@ -126,7 +129,7 @@ public class PostService {
      */
     public Post getPost(Long postId) {
         return postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("动态不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "动态不存在"));
     }
 
     /**
@@ -191,14 +194,13 @@ public class PostService {
         // 设置评论层级
         if (parentId != null) {
             PostComment parentComment = postCommentRepository.findById(parentId)
-                    .orElseThrow(() -> new IllegalArgumentException("父评论不存在"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "父评论不存在"));
 
             // 检查父评论是否属于同一个动态
             if (!parentComment.getPostId().equals(postId)) {
-                throw new IllegalArgumentException("父评论不属于该动态");
+                throw new BusinessException(ErrorCode.PARAMETER_ERROR, "父评论不属于该动态");
             }
 
-            // 设置父评论ID和层级
             comment.setParentId(parentId);
             comment.setLevel(parentComment.getLevel() + 1);
         }

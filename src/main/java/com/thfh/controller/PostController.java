@@ -22,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
+import javax.validation.Valid;
 
 /**
  * 动态管理控制器
@@ -49,7 +50,7 @@ public class PostController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public Result<Post> createPost(
-            @ApiParam(value = "动态信息", required = true) @RequestBody Post post) {
+            @ApiParam(value = "动态信息", required = true) @Valid @RequestBody Post post) {
         // 如果有标签ID列表，为动态添加标签
         Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
@@ -142,7 +143,7 @@ public class PostController {
     @PostMapping("/{postId}/comments")
     public Result<PostComment> commentPost(
             @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
-            @ApiParam(value = "评论信息", required = true) @RequestBody CommentRequest request) {
+            @ApiParam(value = "评论信息", required = true) @Valid @RequestBody CommentRequest request) {
         return Result.success(postService.commentPost(
             postId,
             request.getContent(),

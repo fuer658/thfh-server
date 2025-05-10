@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.NotBlank;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -29,10 +30,12 @@ public class Post {
     @ApiModelProperty(value = "发布用户ID", required = true, example = "1")
     private Long userId;
 
+    @NotBlank(message = "帖子标题不能为空")
     @Column(nullable = false)
     @ApiModelProperty(value = "帖子标题", required = true, example = "分享我的汉服刺绣作品")
     private String title;
 
+    @NotBlank(message = "帖子内容不能为空")
     @Column(columnDefinition = "TEXT")
     @ApiModelProperty(value = "帖子内容", example = "今天完成了一件汉服的刺绣...")
     private String content;
