@@ -241,4 +241,32 @@ public class OrderService {
     public Page<OrderDTO> toOrderDTOPage(Page<Order> orderPage) {
         return orderPage.map(this::toOrderDTO);
     }
+
+    /**
+     * 删除订单
+     * @param id 订单ID
+     */
+    @Transactional
+    public void deleteOrder(Long id) {
+        if (!orderRepository.existsById(id)) {
+            throw new RuntimeException("订单不存在");
+        }
+        orderRepository.deleteById(id);
+    }
+
+    /**
+     * 订单支付（仅状态变更，无实际支付功能）
+     * @param id 订单ID
+     */
+    @Transactional
+    public void payOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("订单不存在"));
+        if (!"UNPAID".equals(order.getStatus())) {
+            throw new RuntimeException("订单当前状态不可支付");
+        }
+        order.setStatus("PAID");
+        order.setUpdateTime(LocalDateTime.now());
+        orderRepository.save(order);
+    }
 } 
