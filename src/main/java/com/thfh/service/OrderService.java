@@ -22,6 +22,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.thfh.dto.OrderDTO;
+import com.thfh.dto.ArtworkDTO;
+import com.thfh.dto.UserDTO;
+
 /**
  * 订单服务实现类
  * 定义订单相关的业务逻辑操作，包括订单的查询、状态更新、物流信息管理等功能
@@ -185,5 +189,56 @@ public class OrderService {
                 Object.class,
                 params
         );
+    }
+
+    /**
+     * 实体转DTO
+     */
+    public OrderDTO toOrderDTO(Order order) {
+        if (order == null) return null;
+        OrderDTO dto = new OrderDTO();
+        dto.setId(order.getId());
+        dto.setOrderNo(order.getOrderNo());
+        dto.setAmount(order.getAmount());
+        dto.setStatus(order.getStatus());
+        dto.setShippingName(order.getShippingName());
+        dto.setShippingPhone(order.getShippingPhone());
+        dto.setShippingAddress(order.getShippingAddress());
+        dto.setLogisticsCompany(order.getLogisticsCompany());
+        dto.setLogisticsNo(order.getLogisticsNo());
+        dto.setCreateTime(order.getCreateTime());
+        dto.setUpdateTime(order.getUpdateTime());
+        // ArtworkDTO
+        if (order.getArtwork() != null) {
+            ArtworkDTO artworkDTO = new ArtworkDTO();
+            artworkDTO.setId(order.getArtwork().getId());
+            artworkDTO.setTitle(order.getArtwork().getTitle());
+            artworkDTO.setCoverUrl(order.getArtwork().getCoverUrl());
+            artworkDTO.setPrice(order.getArtwork().getPrice());
+            // creator
+            if (order.getArtwork().getCreator() != null) {
+                artworkDTO.setCreatorId(order.getArtwork().getCreator().getId());
+                artworkDTO.setCreatorName(order.getArtwork().getCreator().getUsername());
+                artworkDTO.setCreatorAvatar(order.getArtwork().getCreator().getAvatar());
+            }
+            dto.setArtwork(artworkDTO);
+        }
+        // UserDTO
+        if (order.getUser() != null) {
+            UserDTO userDTO = new UserDTO();
+            userDTO.setId(order.getUser().getId());
+            userDTO.setUsername(order.getUser().getUsername());
+            userDTO.setAvatar(order.getUser().getAvatar());
+            userDTO.setUserType(order.getUser().getUserType());
+            dto.setUser(userDTO);
+        }
+        return dto;
+    }
+
+    /**
+     * 分页实体转DTO
+     */
+    public Page<OrderDTO> toOrderDTOPage(Page<Order> orderPage) {
+        return orderPage.map(this::toOrderDTO);
     }
 } 

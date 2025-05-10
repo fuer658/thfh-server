@@ -3,6 +3,7 @@ package com.thfh.controller;
 import com.thfh.dto.CreateOrderDTO;
 import com.thfh.dto.LogisticsDTO;
 import com.thfh.dto.OrderQueryDTO;
+import com.thfh.dto.OrderDTO;
 import com.thfh.model.Order;
 import com.thfh.service.OrderService;
 import com.thfh.common.Result;
@@ -45,10 +46,10 @@ public class OrderController {
     })
     @PostMapping
     @PreAuthorize("hasRole('ROLE_USER')")
-    public Result<Order> createOrder(
+    public Result<OrderDTO> createOrder(
             @Valid @RequestBody @ApiParam(value = "创建订单请求参数", required = true) CreateOrderDTO createOrderDTO) {
         Order order = orderService.createOrder(createOrderDTO);
-        return Result.success(order, "订单创建成功");
+        return Result.success(orderService.toOrderDTO(order), "订单创建成功");
     }
 
     /**
@@ -62,10 +63,10 @@ public class OrderController {
         @ApiResponse(code = 401, message = "未授权，请先登录")
     })
     @GetMapping
-    public Result<Page<Order>> getOrders(
+    public Result<Page<OrderDTO>> getOrders(
             @ApiParam(value = "查询条件，包含订单号、用户ID、状态和分页信息等") OrderQueryDTO queryDTO) {
         Page<Order> page = orderService.getOrders(queryDTO);
-        return Result.success(page);
+        return Result.success(orderService.toOrderDTOPage(page));
     }
 
     /**
@@ -80,10 +81,10 @@ public class OrderController {
         @ApiResponse(code = 404, message = "订单不存在")
     })
     @GetMapping("/{id}")
-    public Result<Order> getOrderDetail(
+    public Result<OrderDTO> getOrderDetail(
             @ApiParam(value = "订单ID", required = true) @PathVariable Long id) {
         Order order = orderService.getOrderDetail(id);
-        return Result.success(order);
+        return Result.success(orderService.toOrderDTO(order));
     }
 
     /**
