@@ -179,6 +179,15 @@ public class ProductCommentService {
     }
 
     /**
+     * 分页查询用户的所有评论
+     */
+    public Page<ProductCommentDTO> getCommentsByUser(Long userId, PageRequest pageRequest) {
+        Page<ProductComment> page = productCommentRepository.findByUserId(userId, pageRequest);
+        List<ProductCommentDTO> dtos = page.getContent().stream().map(this::toDTO).collect(java.util.stream.Collectors.toList());
+        return new org.springframework.data.domain.PageImpl<>(dtos, pageRequest, page.getTotalElements());
+    }
+
+    /**
      * 实体转DTO
      */
     private ProductCommentDTO toDTO(ProductComment comment) {

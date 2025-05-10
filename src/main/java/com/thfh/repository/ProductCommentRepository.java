@@ -19,4 +19,9 @@ public interface ProductCommentRepository extends JpaRepository<ProductComment, 
      * 批量查询二级评论（parentId in ...）
      */
     java.util.List<ProductComment> findByParentIdIn(java.util.List<Long> parentIds);
+
+    /**
+     * 分页查询用户的所有评论
+     */
+    Page<ProductComment> findByUserId(Long userId, Pageable pageable);
 } 

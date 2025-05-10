@@ -174,4 +174,22 @@ public class ProductCommentController {
         productCommentService.deleteProductCommentByAdmin(commentId);
         return Result.success(null);
     }
+
+    /**
+     * 查看自己发布的商品评论
+     */
+    @ApiOperation(value = "查看自己发布的商品评论", notes = "获取当前登录用户发布的所有商品评论，支持分页")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功", response = Result.class),
+        @ApiResponse(code = 401, message = "未授权，请先登录", response = Result.class)
+    })
+    @GetMapping("/comments/my")
+    @PreAuthorize("hasRole('USER')")
+    public Result<Page<ProductCommentDTO>> getMyProductComments(
+            @ApiParam(value = "页码", defaultValue = "1", example = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10", example = "10") @RequestParam(defaultValue = "10") int size) {
+        User currentUser = userService.getCurrentUser();
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        return Result.success(productCommentService.getCommentsByUser(currentUser.getId(), pageRequest));
+    }
 } 
