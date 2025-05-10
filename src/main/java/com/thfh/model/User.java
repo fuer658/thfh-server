@@ -119,6 +119,10 @@ public class User {
     @ApiModelProperty(value = "用户的兴趣爱好列表")
     private List<UserInterest> userInterests = new ArrayList<>();
     
+    @Column(length = 45)
+    @ApiModelProperty(value = "最近登录IP", example = "192.168.1.1")
+    private String recentLoginIp;
+    
     /**
      * 更新实体的updateTime
      */

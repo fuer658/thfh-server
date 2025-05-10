@@ -38,7 +38,7 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public Map<String, Object> login(LoginDTO loginDTO) {
+    public Map<String, Object> login(LoginDTO loginDTO, javax.servlet.http.HttpServletRequest request) {
         // 先尝试管理员登录
         try {
             Admin admin = adminRepository.findByUsername(loginDTO.getUsername())
@@ -76,8 +76,18 @@ public class AuthService {
                 throw new RuntimeException("用户名或密码错误");
             }
 
-            // 更新最后登录时间
+            // 更新最后登录时间和最近登录IP
             user.setLastLoginTime(LocalDateTime.now());
+            if (request != null) {
+                String ip = request.getHeader("X-Forwarded-For");
+                if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                    ip = request.getRemoteAddr();
+                } else {
+                    // X-Forwarded-For 可能有多个IP，取第一个
+                    ip = ip.split(",")[0].trim();
+                }
+                user.setRecentLoginIp(ip);
+            }
             userRepository.save(user);
 
             // 生成包含用户ID的token
