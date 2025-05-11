@@ -5,7 +5,7 @@ import com.thfh.model.DisabilityCertification;
 import com.thfh.model.User;
 import com.thfh.repository.DisabilityCertificationRepository;
 import com.thfh.repository.UserRepository;
-import com.thfh.common.exception.BusinessException;
+import com.thfh.exception.BusinessException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

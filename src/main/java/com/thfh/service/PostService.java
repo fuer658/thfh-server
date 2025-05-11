@@ -26,6 +26,10 @@ import java.util.stream.Collectors;
 
 import com.thfh.exception.BusinessException;
 import com.thfh.exception.ErrorCode;
+import com.thfh.dto.PostReportRequest;
+import com.thfh.repository.PostReportRepository;
+import com.thfh.model.PostReport;
+import java.time.LocalDateTime;
 
 @Slf4j
 
@@ -57,6 +61,9 @@ public class PostService {
 
     @Autowired
     private PostCommentLikeRepository postCommentLikeRepository;
+
+    @Autowired
+    private PostReportRepository postReportRepository;
 
     /**
      * 发布动态
@@ -912,5 +919,27 @@ public class PostService {
     public Page<PostDTO> getUserPostsDTO(Long userId, Pageable pageable) {
         Page<Post> posts = getUserPosts(userId, pageable);
         return posts.map(this::convertToDTO);
+    }
+
+    /**
+     * 举报动态
+     */
+    @Transactional
+    public void reportPost(Long postId, PostReportRequest request) {
+        User currentUser = userService.getCurrentUser();
+        // 校验动态是否存在
+        // 防止重复举报（同一用户对同一动态仅能举报一次，或可加时间限制）
+        postReportRepository.findByPostIdAndReporterId(postId, currentUser.getId()).ifPresent(r -> {
+            throw new BusinessException(ErrorCode.PARAMETER_ERROR, "您已举报过该动态，请勿重复举报");
+        });
+        // 保存举报记录
+        PostReport report = new PostReport();
+        report.setPostId(postId);
+        report.setReporterId(currentUser.getId());
+        report.setReason(request.getReason());
+        report.setDescription(request.getDescription());
+        report.setCreateTime(LocalDateTime.now());
+        report.setStatus("待处理");
+        postReportRepository.save(report);
     }
 }

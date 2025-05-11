@@ -151,4 +151,64 @@ public class OrderController {
         Object info = orderService.getLogisticsInfo(company, number);
         return Result.success(info);
     }
+
+    /**
+     * 删除订单
+     * @param id 订单ID
+     * @return 操作结果
+     */
+    @ApiOperation(value = "删除订单", notes = "根据订单ID删除订单，仅管理员可操作")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "删除成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有权限删除该订单"),
+        @ApiResponse(code = 404, message = "订单不存在")
+    })
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteOrder(
+        @ApiParam(value = "订单ID", required = true) @PathVariable Long id) {
+        orderService.deleteOrder(id);
+        return Result.success(null, "订单删除成功");
+    }
+
+    /**
+     * 订单支付（仅状态变更，无实际支付功能）
+     * @param id 订单ID
+     * @return 操作结果
+     */
+    @ApiOperation(value = "订单支付", notes = "将订单状态变为已支付，仅普通用户可用，无实际支付功能")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "支付成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "没有权限支付该订单"),
+        @ApiResponse(code = 404, message = "订单不存在")
+    })
+    @PostMapping("/{id}/pay")
+    public Result<Void> payOrder(
+        @ApiParam(value = "订单ID", required = true) @PathVariable Long id) {
+        orderService.payOrder(id);
+        return Result.success(null, "支付成功");
+    }
+
+    /**
+     * 获取当前登录用户的订单分页
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param status 订单状态（可选）
+     * @return 订单DTO分页
+     */
+    @ApiOperation(value = "获取当前用户订单", notes = "获取当前登录用户的订单分页列表，仅普通用户可用")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<Page<OrderDTO>> getMyOrders(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String status) {
+        Page<OrderDTO> page = orderService.getOrdersByCurrentUser(pageNum, pageSize, status);
+        return Result.success(page);
+    }
 } 

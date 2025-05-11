@@ -35,7 +35,7 @@ public class ArtworkFavoriteController {
     /**
      * 添加收藏
      * @param artworkId 作品ID
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @return 操作结果
      */
     @ApiOperation(value = "添加收藏", notes = "为指定作品添加收藏")
@@ -56,7 +56,7 @@ public class ArtworkFavoriteController {
     /**
      * 取消收藏
      * @param artworkId 作品ID
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @return 操作结果
      */
     @ApiOperation(value = "取消收藏", notes = "取消对指定作品的收藏")
@@ -100,7 +100,7 @@ public class ArtworkFavoriteController {
     /**
      * 检查作品是否已收藏
      * @param artworkId 作品ID
-     * @param user 当前登录用户
+     * @param authentication 认证信息
      * @return 是否已收藏
      */
     @ApiOperation(value = "检查作品是否已收藏", notes = "检查当前用户是否已收藏指定作品")

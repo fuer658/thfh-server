@@ -151,6 +151,9 @@ public class CourseManagementService {
             course.setTags(courseTagService.processTags(courseDTO.getTags()));
         }
         
+        // 新增：设置开发团队字段
+        course.setDevTeam(courseDTO.getDevTeam());
+        
         course = courseRepository.save(course);
         
         return convertToDTO(course);
@@ -193,6 +196,8 @@ public class CourseManagementService {
         course.setStatus(courseDTO.getStatus());
         course.setVideoUrl(courseDTO.getVideoUrl());
         course.setMaterials(courseDTO.getMaterials());
+        // 新增：更新开发团队字段
+        course.setDevTeam(courseDTO.getDevTeam());
         // 如果enabled为null，保持原值
         if (courseDTO.getEnabled() != null) {
             course.setEnabled(courseDTO.getEnabled());
@@ -543,6 +548,9 @@ public class CourseManagementService {
         if (course.getCreateTime() != null) {
             dto.setCreateTime(course.getCreateTime().toString());
         }
+        
+        // 新增：设置开发团队字段
+        dto.setDevTeam(course.getDevTeam());
         
         return dto;
     }

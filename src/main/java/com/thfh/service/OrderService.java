@@ -241,4 +241,55 @@ public class OrderService {
     public Page<OrderDTO> toOrderDTOPage(Page<Order> orderPage) {
         return orderPage.map(this::toOrderDTO);
     }
+
+    /**
+     * 删除订单
+     * @param id 订单ID
+     */
+    @Transactional
+    public void deleteOrder(Long id) {
+        if (!orderRepository.existsById(id)) {
+            throw new RuntimeException("订单不存在");
+        }
+        orderRepository.deleteById(id);
+    }
+
+    /**
+     * 订单支付（仅状态变更，无实际支付功能）
+     * @param id 订单ID
+     */
+    @Transactional
+    public void payOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("订单不存在"));
+        if (!"UNPAID".equals(order.getStatus())) {
+            throw new RuntimeException("订单当前状态不可支付");
+        }
+        order.setStatus("PAID");
+        order.setUpdateTime(LocalDateTime.now());
+        orderRepository.save(order);
+    }
+
+    /**
+     * 获取当前登录用户的订单分页
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param status 订单状态（可选）
+     * @return 订单DTO分页
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderDTO> getOrdersByCurrentUser(int pageNum, int pageSize, String status) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        PageRequest pageRequest = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime"));
+        Page<Order> orderPage;
+        if (status != null && !status.isEmpty()) {
+            orderPage = orderRepository.findByUserIdAndStatus(currentUser.getId(), status, pageRequest);
+        } else {
+            orderPage = orderRepository.findByUserId(currentUser.getId(), pageRequest);
+        }
+        return toOrderDTOPage(orderPage);
+    }
 } 

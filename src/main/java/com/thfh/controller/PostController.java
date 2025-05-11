@@ -4,7 +4,6 @@ import com.thfh.common.Result;
 import com.thfh.dto.CommentRequest;
 import com.thfh.dto.PostDTO;
 import com.thfh.model.Post;
-import com.thfh.model.PostComment;
 import com.thfh.model.User;
 import com.thfh.dto.PostCommentDTO;
 import com.thfh.service.PostService;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
 import javax.validation.Valid;
+import com.thfh.dto.PostReportRequest;
 
 /**
  * 动态管理控制器
@@ -505,5 +505,24 @@ public class PostController {
             @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
         postService.deleteComment(commentId);
         return Result.success(null);
+    }
+
+    /**
+     * 举报动态
+     */
+    @ApiOperation(value = "举报动态", notes = "用户举报动态，需填写举报原因和描述")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "举报成功"),
+        @ApiResponse(code = 400, message = "请求参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "动态不存在")
+    })
+    @PostMapping("/{postId}/report")
+    @PreAuthorize("hasRole('USER')")
+    public Result<Void> reportPost(
+            @ApiParam(value = "动态ID", required = true) @PathVariable Long postId,
+            @ApiParam(value = "举报信息", required = true) @Valid @RequestBody PostReportRequest request) {
+        postService.reportPost(postId, request);
+        return Result.success(null, "举报成功");
     }
 }

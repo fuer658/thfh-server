@@ -5,6 +5,10 @@ server:
     enabled: true
     min-response-size: 1024
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+  error:
+    include-stacktrace: never
+    whitelabel:
+      enabled: false
   
 # 文件上传路径配置
 file:
