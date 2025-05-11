@@ -133,4 +133,10 @@ public class CourseDTO {
      */
     @ApiModelProperty(value = "浏览量", example = "100")
     private Integer viewCount;
+    
+    /**
+     * 课程开发团队
+     */
+    @ApiModelProperty(value = "开发团队", example = "教研团队A")
+    private String devTeam;
 } 

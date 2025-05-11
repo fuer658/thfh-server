@@ -93,4 +93,8 @@ public class Course {
     @Column(nullable = false)
     @ApiModelProperty(value = "更新时间", required = true)
     private LocalDateTime updateTime = LocalDateTime.now();
+
+    @Column(name = "dev_team", length = 255)
+    @ApiModelProperty(value = "开发团队", notes = "课程开发团队名称")
+    private String devTeam; // 开发团队
 } 
