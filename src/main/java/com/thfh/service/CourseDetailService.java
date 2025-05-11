@@ -121,7 +121,7 @@ public class CourseDetailService {
      * 更新课程章节
      * 
      * @param chapterId 章节ID
-     * @param chapter 更新的章节数据
+     * @param updatedChapter 更新的章节数据
      * @return 更新后的章节对象
      */
     @Transactional
@@ -200,7 +200,7 @@ public class CourseDetailService {
      * 更新课程小节
      * 
      * @param sectionId 小节ID
-     * @param section 更新的小节数据
+     * @param updatedSection 更新的小节数据
      * @return 更新后的小节对象
      */
     @Transactional
@@ -286,7 +286,7 @@ public class CourseDetailService {
      * 更新子小节
      * 
      * @param subSectionId 子小节ID
-     * @param subSection 更新的子小节数据
+     * @param updatedSubSection 更新的子小节数据
      * @return 更新后的子小节对象
      */
     @Transactional
