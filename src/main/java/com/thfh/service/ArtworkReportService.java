@@ -16,9 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ArtworkReportService {
@@ -54,11 +52,6 @@ public class ArtworkReportService {
     public Result<?> getReportList(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<ArtworkReport> reportPage = artworkReportRepository.findAll(pageable);
-        List<ArtworkReportResponse> list = reportPage.getContent().stream().map(report -> {
-            ArtworkReportResponse dto = new ArtworkReportResponse();
-            BeanUtils.copyProperties(report, dto);
-            return dto;
-        }).collect(Collectors.toList());
         com.thfh.common.CustomPage<ArtworkReportResponse> customPage = new com.thfh.common.CustomPage<>(reportPage.map(report -> {
             ArtworkReportResponse dto = new ArtworkReportResponse();
             BeanUtils.copyProperties(report, dto);

@@ -928,7 +928,6 @@ public class PostService {
     public void reportPost(Long postId, PostReportRequest request) {
         User currentUser = userService.getCurrentUser();
         // 校验动态是否存在
-        Post post = getPost(postId);
         // 防止重复举报（同一用户对同一动态仅能举报一次，或可加时间限制）
         postReportRepository.findByPostIdAndReporterId(postId, currentUser.getId()).ifPresent(r -> {
             throw new BusinessException(ErrorCode.PARAMETER_ERROR, "您已举报过该动态，请勿重复举报");

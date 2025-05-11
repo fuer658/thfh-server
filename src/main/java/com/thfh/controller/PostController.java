@@ -4,7 +4,6 @@ import com.thfh.common.Result;
 import com.thfh.dto.CommentRequest;
 import com.thfh.dto.PostDTO;
 import com.thfh.model.Post;
-import com.thfh.model.PostComment;
 import com.thfh.model.User;
 import com.thfh.dto.PostCommentDTO;
 import com.thfh.service.PostService;
