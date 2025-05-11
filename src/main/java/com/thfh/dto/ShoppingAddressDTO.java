@@ -13,7 +13,7 @@ import javax.validation.constraints.Size;
  */
 @Data
 @ApiModel(value = "收货地址DTO", description = "用于收货地址的创建和更新")
-public class ShippingAddressDTO {
+public class ShoppingAddressDTO {
     /**
      * 地址ID，更新时使用
      */

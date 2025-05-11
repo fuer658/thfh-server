@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 订单数据访问接口
@@ -99,4 +100,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
      * @return 订单分页列表
      */
     Page<Order> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
+
+    Optional<Order> findByUserIdAndArtworkIdAndStatus(Long userId, Long artworkId, String status);
 }

@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.thfh.dto.ArtworkDTO;
+import com.thfh.dto.UserDTO;
 
 /**
  * 订单数据传输对象
@@ -25,13 +27,13 @@ public class OrderDTO {
     private String status;
 
     @ApiModelProperty(value = "收货人姓名", example = "张三")
-    private String shippingName;
+    private String shoppingName;
 
     @ApiModelProperty(value = "收货人电话", example = "13800138000")
-    private String shippingPhone;
+    private String shoppingPhone;
 
     @ApiModelProperty(value = "收货地址", example = "北京市朝阳区xxx街道xxx号")
-    private String shippingAddress;
+    private String shoppingAddress;
 
     @ApiModelProperty(value = "物流公司", example = "顺丰快递")
     private String logisticsCompany;

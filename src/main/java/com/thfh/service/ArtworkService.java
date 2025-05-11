@@ -1,5 +1,6 @@
 package com.thfh.service;
 
+import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.ArtworkUpdateDTO;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkTag;
@@ -30,6 +31,9 @@ public class ArtworkService {
 
     @Autowired
     private ArtworkTagRepository artworkTagRepository;
+
+    @Autowired
+    private ArtworkGalleryService artworkGalleryService;
 
     /**
      * 创建作品
@@ -324,5 +328,23 @@ public class ArtworkService {
      */
     public Page<Artwork> getArtworksByUserId(Long userId, Pageable pageable) {
         return artworkRepository.findByCreatorId(userId, pageable);
+    }
+
+    private ArtworkDTO toDTO(Artwork artwork) {
+        if (artwork == null) return null;
+        
+        ArtworkDTO dto = new ArtworkDTO();
+        dto.setId(artwork.getId());
+        dto.setTitle(artwork.getTitle());
+        dto.setDescription(artwork.getDescription());
+        dto.setPrice(artwork.getPrice());
+        dto.setCoverUrl(artwork.getCoverUrl());
+        dto.setCreateTime(artwork.getCreateTime());
+        dto.setUpdateTime(artwork.getUpdateTime());
+        
+        // 获取图册列表
+        dto.setGalleries(artworkGalleryService.getGalleryByArtworkId(artwork.getId()));
+        
+        return dto;
     }
 }

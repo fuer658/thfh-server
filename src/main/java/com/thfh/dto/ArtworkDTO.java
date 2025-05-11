@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.List;
 
 /**
  * 艺术作品数据传输对象
@@ -75,4 +76,7 @@ public class ArtworkDTO {
     
     @ApiModelProperty(value = "更新时间", example = "2023-01-15 15:30:00")
     private LocalDateTime updateTime;
+    
+    @ApiModelProperty("作品图册列表")
+    private List<ArtworkGalleryDTO> galleries;
 } 

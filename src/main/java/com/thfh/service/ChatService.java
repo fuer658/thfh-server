@@ -145,7 +145,7 @@ public class ChatService {
             // 获取该会话的未读消息数量
             User otherUser = userRepository.findById(conversation.getUserId())
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
-            long unreadCount = chatMessageRepository.countUnreadMessagesBetweenUsers(currentUser, otherUser.getId());
+            long unreadCount = chatMessageRepository.countUnreadMessagesBetweenUsers(currentUser.getId(), otherUser.getId());
             conversation.setUnreadCount((int) unreadCount);
         }
         

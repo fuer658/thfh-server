@@ -12,8 +12,12 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +32,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
 
     @Autowired
     private OrderService orderService;
@@ -210,5 +216,37 @@ public class OrderController {
             @RequestParam(required = false) String status) {
         Page<OrderDTO> page = orderService.getOrdersByCurrentUser(pageNum, pageSize, status);
         return Result.success(page);
+    }
+
+    /**
+     * 添加商品到购物车
+     * @param artworkId 艺术品ID
+     * @param createOrderDTO 收货信息
+     * @return 购物车订单信息
+     */
+    @ApiOperation(value = "添加商品到购物车", notes = "将指定艺术品添加到当前用户的购物车")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "添加成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "艺术品不存在")
+    })
+    @PostMapping("/cart/{artworkId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<OrderDTO> addToCart(
+            @ApiParam(value = "艺术品ID", required = true) @PathVariable Long artworkId,
+            @ApiParam(value = "收货信息", required = true) @RequestBody CreateOrderDTO createOrderDTO) {
+        Order order = orderService.addToCart(artworkId, createOrderDTO);
+        return Result.success(orderService.toOrderDTO(order), "添加购物车成功");
+    }
+
+    @GetMapping("/cart/check/{artworkId}")
+    public Result<Boolean> checkArtworkInCart(@PathVariable Long artworkId) {
+        try {
+            boolean exists = orderService.checkArtworkInCart(artworkId);
+            return Result.success(exists);
+        } catch (Exception e) {
+            log.error("检查购物车失败", e);
+            return Result.error("检查购物车失败：" + e.getMessage());
+        }
     }
 } 

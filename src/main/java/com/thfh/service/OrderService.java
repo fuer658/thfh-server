@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.thfh.dto.OrderDTO;
 import com.thfh.dto.ArtworkDTO;
@@ -77,9 +78,9 @@ public class OrderService {
         order.setStatus("UNPAID"); // 初始状态为待支付
         
         // 设置收货信息
-        order.setShippingName(createOrderDTO.getShippingName());
-        order.setShippingPhone(createOrderDTO.getShippingPhone());
-        order.setShippingAddress(createOrderDTO.getShippingAddress());
+        order.setShoppingName(createOrderDTO.getShoppingName());
+        order.setShoppingPhone(createOrderDTO.getShoppingPhone());
+        order.setShoppingAddress(createOrderDTO.getShoppingAddress());
         
         // 设置创建时间和更新时间
         LocalDateTime now = LocalDateTime.now();
@@ -201,9 +202,9 @@ public class OrderService {
         dto.setOrderNo(order.getOrderNo());
         dto.setAmount(order.getAmount());
         dto.setStatus(order.getStatus());
-        dto.setShippingName(order.getShippingName());
-        dto.setShippingPhone(order.getShippingPhone());
-        dto.setShippingAddress(order.getShippingAddress());
+        dto.setShoppingName(order.getShoppingName());
+        dto.setShoppingPhone(order.getShoppingPhone());
+        dto.setShoppingAddress(order.getShoppingAddress());
         dto.setLogisticsCompany(order.getLogisticsCompany());
         dto.setLogisticsNo(order.getLogisticsNo());
         dto.setCreateTime(order.getCreateTime());
@@ -291,5 +292,66 @@ public class OrderService {
             orderPage = orderRepository.findByUserId(currentUser.getId(), pageRequest);
         }
         return toOrderDTOPage(orderPage);
+    }
+
+    /**
+     * 添加商品到购物车
+     * @param artworkId 艺术品ID
+     * @param createOrderDTO 创建订单的请求数据
+     * @return 创建的购物车订单
+     */
+    @Transactional
+    public Order addToCart(Long artworkId, CreateOrderDTO createOrderDTO) {
+        // 获取当前用户
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        
+        // 获取艺术品信息
+        Artwork artwork = artworkService.getArtworkById(artworkId)
+                .orElseThrow(() -> new RuntimeException("艺术品不存在"));
+                
+        // 创建购物车订单
+        Order order = new Order();
+        order.setOrderNo(generateOrderNo());
+        order.setUser(currentUser);
+        order.setArtwork(artwork);
+        order.setAmount(artwork.getPrice());
+        order.setStatus("ON_CART"); // 设置为购物车状态
+        
+        // 设置收货信息
+        order.setShoppingName(createOrderDTO.getShoppingName());
+        order.setShoppingPhone(createOrderDTO.getShoppingPhone());
+        order.setShoppingAddress(createOrderDTO.getShoppingAddress());
+        
+        // 设置创建时间和更新时间
+        LocalDateTime now = LocalDateTime.now();
+        order.setCreateTime(now);
+        order.setUpdateTime(now);
+        
+        // 保存订单
+        return orderRepository.save(order);
+    }
+
+    public boolean checkArtworkInCart(Long artworkId) {
+        // 获取当前用户
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+
+        // 检查作品是否存在
+        Artwork artwork = artworkService.getArtworkById(artworkId)
+                .orElseThrow(() -> new RuntimeException("作品不存在"));
+
+        // 查询用户购物车中是否存在该作品
+        Optional<Order> existingOrder = orderRepository.findByUserIdAndArtworkIdAndStatus(
+                currentUser.getId(), 
+                artworkId, 
+                "ON_CART"
+        );
+
+        return existingOrder.isPresent();
     }
 } 

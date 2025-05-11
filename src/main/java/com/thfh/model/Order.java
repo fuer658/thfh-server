@@ -57,11 +57,11 @@ public class Order {
     private BigDecimal amount;
 
     /**
-     * 订单状态（UNPAID-待支付，PAID-已支付，SHIPPED-已发货，COMPLETED-已完成，CANCELLED-已取消）
+     * 订单状态（UNPAID-待支付，PAID-已支付，SHIPPED-已发货，COMPLETED-已完成，CANCELLED-已取消，ON_CART-在购物车）
      */
     @Column(nullable = false, length = 20)
     @ApiModelProperty(value = "订单状态", example = "PAID", required = true, 
-        allowableValues = "UNPAID,PAID,SHIPPED,COMPLETED,CANCELLED")
+        allowableValues = "UNPAID,PAID,SHIPPED,COMPLETED,CANCELLED,ON_CART")
     private String status;
 
     /**
@@ -69,21 +69,21 @@ public class Order {
      */
     @Column(nullable = false, length = 50)
     @ApiModelProperty(value = "收货人姓名", example = "张三", required = true)
-    private String shippingName;
+    private String shoppingName;
 
     /**
      * 收货人电话
      */
     @Column(nullable = false, length = 20)
     @ApiModelProperty(value = "收货人电话", example = "13800138000", required = true)
-    private String shippingPhone;
+    private String shoppingPhone;
 
     /**
      * 收货地址
      */
     @Column(nullable = false)
     @ApiModelProperty(value = "收货地址", example = "北京市朝阳区xxx街道xxx号", required = true)
-    private String shippingAddress;
+    private String shoppingAddress;
 
     /**
      * 物流公司名称

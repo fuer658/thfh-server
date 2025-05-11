@@ -44,6 +44,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     
     // 统计两个用户之间的未读消息数量
     @Query("SELECT COUNT(m) FROM ChatMessage m WHERE " +
-           "m.receiver = :receiver AND m.sender.id = :senderId AND m.read = false")
-    Long countUnreadMessagesBetweenUsers(@Param("receiver") User receiver, @Param("senderId") Long senderId);
+           "m.receiver.id = :receiverId AND m.sender.id = :senderId AND m.read = false")
+    Long countUnreadMessagesBetweenUsers(@Param("receiverId") Long receiverId, @Param("senderId") Long senderId);
 } 

@@ -5,7 +5,6 @@ import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.ArtworkScoreDTO;
 import com.thfh.dto.ArtworkUpdateDTO;
 import com.thfh.dto.FollowDTO;
-import com.thfh.dto.ShoppingCartDTO;
 import com.thfh.dto.TagDTO;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkType;
@@ -13,7 +12,6 @@ import com.thfh.model.User;
 import com.thfh.service.AdminService;
 import com.thfh.service.ArtworkService;
 import com.thfh.service.ArtworkScoreService;
-import com.thfh.service.ShoppingCartService;
 import com.thfh.service.UserService;
 import com.thfh.service.FollowService;
 import com.thfh.exception.ResourceNotFoundException;
@@ -68,7 +66,6 @@ public class ArtworkController {
     private final ArtworkService artworkService;
     private final ArtworkScoreService artworkScoreService;
     private final AdminService adminService;
-    private final ShoppingCartService shoppingCartService;
     private final FollowService followService;
 
     /**
@@ -511,49 +508,6 @@ public class ArtworkController {
     }
 
     /**
-     * 将作品添加到购物车
-     * 
-     * @param artworkId 作品ID
-     * @param quantity 数量
-     * @param authentication 认证信息
-     * @return 更新后的购物车
-     */
-    @ApiOperation(value = "添加到购物车", notes = "将作品添加到购物车中")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "添加成功"),
-        @ApiResponse(code = 400, message = "请求参数错误"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 404, message = "作品不存在")
-    })
-    @PostMapping("/{artworkId}/addToCart")
-    public Result<ShoppingCartDTO> addToCart(
-            @ApiParam(value = "作品ID", required = true) 
-            @PathVariable @Positive(message = "作品ID必须为正数") Long artworkId,
-            @ApiParam(value = "数量", defaultValue = "1") 
-            @RequestParam(defaultValue = "1") @Positive(message = "数量必须大于0") Integer quantity,
-            @ApiParam(hidden = true) Authentication authentication) {
-        log.info("正在将作品 {} 添加到购物车，数量: {}", artworkId, quantity);
-        
-        // 检查作品是否存在
-        Optional<Artwork> artworkOpt = artworkService.getArtworkById(artworkId);
-        if (!artworkOpt.isPresent()) {
-            throw new ResourceNotFoundException("作品不存在，ID: " + artworkId);
-        }
-        
-        // 检查作品是否可购买
-        Artwork artwork = artworkOpt.get();
-        if (artwork.getPrice() == null || artwork.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            return Result.error("该作品不可购买");
-        }
-        
-        User user = userService.getCurrentUser();
-        ShoppingCartDTO cart = shoppingCartService.addToCart(user.getId(), artworkId, quantity);
-        
-        log.info("用户 {} 成功将作品 {} 添加到购物车", user.getUsername(), artworkId);
-        return Result.success(cart, "已添加到购物车");
-    }
-
-    /**
      * 获取已关注用户的作品列表
      * @param authentication 认证信息
      * @param page 页码
@@ -637,6 +591,45 @@ public class ArtworkController {
         Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworks);
         
         return Result.success(dtoPage);
+    }
+
+    /**
+     * 作者更新作品信息
+     * @param artworkId 作品ID
+     * @param updateDTO 更新的作品信息
+     * @param user 当前登录用户
+     * @return 更新结果
+     */
+    @ApiOperation(value = "作者更新作品", notes = "作者更新自己的作品信息")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "更新成功"),
+            @ApiResponse(code = 400, message = "请求参数错误"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 403, message = "没有权限更新该作品"),
+            @ApiResponse(code = 404, message = "作品不存在")
+    })
+    @PutMapping("/{artworkId}")
+    public Result<Void> updateArtwork(
+            @ApiParam(value = "作品ID", required = true) 
+            @PathVariable @Positive(message = "作品ID必须为正数") Long artworkId,
+            @ApiParam(value = "更新的作品信息", required = true) @Valid @RequestBody ArtworkUpdateDTO updateDTO,
+            @ApiParam(hidden = true) @AuthenticationPrincipal User user) {
+        log.info("用户 {} 正在更新作品 {}: {}", user.getUsername(), artworkId, updateDTO);
+        
+        // 获取作品信息
+        Artwork artwork = artworkService.getArtworkById(artworkId)
+                .orElseThrow(() -> new ResourceNotFoundException("作品不存在，ID: " + artworkId));
+        
+        // 验证当前用户是否为作品作者
+        if (!artwork.getCreator().getId().equals(user.getId())) {
+            log.warn("用户 {} 尝试更新不属于他的作品 {}", user.getUsername(), artworkId);
+            return Result.error(HttpStatus.FORBIDDEN.value(), "您没有权限更新该作品");
+        }
+        
+        artworkService.updateArtwork(artworkId, updateDTO);
+        log.info("用户 {} 成功更新作品 {}", user.getUsername(), artworkId);
+        
+        return Result.success(null, "作品更新成功");
     }
     
     /**
