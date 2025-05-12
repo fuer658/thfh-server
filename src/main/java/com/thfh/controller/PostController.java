@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.Set;
 import javax.validation.Valid;
@@ -524,5 +525,15 @@ public class PostController {
             @ApiParam(value = "举报信息", required = true) @Valid @RequestBody PostReportRequest request) {
         postService.reportPost(postId, request);
         return Result.success(null, "举报成功");
+    }
+
+    /**
+     * 管理员修复所有帖子评论计数
+     */
+    @GetMapping("/admin/fix-comment-counts")
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Integer> fixCommentCounts() {
+        int fixedCount = postService.fixAllPostsCommentCount();
+        return Result.success(fixedCount);
     }
 }

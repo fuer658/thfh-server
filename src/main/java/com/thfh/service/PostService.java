@@ -699,8 +699,19 @@ public class PostService {
         // 删除评论
         postCommentRepository.deleteById(commentId);
 
-        // 更新动态的评论计数
-        postRepository.updateCommentCount(postId, -1);
+        // 获取当前动态的评论数
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("动态不存在"));
+        
+        // 确保评论计数不会变为负数
+        if (post.getCommentCount() > 0) {
+            // 更新动态的评论计数
+            postRepository.updateCommentCount(postId, -1);
+        } else {
+            // 如果当前评论计数已经是0或负数，则强制设置为0
+            post.setCommentCount(0);
+            postRepository.save(post);
+        }
     }
 
     /**
@@ -869,8 +880,19 @@ public class PostService {
         // 删除评论
         postCommentRepository.deleteById(commentId);
         
-        // 更新动态的评论计数
-        postRepository.updateCommentCount(postId, -1);
+        // 获取当前动态的评论数
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("动态不存在"));
+        
+        // 确保评论计数不会变为负数
+        if (post.getCommentCount() > 0) {
+            // 更新动态的评论计数
+            postRepository.updateCommentCount(postId, -1);
+        } else {
+            // 如果当前评论计数已经是0或负数，则强制设置为0
+            post.setCommentCount(0);
+            postRepository.save(post);
+        }
     }
 
     // =================== 新增DTO转换方法 ===================
@@ -941,5 +963,35 @@ public class PostService {
         report.setCreateTime(LocalDateTime.now());
         report.setStatus("待处理");
         postReportRepository.save(report);
+    }
+
+    /**
+     * 修复所有帖子的评论计数，确保不存在负数计数
+     * @return 修复的帖子数量
+     */
+    @Transactional
+    public int fixAllPostsCommentCount() {
+        int fixedCount = 0;
+        
+        // 获取所有帖子
+        List<Post> posts = postRepository.findAll();
+        
+        for (Post post : posts) {
+            // 检查评论计数是否为负数
+            if (post.getCommentCount() != null && post.getCommentCount() < 0) {
+                // 计算实际评论数
+                long actualCommentCount = postCommentRepository.countByPostId(post.getId());
+                
+                // 更新为正确的评论数或0
+                post.setCommentCount((int) Math.max(0, actualCommentCount));
+                postRepository.save(post);
+                
+                fixedCount++;
+                log.info("Fixed comment count for post ID {}: from {} to {}", 
+                        post.getId(), post.getCommentCount(), actualCommentCount);
+            }
+        }
+        
+        return fixedCount;
     }
 }
