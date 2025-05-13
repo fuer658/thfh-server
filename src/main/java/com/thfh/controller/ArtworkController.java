@@ -614,22 +614,33 @@ public class ArtworkController {
             @PathVariable @Positive(message = "作品ID必须为正数") Long artworkId,
             @ApiParam(value = "更新的作品信息", required = true) @Valid @RequestBody ArtworkUpdateDTO updateDTO,
             @ApiParam(hidden = true) @AuthenticationPrincipal User user) {
-        log.info("用户 {} 正在更新作品 {}: {}", user.getUsername(), artworkId, updateDTO);
-        
-        // 获取作品信息
-        Artwork artwork = artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new ResourceNotFoundException("作品不存在，ID: " + artworkId));
-        
-        // 验证当前用户是否为作品作者
-        if (!artwork.getCreator().getId().equals(user.getId())) {
-            log.warn("用户 {} 尝试更新不属于他的作品 {}", user.getUsername(), artworkId);
-            return Result.error(HttpStatus.FORBIDDEN.value(), "您没有权限更新该作品");
+        // 检查用户是否为空，如果为空则尝试通过service获取当前用户
+        if (user == null) {
+            user = userService.getCurrentUser();
+            if (user == null) {
+                log.error("用户未登录或会话已过期");
+                return Result.unauthorized("用户未登录或会话已过期，请重新登录");
+            }
         }
         
-        artworkService.updateArtwork(artworkId, updateDTO);
-        log.info("用户 {} 成功更新作品 {}", user.getUsername(), artworkId);
+        log.info("用户 {} 正在更新作品 {}: {}", user.getUsername(), artworkId, updateDTO);
         
-        return Result.success(null, "作品更新成功");
+        try {
+            // 使用新的userUpdateArtwork方法，确保用户权限检查和更新操作
+            artworkService.userUpdateArtwork(artworkId, updateDTO, user);
+            log.info("用户 {} 成功更新作品 {}", user.getUsername(), artworkId);
+            return Result.success(null, "作品更新成功");
+        } catch (IllegalArgumentException e) {
+            log.warn("用户 {} 更新作品 {} 失败: {}", user.getUsername(), artworkId, e.getMessage());
+            // 根据错误信息返回适当的状态码
+            if (e.getMessage().contains("不存在")) {
+                return Result.error(HttpStatus.NOT_FOUND.value(), e.getMessage());
+            } else if (e.getMessage().contains("没有权限")) {
+                return Result.error(HttpStatus.FORBIDDEN.value(), e.getMessage());
+            } else {
+                return Result.error(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+            }
+        }
     }
     
     /**

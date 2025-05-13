@@ -261,6 +261,59 @@ public class ArtworkService {
             });
             artwork.setTags(processedTags);
         }
+        return artworkRepository.save(artwork);
+    }
+
+    /**
+     * 用户更新自己的作品信息
+     * @param artworkId 作品ID
+     * @param updateDTO 更新的作品信息
+     * @param user 当前用户
+     * @return 更新后的作品
+     * @throws IllegalArgumentException 如果作品不存在或用户不是作品创建者
+     */
+    @Transactional
+    public Artwork userUpdateArtwork(Long artworkId, ArtworkUpdateDTO updateDTO, User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("用户未登录或会话已过期");
+        }
+        
+        Artwork artwork = artworkRepository.findById(artworkId)
+                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+        
+        // 验证当前用户是否为作品创建者
+        if (artwork.getCreator() == null) {
+            throw new IllegalArgumentException("作品创建者信息缺失");
+        }
+        
+        if (!artwork.getCreator().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("您没有权限更新该作品");
+        }
+        
+        // 更新基本信息
+        BeanUtils.copyProperties(updateDTO, artwork, "id", "creator", "createTime", "averageScore", "scoreCount", "totalScore", "favoriteCount", "likeCount", "viewCount");
+        
+        // 处理标签
+        if (updateDTO.getTags() != null) {
+            Set<ArtworkTag> processedTags = new HashSet<>();
+            updateDTO.getTags().forEach(tag -> {
+                if (tag.getId() == null) {
+                    // 检查是否存在相同名称的标签
+                    ArtworkTag existingTag = artworkTagRepository.findByName(tag.getName());
+                    if (existingTag != null) {
+                        // 如果存在，使用已有标签
+                        processedTags.add(existingTag);
+                    } else {
+                        // 如果不存在，保存新标签
+                        artworkTagRepository.save(tag);
+                        processedTags.add(tag);
+                    }
+                } else {
+                    processedTags.add(tag);
+                }
+            });
+            artwork.setTags(processedTags);
+        }
         
         return artworkRepository.save(artwork);
     }
