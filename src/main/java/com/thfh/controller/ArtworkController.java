@@ -48,19 +48,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 作品管理控制器
  * 提供作品相关的API接口，包括作品发布、评分、查询、删除和编辑等功能
  */
-@Api(tags = "作品管理", description = "作品相关的API接口，包括作品发布、评分、查询、删除和编辑等功能")
+@Api(tags = "作品管理")
 @RestController
 @RequestMapping("/api/artworks")
 @Validated
 @Slf4j
 @RequiredArgsConstructor
 public class ArtworkController {
+
+    private static final String ARTWORK_NOT_FOUND = "作品不存在，ID: ";
+    private static final String CREATE_TIME = "createTime";
 
     private final UserService userService;
     private final ArtworkService artworkService;
@@ -131,7 +133,7 @@ public class ArtworkController {
         
         User user = userService.getCurrentUser();
         Artwork artwork = artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new ResourceNotFoundException("作品不存在，ID: " + artworkId));
+                .orElseThrow(() -> new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId));
                 
         artworkScoreService.scoreArtwork(artworkId, user.getId(), scoreDTO.getScore(), user, artwork);
         
@@ -157,7 +159,7 @@ public class ArtworkController {
         
         // 验证作品是否存在
         artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new ResourceNotFoundException("作品不存在，ID: " + artworkId));
+                .orElseThrow(() -> new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId));
                 
         Map<String, Object> scoreInfo = new HashMap<>();
         scoreInfo.put("averageScore", artworkScoreService.getArtworkAverageScore(artworkId));
@@ -190,7 +192,7 @@ public class ArtworkController {
             @ApiParam(value = "是否启用（可选）") @RequestParam(required = false) Boolean enabled) {
         log.debug("获取作品列表: 页码={}, 大小={}, 标题={}, 学生ID={}, 启用状态={}", page, size, title, studentId, enabled);
         
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME));
         Page<Artwork> artworkPage = artworkService.getArtworks(title, studentId, enabled, pageRequest);
         
         // 转换为DTO
@@ -225,7 +227,7 @@ public class ArtworkController {
         log.debug("获取当前用户作品列表: 页码={}, 大小={}, 类型={}, 启用状态={}", page, size, type, enabled);
         
         User user = userService.getCurrentUser();
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME));
         
         Page<Artwork> artworks;
         if (type != null && enabled != null) {
@@ -266,7 +268,7 @@ public class ArtworkController {
         
         User user = userService.getCurrentUser();
         Artwork artwork = artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new ResourceNotFoundException("作品不存在，ID: " + artworkId));
+                .orElseThrow(() -> new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId));
         
         // 验证当前用户是否为作品创建者
         if (!artwork.getCreator().getId().equals(user.getId())) {
@@ -311,7 +313,7 @@ public class ArtworkController {
         
         // 检查作品是否存在
         if (!artworkService.getArtworkById(artworkId).isPresent()) {
-            throw new ResourceNotFoundException("作品不存在，ID: " + artworkId);
+            throw new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId);
         }
         
         artworkService.deleteArtwork(artworkId);
@@ -402,7 +404,7 @@ public class ArtworkController {
         
         // 检查作品是否存在
         if (!artworkService.getArtworkById(artworkId).isPresent()) {
-            throw new ResourceNotFoundException("作品不存在，ID: " + artworkId);
+            throw new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId);
         }
         
         artworkService.updateArtwork(artworkId, updateDTO);
@@ -434,7 +436,7 @@ public class ArtworkController {
         
         // 检查作品是否存在
         if (!artworkService.getArtworkById(artworkId).isPresent()) {
-            throw new ResourceNotFoundException("作品不存在，ID: " + artworkId);
+            throw new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId);
         }
         
         artworkService.updateArtworkRecommendation(artworkId, recommended == 1);
@@ -463,7 +465,7 @@ public class ArtworkController {
         
         // 获取作品信息
         Artwork artwork = artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new ResourceNotFoundException("作品不存在，ID: " + artworkId));
+                .orElseThrow(() -> new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId));
         
         // 转换为DTO
         ArtworkDTO dto = convertToArtworkDTO(artwork);
@@ -493,7 +495,7 @@ public class ArtworkController {
         
         // 检查作品是否存在
         Artwork artwork = artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new ResourceNotFoundException("作品不存在，ID: " + artworkId));
+                .orElseThrow(() -> new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId));
         
         // 检查当前用户是否有权限修改价格
         User user = userService.getCurrentUser();
@@ -529,7 +531,7 @@ public class ArtworkController {
         log.debug("获取已关注用户的作品列表: 页码={}, 大小={}", page, size);
         
         User user = userService.getCurrentUser();
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME));
         
         // 获取已关注的用户ID列表
         List<Long> followingIds = followService.getFollowingList(user.getId())
@@ -578,7 +580,7 @@ public class ArtworkController {
         // 验证用户是否存在
         userService.getUserById(userId);
                 
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME));
         
         Page<Artwork> artworks;
         if (enabled != null) {

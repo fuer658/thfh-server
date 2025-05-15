@@ -7,7 +7,6 @@ import com.thfh.model.Artwork;
 import com.thfh.model.Order;
 import com.thfh.model.User;
 import com.thfh.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -22,10 +21,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 import com.thfh.dto.OrderDTO;
 import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.UserDTO;
+import com.thfh.exception.BusinessException;
+import com.thfh.exception.ErrorCode;
 
 /**
  * 订单服务实现类
@@ -34,23 +36,25 @@ import com.thfh.dto.UserDTO;
 @Service
 public class OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private RestTemplate restTemplate;
-    
-    @Autowired
-    private UserService userService;
-    
-    @Autowired
-    private ArtworkService artworkService;
+    private final OrderRepository orderRepository;
+    private final RestTemplate restTemplate;
+    private final UserService userService;
+    private final ArtworkService artworkService;
 
     @Value("${cainiao.api.url}")
     private String cainiaoApiUrl;
 
     @Value("${cainiao.api.key}")
     private String cainiaoApiKey;
+
+    private static final Random RANDOM = new Random();
+
+    public OrderService(OrderRepository orderRepository, RestTemplate restTemplate, UserService userService, ArtworkService artworkService) {
+        this.orderRepository = orderRepository;
+        this.restTemplate = restTemplate;
+        this.userService = userService;
+        this.artworkService = artworkService;
+    }
 
     /**
      * 创建订单
@@ -62,12 +66,12 @@ public class OrderService {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
         
         // 获取艺术品信息
         Artwork artwork = artworkService.getArtworkById(createOrderDTO.getArtworkId())
-                .orElseThrow(() -> new RuntimeException("艺术品不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_EXIST, "艺术品不存在"));
                 
         // 创建订单
         Order order = new Order();
@@ -98,7 +102,7 @@ public class OrderService {
      */
     private String generateOrderNo() {
         String datePart = LocalDateTime.now().toString().substring(0, 10).replace("-", "");
-        String randomPart = String.format("%06d", (int) (Math.random() * 1000000));
+        String randomPart = String.format("%06d", RANDOM.nextInt(1000000));
         return datePart + randomPart;
     }
 
@@ -150,7 +154,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public Order getOrderDetail(Long id) {
         return orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("订单不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_EXIST, "订单不存在"));
     }
     
     /**
@@ -250,7 +254,7 @@ public class OrderService {
     @Transactional
     public void deleteOrder(Long id) {
         if (!orderRepository.existsById(id)) {
-            throw new RuntimeException("订单不存在");
+            throw new BusinessException(ErrorCode.DATA_NOT_EXIST, "订单不存在");
         }
         orderRepository.deleteById(id);
     }
@@ -262,9 +266,9 @@ public class OrderService {
     @Transactional
     public void payOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("订单不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_EXIST, "订单不存在"));
         if (!"UNPAID".equals(order.getStatus())) {
-            throw new RuntimeException("订单当前状态不可支付");
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "订单当前状态不可支付");
         }
         order.setStatus("PAID");
         order.setUpdateTime(LocalDateTime.now());
@@ -282,7 +286,7 @@ public class OrderService {
     public Page<OrderDTO> getOrdersByCurrentUser(int pageNum, int pageSize, String status) {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
         PageRequest pageRequest = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Order> orderPage;
@@ -305,12 +309,12 @@ public class OrderService {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
         
         // 获取艺术品信息
         Artwork artwork = artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new RuntimeException("艺术品不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_EXIST, "艺术品不存在"));
                 
         // 创建购物车订单
         Order order = new Order();
@@ -338,12 +342,12 @@ public class OrderService {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         // 检查作品是否存在
-        Artwork artwork = artworkService.getArtworkById(artworkId)
-                .orElseThrow(() -> new RuntimeException("作品不存在"));
+        artworkService.getArtworkById(artworkId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_EXIST, "作品不存在"));
 
         // 查询用户购物车中是否存在该作品
         Optional<Order> existingOrder = orderRepository.findByUserIdAndArtworkIdAndStatus(

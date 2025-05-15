@@ -1,6 +1,5 @@
 package com.thfh.service;
 
-import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.ArtworkUpdateDTO;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkTag;
@@ -9,7 +8,6 @@ import com.thfh.model.User;
 import com.thfh.repository.ArtworkRepository;
 import com.thfh.repository.ArtworkTagRepository;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,17 +21,19 @@ import java.util.Set;
 @Service
 public class ArtworkService {
 
-    @Autowired
-    private ArtworkRepository artworkRepository;
+    private final ArtworkRepository artworkRepository;
+    private final UserService userService;
+    private final ArtworkTagRepository artworkTagRepository;
 
-    @Autowired
-    private UserService userService;
+    private static final String ARTWORK_NOT_FOUND = "作品不存在";
 
-    @Autowired
-    private ArtworkTagRepository artworkTagRepository;
-
-    @Autowired
-    private ArtworkGalleryService artworkGalleryService;
+    public ArtworkService(ArtworkRepository artworkRepository,
+                         UserService userService,
+                         ArtworkTagRepository artworkTagRepository) {
+        this.artworkRepository = artworkRepository;
+        this.userService = userService;
+        this.artworkTagRepository = artworkTagRepository;
+    }
 
     /**
      * 创建作品
@@ -41,15 +41,22 @@ public class ArtworkService {
      * @return 创建的作品
      */
     public Artwork createArtwork(Artwork artwork) {
-        // 验证作品必填字段
+        validateArtworkFields(artwork);
+        ensureArtworkCreator(artwork);
+        processArtworkTags(artwork);
+        return artworkRepository.save(artwork);
+    }
+
+    private void validateArtworkFields(Artwork artwork) {
         if (artwork.getTitle() == null || artwork.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("作品标题不能为空");
         }
         if (artwork.getType() == null) {
             throw new IllegalArgumentException("作品类型不能为空");
         }
-        
-        // 确保作品有创建者
+    }
+
+    private void ensureArtworkCreator(Artwork artwork) {
         if (artwork.getCreator() == null) {
             User currentUser = userService.getCurrentUser();
             if (currentUser == null) {
@@ -57,19 +64,17 @@ public class ArtworkService {
             }
             artwork.setCreator(currentUser);
         }
-        
-        // 保存标签
+    }
+
+    private void processArtworkTags(Artwork artwork) {
         if (artwork.getTags() != null && !artwork.getTags().isEmpty()) {
             Set<ArtworkTag> processedTags = new HashSet<>();
             artwork.getTags().forEach(tag -> {
                 if (tag.getId() == null) {
-                    // 检查是否存在相同名称的标签
                     ArtworkTag existingTag = artworkTagRepository.findByName(tag.getName());
                     if (existingTag != null) {
-                        // 如果存在，使用已有标签
                         processedTags.add(existingTag);
                     } else {
-                        // 如果不存在，保存新标签
                         artworkTagRepository.save(tag);
                         processedTags.add(tag);
                     }
@@ -79,9 +84,6 @@ public class ArtworkService {
             });
             artwork.setTags(processedTags);
         }
-        
-        // 保存作品
-        return artworkRepository.save(artwork);
     }
 
     /**
@@ -202,7 +204,7 @@ public class ArtworkService {
     @Transactional
     public Artwork updateArtworkRecommendation(Long artworkId, Boolean recommended) {
         Artwork artwork = artworkRepository.findById(artworkId)
-                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTWORK_NOT_FOUND));
         artwork.setRecommended(recommended);
         return artworkRepository.save(artwork);
     }
@@ -216,7 +218,7 @@ public class ArtworkService {
     @Transactional
     public Artwork updateArtworkPrice(Long artworkId, BigDecimal price) {
         Artwork artwork = artworkRepository.findById(artworkId)
-                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTWORK_NOT_FOUND));
         
         if (artwork.getType() != ArtworkType.COMMERCIAL) {
             throw new IllegalStateException("只有商业作品可以修改价格");
@@ -235,7 +237,7 @@ public class ArtworkService {
     @Transactional
     public Artwork updateArtwork(Long artworkId, ArtworkUpdateDTO updateDTO) {
         Artwork artwork = artworkRepository.findById(artworkId)
-                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTWORK_NOT_FOUND));
         
         // 更新基本信息
         BeanUtils.copyProperties(updateDTO, artwork, "id", "creator", "createTime", "averageScore", "scoreCount", "totalScore", "favoriteCount", "likeCount", "viewCount");
@@ -279,7 +281,7 @@ public class ArtworkService {
         }
         
         Artwork artwork = artworkRepository.findById(artworkId)
-                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTWORK_NOT_FOUND));
         
         // 验证当前用户是否为作品创建者
         if (artwork.getCreator() == null) {
@@ -326,7 +328,7 @@ public class ArtworkService {
     @Transactional
     public Artwork incrementViewCount(Long artworkId) {
         Artwork artwork = artworkRepository.findById(artworkId)
-                .orElseThrow(() -> new IllegalArgumentException("作品不存在"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTWORK_NOT_FOUND));
         
         if (artwork.getViewCount() == null) {
             artwork.setViewCount(0);
@@ -381,23 +383,5 @@ public class ArtworkService {
      */
     public Page<Artwork> getArtworksByUserId(Long userId, Pageable pageable) {
         return artworkRepository.findByCreatorId(userId, pageable);
-    }
-
-    private ArtworkDTO toDTO(Artwork artwork) {
-        if (artwork == null) return null;
-        
-        ArtworkDTO dto = new ArtworkDTO();
-        dto.setId(artwork.getId());
-        dto.setTitle(artwork.getTitle());
-        dto.setDescription(artwork.getDescription());
-        dto.setPrice(artwork.getPrice());
-        dto.setCoverUrl(artwork.getCoverUrl());
-        dto.setCreateTime(artwork.getCreateTime());
-        dto.setUpdateTime(artwork.getUpdateTime());
-        
-        // 获取图册列表
-        dto.setGalleries(artworkGalleryService.getGalleryByArtworkId(artwork.getId()));
-        
-        return dto;
     }
 }

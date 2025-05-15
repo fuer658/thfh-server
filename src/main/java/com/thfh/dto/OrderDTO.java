@@ -5,8 +5,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import com.thfh.dto.ArtworkDTO;
-import com.thfh.dto.UserDTO;
 
 /**
  * 订单数据传输对象
