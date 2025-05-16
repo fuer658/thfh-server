@@ -38,4 +38,10 @@ public class OrderCommentDTO {
 
     @ApiModelProperty(value = "关联的订单信息")
     private OrderDTO order;
+
+    @ApiModelProperty(value = "点赞数量", example = "10")
+    private Integer likeCount;
+
+    @ApiModelProperty(value = "当前用户是否已点赞", example = "false")
+    private Boolean liked = false;
 } 

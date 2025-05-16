@@ -82,4 +82,11 @@ public class OrderComment {
     @Column(nullable = false)
     @ApiModelProperty(value = "更新时间", example = "2024-01-01 12:00:00", required = true)
     private LocalDateTime updateTime = LocalDateTime.now();
+
+    /**
+     * 点赞数量
+     */
+    @Column(nullable = false)
+    @ApiModelProperty(value = "点赞数量", example = "10")
+    private Integer likeCount = 0;
 } 

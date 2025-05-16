@@ -1,6 +1,7 @@
 package com.thfh.controller;
 
 import com.thfh.dto.OrderCommentDTO;
+import com.thfh.dto.OrderCommentCreateDTO;
 import com.thfh.model.OrderComment;
 import com.thfh.service.OrderCommentService;
 import com.thfh.service.OrderCommentFileService;
@@ -12,6 +13,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +34,40 @@ public class OrderCommentController {
 
     @Autowired
     private OrderCommentFileService orderCommentFileService;
+
+    /**
+     * 创建订单评价 (使用JSON请求体)
+     * @param orderId 订单ID
+     * @param commentDTO 评价数据
+     * @return 创建的评价
+     */
+    @ApiOperation(value = "创建订单评价(JSON)", notes = "对已完成的订单进行评价，使用JSON请求体")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "评价成功"),
+        @ApiResponse(code = 400, message = "参数错误"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 403, message = "无权评价该订单"),
+        @ApiResponse(code = 404, message = "订单不存在")
+    })
+    @PostMapping(value = "/{orderId}/json", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<OrderCommentDTO> createCommentWithJson(
+            @ApiParam(value = "订单ID", required = true) @PathVariable Long orderId,
+            @ApiParam(value = "评价数据", required = true) @RequestBody OrderCommentCreateDTO commentDTO) {
+        
+        try {
+            OrderComment comment = orderCommentService.createComment(
+                orderId, 
+                commentDTO.getContent(), 
+                commentDTO.getImageUrls(), 
+                commentDTO.getVideoUrl(), 
+                commentDTO.getScore()
+            );
+            return Result.success(orderCommentService.toOrderCommentDTO(comment), "评价成功");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 
     /**
      * 创建订单评价
@@ -138,5 +174,72 @@ public class OrderCommentController {
             @ApiParam(value = "每页数量", defaultValue = "10") @RequestParam(defaultValue = "10") int pageSize) {
         Page<OrderCommentDTO> page = orderCommentService.getCurrentUserComments(pageNum, pageSize);
         return Result.success(page);
+    }
+    
+    /**
+     * 点赞评论
+     * @param commentId 评论ID
+     * @return 更新后的点赞数
+     */
+    @ApiOperation(value = "点赞评论", notes = "对评论进行点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "点赞成功"),
+        @ApiResponse(code = 400, message = "已点赞过该评论"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "评论不存在")
+    })
+    @PostMapping("/{commentId}/like")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<Integer> likeComment(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+        try {
+            int likeCount = orderCommentService.likeComment(commentId);
+            return Result.success(likeCount, "点赞成功");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 取消点赞评论
+     * @param commentId 评论ID
+     * @return 更新后的点赞数
+     */
+    @ApiOperation(value = "取消点赞评论", notes = "取消对评论的点赞")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "取消点赞成功"),
+        @ApiResponse(code = 400, message = "未点赞过该评论"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "评论不存在")
+    })
+    @DeleteMapping("/{commentId}/like")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<Integer> unlikeComment(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+        try {
+            int likeCount = orderCommentService.unlikeComment(commentId);
+            return Result.success(likeCount, "取消点赞成功");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 检查是否已点赞评论
+     * @param commentId 评论ID
+     * @return 是否已点赞
+     */
+    @ApiOperation(value = "检查是否已点赞", notes = "检查当前用户是否已点赞评论")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "查询成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "评论不存在")
+    })
+    @GetMapping("/{commentId}/liked")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public Result<Boolean> isCommentLiked(
+            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+        boolean liked = orderCommentService.isCommentLiked(commentId);
+        return Result.success(liked);
     }
 } 

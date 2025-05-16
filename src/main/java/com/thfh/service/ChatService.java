@@ -190,4 +190,51 @@ public class ChatService {
         
         chatMessageRepository.saveAll(messages);
     }
-} 
+
+    /**
+     * 删除单条消息
+     *
+     * @param messageId 消息ID
+     * @param userId 当前用户ID（用于验证权限）
+     * @return 删除是否成功
+     */
+    @Transactional
+    public boolean deleteMessage(Long messageId, Long userId) {
+        ChatMessage message = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("消息不存在"));
+
+        // 验证权限（只有消息的发送者或接收者可以删除消息）
+        if (!message.getSender().getId().equals(userId) && !message.getReceiver().getId().equals(userId)) {
+            throw new RuntimeException("没有权限删除该消息");
+        }
+
+        // 删除消息
+        chatMessageRepository.deleteById(messageId);
+        return true;
+    }
+
+    /**
+     * 删除两个用户之间的所有消息（清空聊天记录）
+     *
+     * @param userId1 用户1 ID
+     * @param userId2 用户2 ID
+     * @return 删除的消息数量
+     */
+    @Transactional
+    public int deleteAllMessagesBetweenUsers(Long userId1, Long userId2) {
+        User user1 = userRepository.findById(userId1)
+                .orElseThrow(() -> new RuntimeException("用户1不存在"));
+
+        User user2 = userRepository.findById(userId2)
+                .orElseThrow(() -> new RuntimeException("用户2不存在"));
+
+        // 获取两用户间的所有消息
+        List<ChatMessage> messages = chatMessageRepository.findMessagesBetweenUsers(user1, user2);
+        int count = messages.size();
+
+        // 删除所有消息
+        chatMessageRepository.deleteAll(messages);
+
+        return count;
+    }
+}

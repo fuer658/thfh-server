@@ -49,14 +49,14 @@ public class ChatController {
     public Result<ChatMessageDTO> sendMessage(
             @ApiParam(value = "消息请求体") @RequestBody ChatMessageRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long senderId = (Long) httpRequest.getAttribute(USER_ID_ATTR);
         ChatMessageDTO message = chatService.sendMessage(
-            senderId, 
-            request.getReceiverId(), 
-            request.getContent(), 
-            request.getMessageType(), 
-            request.getMediaUrl()
+                senderId,
+                request.getReceiverId(),
+                request.getContent(),
+                request.getMessageType(),
+                request.getMediaUrl()
         );
         return Result.success(message);
     }
@@ -69,15 +69,15 @@ public class ChatController {
     public ChatMessageDTO sendMessageWebSocket(
             @Payload Map<String, Object> payload,
             HttpServletRequest request) {
-        
+
         Long senderId = (Long) request.getAttribute(USER_ID_ATTR);
         Long receiverId = Long.valueOf(payload.get("receiverId").toString());
         String content = (String) payload.get("content");
-        String messageType = payload.containsKey("messageType") ? 
+        String messageType = payload.containsKey("messageType") ?
                 (String) payload.get("messageType") : "TEXT";
-        String mediaUrl = payload.containsKey("mediaUrl") ? 
+        String mediaUrl = payload.containsKey("mediaUrl") ?
                 (String) payload.get("mediaUrl") : null;
-                
+
         return chatService.sendMessage(senderId, receiverId, content, messageType, mediaUrl);
     }
 
@@ -88,7 +88,7 @@ public class ChatController {
     @GetMapping("/conversations")
     public Result<List<ChatConversationDTO>> getUserConversations(
             HttpServletRequest request) {
-        
+
         Long userId = (Long) request.getAttribute(USER_ID_ATTR);
         List<ChatConversationDTO> conversations = chatService.getUserConversations(userId);
         return Result.success(conversations);
@@ -102,13 +102,13 @@ public class ChatController {
     public Result<List<ChatMessageDTO>> getMessages(
             @ApiParam(value = "请求体") @RequestBody GetMessagesRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long currentUserId = (Long) httpRequest.getAttribute(USER_ID_ATTR);
         List<ChatMessageDTO> messages = chatService.getMessagesBetweenUsers(currentUserId, request.getOtherUserId());
-        
+
         // 标记所有消息为已读
         chatService.markAllMessagesAsRead(currentUserId, request.getOtherUserId());
-        
+
         return Result.success(messages);
     }
 
@@ -119,7 +119,7 @@ public class ChatController {
     @PostMapping("/read/{messageId}")
     public Result<Void> markMessageAsRead(
             @ApiParam(value = "消息ID") @PathVariable Long messageId) {
-        
+
         chatService.markMessageAsRead(messageId);
         return Result.success(null);
     }
@@ -132,7 +132,7 @@ public class ChatController {
     public Result<Void> markAllMessagesAsRead(
             @ApiParam(value = "请求体") @RequestBody MarkReadRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long currentUserId = (Long) httpRequest.getAttribute(USER_ID_ATTR);
         chatService.markAllMessagesAsRead(currentUserId, request.getOtherUserId());
         return Result.success(null);
@@ -144,10 +144,10 @@ public class ChatController {
      */
     @ApiOperation(value = "上传聊天图片", notes = "上传单张聊天图片，仅支持JPG、PNG、GIF、BMP、WEBP格式，单张图片不超过10MB")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "上传成功"),
-        @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 500, message = "服务器内部错误")
+            @ApiResponse(code = 200, message = "上传成功"),
+            @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 500, message = "服务器内部错误")
     })
     @PostMapping("/upload-image")
     public ResponseEntity<Map<String, Object>> uploadChatImage(
@@ -158,7 +158,7 @@ public class ChatController {
             // 校验图片类型和大小
             String contentType = image.getContentType();
             List<String> allowedTypes = Arrays.asList(
-                "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"
+                    "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"
             );
             if (contentType == null || !allowedTypes.contains(contentType.toLowerCase())) {
                 result.put("code", 400);
@@ -203,10 +203,10 @@ public class ChatController {
      */
     @ApiOperation(value = "上传聊天语音", notes = "上传单条语音，仅支持MP3、WAV、AAC格式，单条语音不超过10MB")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "上传成功"),
-        @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 500, message = "服务器内部错误")
+            @ApiResponse(code = 200, message = "上传成功"),
+            @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
+            @ApiResponse(code = 401, message = "未授权，请先登录"),
+            @ApiResponse(code = 500, message = "服务器内部错误")
     })
     @PostMapping("/upload-voice")
     public ResponseEntity<Map<String, Object>> uploadChatVoice(
@@ -217,7 +217,7 @@ public class ChatController {
             // 校验语音类型和大小
             String contentType = voice.getContentType();
             List<String> allowedTypes = Arrays.asList(
-                "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/aac"
+                    "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/aac"
             );
             if (contentType == null || !allowedTypes.contains(contentType.toLowerCase())) {
                 result.put("code", 400);
@@ -255,4 +255,32 @@ public class ChatController {
             return ResponseEntity.status(500).body(result);
         }
     }
-} 
+
+    /**
+     * 删除指定消息
+     */
+    @ApiOperation(value = "删除指定消息")
+    @DeleteMapping("/message/{messageId}")
+    public Result<Boolean> deleteMessage(
+            @ApiParam(value = "消息ID") @PathVariable Long messageId,
+            HttpServletRequest httpRequest) {
+
+        Long currentUserId = (Long) httpRequest.getAttribute("userId");
+        boolean success = chatService.deleteMessage(messageId, currentUserId);
+        return Result.success(success);
+    }
+
+    /**
+     * 删除与指定用户的所有聊天记录
+     */
+    @ApiOperation(value = "删除与指定用户的所有聊天记录")
+    @DeleteMapping("/messages/{otherUserId}")
+    public Result<Integer> deleteAllMessages(
+            @ApiParam(value = "对方用户ID") @PathVariable Long otherUserId,
+            HttpServletRequest httpRequest) {
+
+        Long currentUserId = (Long) httpRequest.getAttribute("userId");
+        int deletedCount = chatService.deleteAllMessagesBetweenUsers(currentUserId, otherUserId);
+        return Result.success(deletedCount);
+    }
+}

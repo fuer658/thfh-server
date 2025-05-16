@@ -80,27 +80,61 @@ public class CourseFileService {
             throw new RuntimeException("未授权，请先登录");
         }
         
-        // 验证文件类型
+        // 记录文件信息
+        String originalFilename = file.getOriginalFilename();
+        long fileSize = file.getSize();
         String contentType = file.getContentType();
-        if (contentType == null) {
-            throw new RuntimeException("无法识别的文件类型");
+
+        // 获取文件扩展名
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+        }
+        
+        // 根据扩展名判断文件类型（作为备用方案）
+        String extensionBasedType = "";
+        if (extension.equals(".jpg") || extension.equals(".jpeg") || extension.equals(".png") || 
+            extension.equals(".gif") || extension.equals(".bmp") || extension.equals(".webp")) {
+            extensionBasedType = "image/" + extension.substring(1);
+            // 特别处理 jpeg
+            if (extension.equals(".jpg")) {
+                extensionBasedType = "image/jpeg";
+            }
+        }
+        
+        // 如果MIME类型为空或无法识别，则使用基于扩展名的类型
+        if (contentType == null || contentType.equals("application/octet-stream")) {
+            if (!extensionBasedType.isEmpty()) {
+                contentType = extensionBasedType;
+            } else {
+                throw new RuntimeException("无法识别的文件类型");
+            }
         }
         
         // 根据文件类型进行验证
+        boolean isAllowed = false;
         switch (fileType) {
             case "cover":
-                if (!ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+                // 对于封面图片，首先检查MIME类型，如果不匹配，则检查扩展名
+                isAllowed = ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase());
+                if (!isAllowed && extension.matches("\\.(jpg|jpeg|png|gif|bmp|webp)$")) {
+                    isAllowed = true;
+                }
+                
+                if (!isAllowed) {
                     throw new RuntimeException("不支持的图片类型，只支持JPG、PNG、GIF、BMP、WEBP格式");
                 }
                 break;
             case "video":
-                if (!ALLOWED_VIDEO_TYPES.contains(contentType.toLowerCase())) {
+                isAllowed = ALLOWED_VIDEO_TYPES.contains(contentType.toLowerCase());
+                if (!isAllowed) {
                     throw new RuntimeException("不支持的视频类型，只支持MP4、MOV、AVI、MKV、WEBM格式");
                 }
                 break;
             case "material":
-                if (!ALLOWED_DOCUMENT_TYPES.contains(contentType.toLowerCase()) && 
-                    !ALLOWED_VIDEO_TYPES.contains(contentType.toLowerCase())) {
+                isAllowed = ALLOWED_DOCUMENT_TYPES.contains(contentType.toLowerCase()) || 
+                            ALLOWED_VIDEO_TYPES.contains(contentType.toLowerCase());
+                if (!isAllowed) {
                     throw new RuntimeException("不支持的文件类型，请上传PDF、Word、Excel、文本文档或视频文件");
                 }
                 break;
@@ -108,14 +142,7 @@ public class CourseFileService {
                 throw new RuntimeException("不支持的文件类型参数");
         }
         
-        // 获取原始文件名和扩展名
-        String originalFilename = file.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-        
-        // 生成新文件名
+        // 生成新文件名，保留原始扩展名
         String newFilename = UUID.randomUUID().toString() + extension;
         
         // 获取当前日期，用于创建年月日目录结构
@@ -137,6 +164,8 @@ public class CourseFileService {
         Files.copy(file.getInputStream(), filePath);
         
         // 生成访问URL
-        return serverUrlUtil.getFileUrl(relativePath + "/" + newFilename);
+        String fileUrl = serverUrlUtil.getFileUrl(relativePath + "/" + newFilename);
+        
+        return fileUrl;
     }
 } 

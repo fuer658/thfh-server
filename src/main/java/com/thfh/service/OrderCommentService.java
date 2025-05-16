@@ -1,9 +1,11 @@
 package com.thfh.service;
 
 import com.thfh.dto.OrderCommentDTO;
+import com.thfh.model.CommentLike;
 import com.thfh.model.Order;
 import com.thfh.model.OrderComment;
 import com.thfh.model.User;
+import com.thfh.repository.CommentLikeRepository;
 import com.thfh.repository.OrderCommentRepository;
 import com.thfh.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ public class OrderCommentService {
 
     @Autowired
     private OrderRepository orderRepository;
+    
+    @Autowired
+    private CommentLikeRepository commentLikeRepository;
 
     @Autowired
     private UserService userService;
@@ -84,6 +89,7 @@ public class OrderCommentService {
         comment.setImages(images != null ? String.join(",", images) : null);
         comment.setVideo(video);
         comment.setScore(score);
+        comment.setLikeCount(0);
 
         return orderCommentRepository.save(comment);
     }
@@ -132,6 +138,89 @@ public class OrderCommentService {
         Page<OrderComment> commentPage = orderCommentRepository.findByUserId(currentUser.getId(), pageRequest);
         return commentPage.map(this::toOrderCommentDTO);
     }
+    
+    /**
+     * 点赞评论
+     * @param commentId 评论ID
+     * @return 更新后的点赞数
+     */
+    @Transactional
+    public int likeComment(Long commentId) {
+        // 获取当前用户
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        
+        // 检查评论是否存在
+        OrderComment comment = orderCommentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("评论不存在"));
+        
+        // 检查是否已点赞
+        if (commentLikeRepository.existsByCommentIdAndUserId(commentId, currentUser.getId())) {
+            throw new RuntimeException("您已点赞过该评论");
+        }
+        
+        // 创建点赞记录
+        CommentLike like = new CommentLike();
+        like.setComment(comment);
+        like.setUser(currentUser);
+        commentLikeRepository.save(like);
+        
+        // 更新评论点赞数
+        comment.setLikeCount(comment.getLikeCount() + 1);
+        orderCommentRepository.save(comment);
+        
+        return comment.getLikeCount();
+    }
+    
+    /**
+     * 取消点赞评论
+     * @param commentId 评论ID
+     * @return 更新后的点赞数
+     */
+    @Transactional
+    public int unlikeComment(Long commentId) {
+        // 获取当前用户
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("用户未登录");
+        }
+        
+        // 检查评论是否存在
+        OrderComment comment = orderCommentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("评论不存在"));
+        
+        // 查找点赞记录
+        CommentLike like = commentLikeRepository.findByCommentIdAndUserId(commentId, currentUser.getId());
+        if (like == null) {
+            throw new RuntimeException("您未点赞过该评论");
+        }
+        
+        // 删除点赞记录
+        commentLikeRepository.delete(like);
+        
+        // 更新评论点赞数
+        comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+        orderCommentRepository.save(comment);
+        
+        return comment.getLikeCount();
+    }
+    
+    /**
+     * 检查用户是否已点赞评论
+     * @param commentId 评论ID
+     * @return 是否已点赞
+     */
+    @Transactional(readOnly = true)
+    public boolean isCommentLiked(Long commentId) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return false;
+        }
+        
+        return commentLikeRepository.existsByCommentIdAndUserId(commentId, currentUser.getId());
+    }
 
     /**
      * 实体转DTO
@@ -148,6 +237,15 @@ public class OrderCommentService {
         dto.setScore(comment.getScore());
         dto.setCreateTime(comment.getCreateTime());
         dto.setUpdateTime(comment.getUpdateTime());
+        dto.setLikeCount(comment.getLikeCount());
+        
+        // 检查当前用户是否已点赞
+        User currentUser = userService.getCurrentUser();
+        if (currentUser != null) {
+            dto.setLiked(commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), currentUser.getId()));
+        } else {
+            dto.setLiked(false);
+        }
 
         // 设置用户信息
         if (comment.getUser() != null) {

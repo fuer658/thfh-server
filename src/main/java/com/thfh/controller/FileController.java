@@ -58,6 +58,7 @@ public class FileController {
     // 允许的图片文件类型
     private static final List<String> ALLOWED_IMAGE_TYPES = Arrays.asList(
         "image/jpeg",
+        "image/jpg",
         "image/png",
         "image/gif",
         "image/bmp",
