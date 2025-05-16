@@ -10,6 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.thfh.exception.BusinessException;
+import com.thfh.exception.ErrorCode;
+import com.thfh.exception.ResourceNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class ChatService {
 
     @Autowired
@@ -46,11 +51,19 @@ public class ChatService {
     public ChatMessageDTO sendMessage(Long senderId, Long receiverId, String content, 
                                      String messageType, String mediaUrl) {
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("发送者不存在"));
-
+                .orElseThrow(() -> {
+                    log.warn("发送者不存在, senderId={}", senderId);
+                    return new ResourceNotFoundException("发送者不存在");
+                });
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new RuntimeException("接收者不存在"));
-
+                .orElseThrow(() -> {
+                    log.warn("接收者不存在, receiverId={}", receiverId);
+                    return new ResourceNotFoundException("接收者不存在");
+                });
+        if (content == null || content.trim().isEmpty()) {
+            log.warn("消息内容为空, senderId={}, receiverId={}", senderId, receiverId);
+            throw new BusinessException(ErrorCode.PARAMETER_ERROR, "消息内容不能为空");
+        }
         ChatMessage message = new ChatMessage();
         message.setSender(sender);
         message.setReceiver(receiver);
@@ -59,18 +72,18 @@ public class ChatService {
         message.setMediaUrl(mediaUrl);
         message.setSentTime(LocalDateTime.now());
         message.setRead(false);
-
         message = chatMessageRepository.save(message);
-        
         ChatMessageDTO messageDTO = ChatMessageDTO.fromEntity(message);
-        
         // 使用WebSocket向接收者发送消息
-        messagingTemplate.convertAndSendToUser(
-                receiver.getUsername(),
-                "/queue/messages",
-                messageDTO
-        );
-
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    receiver.getUsername(),
+                    "/queue/messages",
+                    messageDTO
+            );
+        } catch (Exception e) {
+            log.error("WebSocket消息推送失败, receiver={}, messageId={}, error={}", receiver.getUsername(), message.getId(), e.getMessage());
+        }
         return messageDTO;
     }
 
@@ -84,18 +97,20 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getMessagesBetweenUsers(Long userId1, Long userId2) {
         User user1 = userRepository.findById(userId1)
-                .orElseThrow(() -> new RuntimeException("用户1不存在"));
-        
+                .orElseThrow(() -> {
+                    log.warn("用户不存在, userId={}", userId1);
+                    return new ResourceNotFoundException("用户1不存在");
+                });
         User user2 = userRepository.findById(userId2)
-                .orElseThrow(() -> new RuntimeException("用户2不存在"));
-
+                .orElseThrow(() -> {
+                    log.warn("用户不存在, userId={}", userId2);
+                    return new ResourceNotFoundException("用户2不存在");
+                });
         List<ChatMessage> messages = chatMessageRepository.findMessagesBetweenUsers(user1, user2);
-        
         List<ChatMessageDTO> messageDTOs = new ArrayList<>();
         for (ChatMessage message : messages) {
             messageDTOs.add(ChatMessageDTO.fromEntity(message));
         }
-
         return messageDTOs;
     }
 
@@ -108,47 +123,37 @@ public class ChatService {
     @Transactional(readOnly = true)
     public List<ChatConversationDTO> getUserConversations(Long userId) {
         User currentUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
-        
+                .orElseThrow(() -> {
+                    log.warn("用户不存在, userId={}", userId);
+                    return new ResourceNotFoundException("用户不存在");
+                });
         List<ChatMessage> recentMessages = chatMessageRepository.findRecentChatsByUser(userId);
-        
         Map<Long, ChatConversationDTO> conversationsMap = new HashMap<>();
-        
         for (ChatMessage message : recentMessages) {
-            // 确定会话对象 (对话的另一方)
             User otherUser = message.getSender().getId().equals(userId) ? 
                               message.getReceiver() : message.getSender();
-                              
-            // 创建会话DTO或获取现有的
             ChatConversationDTO conversation = conversationsMap.getOrDefault(otherUser.getId(), new ChatConversationDTO());
-            
-            // 设置用户信息
             conversation.setUserId(otherUser.getId());
             conversation.setUsername(otherUser.getUsername());
             conversation.setAvatar(otherUser.getAvatar());
-            
-            // 设置最后一条消息
             conversation.setLastMessage(message.getContent());
             conversation.setLastMessageTime(message.getSentTime().format(formatter));
             conversation.setMessageType(message.getMessageType());
-            
-            // 检查是否有未读消息
             if (message.getReceiver().getId().equals(userId) && !message.isRead()) {
                 conversation.setHasUnread(true);
             }
-            
             conversationsMap.put(otherUser.getId(), conversation);
         }
-        
         // 查询每个会话的未读消息数量
         for (ChatConversationDTO conversation : conversationsMap.values()) {
-            // 获取该会话的未读消息数量
             User otherUser = userRepository.findById(conversation.getUserId())
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> {
+                    log.warn("用户不存在, userId={}", conversation.getUserId());
+                    return new ResourceNotFoundException("用户不存在");
+                });
             long unreadCount = chatMessageRepository.countUnreadMessagesBetweenUsers(currentUser.getId(), otherUser.getId());
             conversation.setUnreadCount((int) unreadCount);
         }
-        
         return new ArrayList<>(conversationsMap.values());
     }
 
@@ -160,8 +165,14 @@ public class ChatService {
     @Transactional
     public void markMessageAsRead(Long messageId) {
         ChatMessage message = chatMessageRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("消息不存在"));
-        
+                .orElseThrow(() -> {
+                    log.warn("消息不存在, messageId={}", messageId);
+                    return new ResourceNotFoundException("消息不存在");
+                });
+        if (message.isRead()) {
+            log.info("消息已读, messageId={}", messageId);
+            return;
+        }
         message.setRead(true);
         chatMessageRepository.save(message);
     }
@@ -175,20 +186,26 @@ public class ChatService {
     @Transactional
     public void markAllMessagesAsRead(Long currentUserId, Long otherUserId) {
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("当前用户不存在"));
-        
+                .orElseThrow(() -> {
+                    log.warn("当前用户不存在, userId={}", currentUserId);
+                    return new ResourceNotFoundException("当前用户不存在");
+                });
         User otherUser = userRepository.findById(otherUserId)
-                .orElseThrow(() -> new RuntimeException("对方用户不存在"));
-        
+                .orElseThrow(() -> {
+                    log.warn("对方用户不存在, userId={}", otherUserId);
+                    return new ResourceNotFoundException("对方用户不存在");
+                });
         List<ChatMessage> messages = chatMessageRepository.findMessagesBetweenUsers(currentUser, otherUser);
-        
+        boolean updated = false;
         for (ChatMessage message : messages) {
             if (message.getReceiver().getId().equals(currentUserId) && !message.isRead()) {
                 message.setRead(true);
+                updated = true;
             }
         }
-        
-        chatMessageRepository.saveAll(messages);
+        if (updated) {
+            chatMessageRepository.saveAll(messages);
+        }
     }
 
     /**
@@ -201,14 +218,15 @@ public class ChatService {
     @Transactional
     public boolean deleteMessage(Long messageId, Long userId) {
         ChatMessage message = chatMessageRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("消息不存在"));
-
+                .orElseThrow(() -> {
+                    log.warn("消息不存在, messageId={}", messageId);
+                    return new ResourceNotFoundException("消息不存在");
+                });
         // 验证权限（只有消息的发送者或接收者可以删除消息）
         if (!message.getSender().getId().equals(userId) && !message.getReceiver().getId().equals(userId)) {
-            throw new RuntimeException("没有权限删除该消息");
+            log.warn("无权限删除消息, messageId={}, userId={}", messageId, userId);
+            throw new BusinessException(ErrorCode.FORBIDDEN, "没有权限删除该消息");
         }
-
-        // 删除消息
         chatMessageRepository.deleteById(messageId);
         return true;
     }
@@ -223,18 +241,20 @@ public class ChatService {
     @Transactional
     public int deleteAllMessagesBetweenUsers(Long userId1, Long userId2) {
         User user1 = userRepository.findById(userId1)
-                .orElseThrow(() -> new RuntimeException("用户1不存在"));
-
+                .orElseThrow(() -> {
+                    log.warn("用户不存在, userId={}", userId1);
+                    return new ResourceNotFoundException("用户1不存在");
+                });
         User user2 = userRepository.findById(userId2)
-                .orElseThrow(() -> new RuntimeException("用户2不存在"));
-
-        // 获取两用户间的所有消息
+                .orElseThrow(() -> {
+                    log.warn("用户不存在, userId={}", userId2);
+                    return new ResourceNotFoundException("用户2不存在");
+                });
         List<ChatMessage> messages = chatMessageRepository.findMessagesBetweenUsers(user1, user2);
         int count = messages.size();
-
-        // 删除所有消息
-        chatMessageRepository.deleteAll(messages);
-
+        if (count > 0) {
+            chatMessageRepository.deleteAll(messages);
+        }
         return count;
     }
 }
