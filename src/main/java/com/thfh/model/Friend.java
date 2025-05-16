@@ -27,6 +27,10 @@ public class Friend {
     @Column(name = "created_at", updatable = false)
     private Date createdAt = new Date();
 
+    @ApiModelProperty("好友备注")
+    @Column(name = "remark", length = 255)
+    private String remark;
+
     // getter/setter 省略，可用 Lombok 简化
 
     public Long getId() {
@@ -59,5 +63,13 @@ public class Friend {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 } 

@@ -141,4 +141,15 @@ public class FriendController {
             @ApiParam(value = "用户ID", required = true) @RequestParam Long userId) {
         return Result.success(friendService.cancelFriendRequest(requestId, userId));
     }
+
+    /**
+     * 判断两用户是否为好友
+     */
+    @ApiOperation("判断两用户是否为好友")
+    @GetMapping("/check")
+    public Result<Boolean> isFriend(
+            @ApiParam(value = "用户ID", required = true) @RequestParam Long userId,
+            @ApiParam(value = "好友ID", required = true) @RequestParam Long friendId) {
+        return Result.success(friendService.isFriend(userId, friendId));
+    }
 } 

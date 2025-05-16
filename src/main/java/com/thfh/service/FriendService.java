@@ -8,6 +8,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.thfh.service.BlacklistService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
@@ -18,6 +20,8 @@ import java.util.Collections;
 public class FriendService {
     private final FriendRepository friendRepository;
     private final FriendRequestRepository friendRequestRepository;
+    @Autowired
+    private BlacklistService blacklistService;
 
     public FriendService(FriendRepository friendRepository, FriendRequestRepository friendRequestRepository) {
         this.friendRepository = friendRepository;
@@ -130,18 +134,47 @@ public class FriendService {
         }
     }
     public String blockFriend(Long userId, Long targetUserId) {
+        blacklistService.addToBlacklist(userId, targetUserId);
         return "拉黑成功";
     }
     public String unblockFriend(Long userId, Long targetUserId) {
+        blacklistService.removeFromBlacklist(userId, targetUserId);
         return "解除拉黑成功";
     }
     public String setFriendRemark(Long userId, Long friendId, String remark) {
+        Friend friend = friendRepository.findByUserIdAndFriendId(userId, friendId);
+        if (friend == null) {
+            return "好友不存在";
+        }
+        friend.setRemark(remark); // 假设Friend表有remark字段
+        friendRepository.save(friend);
         return "备注设置成功";
     }
     public Friend getFriendDetail(Long userId, Long friendId) {
-        return null;
+        return friendRepository.findByUserIdAndFriendId(userId, friendId);
     }
     public String cancelFriendRequest(Long requestId, Long userId) {
+        FriendRequest request = friendRequestRepository.findById(requestId).orElse(null);
+        if (request == null) {
+            return "请求不存在";
+        }
+        if (!request.getFromUserId().equals(userId)) {
+            return "只能撤回自己发起的请求";
+        }
+        if (request.getStatus() != 0) {
+            return "请求已处理，无法撤回";
+        }
+        request.setStatus(3); // 3=撤回
+        request.setUpdatedAt(new java.util.Date());
+        friendRequestRepository.save(request);
         return "撤回成功";
+    }
+
+    /**
+     * 判断两用户是否为好友
+     */
+    @ApiOperation("判断两用户是否为好友")
+    public boolean isFriend(Long userId, Long friendId) {
+        return friendRepository.findByUserIdAndFriendId(userId, friendId) != null;
     }
 } 
