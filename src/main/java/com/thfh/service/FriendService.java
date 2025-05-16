@@ -8,8 +8,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.thfh.service.BlacklistService;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
@@ -20,12 +18,12 @@ import java.util.Collections;
 public class FriendService {
     private final FriendRepository friendRepository;
     private final FriendRequestRepository friendRequestRepository;
-    @Autowired
-    private BlacklistService blacklistService;
+    private final BlacklistService blacklistService;
 
-    public FriendService(FriendRepository friendRepository, FriendRequestRepository friendRequestRepository) {
+    public FriendService(FriendRepository friendRepository, FriendRequestRepository friendRequestRepository, BlacklistService blacklistService) {
         this.friendRepository = friendRepository;
         this.friendRequestRepository = friendRequestRepository;
+        this.blacklistService = blacklistService;
     }
 
     /**
