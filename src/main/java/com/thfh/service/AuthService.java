@@ -1,6 +1,7 @@
 package com.thfh.service;
 
 import com.thfh.dto.AdminDTO;
+import com.thfh.dto.ChangePasswordDTO;
 import com.thfh.dto.LoginDTO;
 import com.thfh.dto.UserDTO;
 import com.thfh.model.Admin;
@@ -304,5 +305,32 @@ public class AuthService {
      */
     public boolean verifyJwtToken(String token) {
         return jwtUtil.validateToken(token);
+    }
+
+    /**
+     * 修改用户密码
+     * 
+     * @param username 用户名
+     * @param changePasswordDTO 包含旧密码和新密码的DTO
+     * @return 修改结果信息
+     * @throws RuntimeException 当旧密码验证失败或用户不存在时抛出
+     */
+    @Transactional
+    public String changePassword(String username, ChangePasswordDTO changePasswordDTO) {
+        // 获取用户信息
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        // 验证旧密码是否正确
+        if (!passwordEncoder.matches(changePasswordDTO.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("旧密码不正确");
+        }
+        
+        // 加密并保存新密码
+        user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+        user.setUpdateTime(LocalDateTime.now());
+        userRepository.save(user);
+        
+        return "密码修改成功";
     }
 }
