@@ -52,13 +52,7 @@ public class PostController {
     @PreAuthorize("hasRole('USER')")
     public Result<PostDTO> createPost(
             @ApiParam(value = "动态信息", required = true) @Valid @RequestBody Post post) {
-        Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
-        if (tagIds != null && !tagIds.isEmpty()) {
-            for (Long tagId : tagIds) {
-                postService.addTag(createdPost.getId(), tagId);
-            }
-        }
         return Result.success(postService.toPostDTO(createdPost));
     }
 
@@ -313,13 +307,7 @@ public class PostController {
     public Result<PostDTO> createPostByAdmin(
             @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
             @ApiParam(value = "动态内容", required = true) @Valid @RequestBody Post post) {
-        Set<Long> tagIds = post.getTagIds();
         Post createdPost = postService.createPost(post);
-        if (tagIds != null && !tagIds.isEmpty()) {
-            for (Long tagId : tagIds) {
-                postService.addTag(createdPost.getId(), tagId);
-            }
-        }
         return Result.success(postService.toPostDTO(createdPost));
     }
 
@@ -535,5 +523,22 @@ public class PostController {
     public Result<Integer> fixCommentCounts() {
         int fixedCount = postService.fixAllPostsCommentCount();
         return Result.success(fixedCount);
+    }
+
+    /**
+     * 根据标签名称获取动态列表
+     */
+    @ApiOperation(value = "根据标签名称获取动态列表", notes = "获取包含指定标签名称的所有动态")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/tag/name")
+    public Result<Page<PostDTO>> getPostsByTagName(
+            @ApiParam(value = "标签名称", required = true) @RequestParam String tagName,
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        return Result.success(postService.findPostsByTagNameDTO(tagName, pageRequest));
     }
 }

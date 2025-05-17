@@ -72,7 +72,7 @@ public class Post {
     @ApiModelProperty(value = "更新时间", example = "2023-01-02T12:00:00")
     private LocalDateTime updateTime;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinTable(
         name = "post_tags_relation",
         joinColumns = @JoinColumn(name = "post_id"),
@@ -84,6 +84,10 @@ public class Post {
     @Transient
     @ApiModelProperty(value = "标签ID集合", hidden = true)
     private Set<Long> tagIds = new HashSet<>();
+
+    @Transient
+    @ApiModelProperty(value = "标签名称集合", notes = "用于创建或关联标签", example = "[\"教学\", \"技巧\", \"分享\"]")
+    private Set<String> tagNames = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)

@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import com.thfh.model.PostTag;
 
 /**
  * 帖子数据传输对象
@@ -51,4 +53,7 @@ public class PostDTO {
     
     @ApiModelProperty(value = "更新时间", example = "2023-01-01 11:30:00")
     private LocalDateTime updateTime;
+    
+    @ApiModelProperty(value = "帖子标签", notes = "帖子关联的标签集合")
+    private Set<PostTag> tags;
 } 

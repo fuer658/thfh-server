@@ -2,6 +2,7 @@ package com.thfh.service;
 
 import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import com.thfh.model.*;
 import com.thfh.repository.*;
@@ -30,6 +31,7 @@ import com.thfh.dto.PostReportRequest;
 import com.thfh.repository.PostReportRepository;
 import com.thfh.model.PostReport;
 import java.time.LocalDateTime;
+import javax.persistence.criteria.JoinType;
 
 @Slf4j
 
@@ -65,6 +67,9 @@ public class PostService {
     @Autowired
     private PostReportRepository postReportRepository;
 
+    @Autowired
+    private PostTagService postTagService;
+
     /**
      * 发布动态
      */
@@ -72,19 +77,32 @@ public class PostService {
     public Post createPost(Post post) {
         User currentUser = userService.getCurrentUser();
         post.setUserId(currentUser.getId());
-        Post savedPost = postRepository.save(post);
-
-        // 处理标签
+        
+        // 处理标签名称，确保所有标签都被持久化
+        if (post.getTagNames() != null && !post.getTagNames().isEmpty()) {
+            for (String tagName : post.getTagNames()) {
+                if (tagName != null && !tagName.trim().isEmpty()) {
+                    PostTag tag = postTagService.findOrCreateTag(tagName);
+                    // 确保标签已持久化并有ID
+                    if (tag.getId() == null) {
+                        tag = postTagRepository.save(tag);
+                    }
+                    post.getTags().add(tag);
+                }
+            }
+        }
+        
+        // 处理标签ID
         if (post.getTagIds() != null && !post.getTagIds().isEmpty()) {
             for (Long tagId : post.getTagIds()) {
                 PostTag tag = postTagRepository.findById(tagId)
                         .orElseThrow(() -> new BusinessException(ErrorCode.PARAMETER_ERROR, "标签不存在: " + tagId));
-                savedPost.getTags().add(tag);
+                post.getTags().add(tag);
             }
-            savedPost = postRepository.save(savedPost);
         }
-
-        return savedPost;
+        
+        // 保存帖子（此时所有标签都已持久化）
+        return postRepository.save(post);
     }
 
     /**
@@ -116,34 +134,72 @@ public class PostService {
 
         // 设置动态的用户ID为目标用户ID
         post.setUserId(userId);
-        Post savedPost = postRepository.save(post);
-
-        // 处理标签（管理员可以直接添加标签，无需权限检查）
+        
+        // 处理标签名称，确保所有标签都被持久化
+        if (post.getTagNames() != null && !post.getTagNames().isEmpty()) {
+            for (String tagName : post.getTagNames()) {
+                if (tagName != null && !tagName.trim().isEmpty()) {
+                    PostTag tag = postTagService.findOrCreateTag(tagName);
+                    // 确保标签已持久化并有ID
+                    if (tag.getId() == null) {
+                        tag = postTagRepository.save(tag);
+                    }
+                    post.getTags().add(tag);
+                }
+            }
+        }
+        
+        // 处理标签ID
         if (post.getTagIds() != null && !post.getTagIds().isEmpty()) {
             for (Long tagId : post.getTagIds()) {
                 PostTag tag = postTagRepository.findById(tagId)
                         .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
-                savedPost.getTags().add(tag);
+                post.getTags().add(tag);
             }
-            savedPost = postRepository.save(savedPost);
         }
-
-        return savedPost;
+        
+        // 保存帖子（此时所有标签都已持久化）
+        return postRepository.save(post);
     }
 
     /**
      * 获取动态详情
      */
     public Post getPost(Long postId) {
-        return postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "动态不存在"));
+        Specification<Post> spec = (root, query, cb) -> {
+            // 添加root.fetch关联tags，确保标签被加载
+            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+                root.fetch("tags", JoinType.LEFT);
+                // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
+                query.distinct(true);
+            }
+            
+            return cb.equal(root.get("id"), postId);
+        };
+
+        List<Post> posts = postRepository.findAll(spec);
+        if (posts.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "动态不存在");
+        }
+        return posts.get(0);
     }
 
     /**
      * 获取用户动态列表
      */
     public Page<Post> getUserPosts(Long userId, Pageable pageable) {
-        return postRepository.findByUserIdOrderByCreateTimeDesc(userId, pageable);
+        Specification<Post> spec = (root, query, cb) -> {
+            // 添加root.fetch关联tags，确保标签被加载
+            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+                root.fetch("tags", JoinType.LEFT);
+                // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
+                query.distinct(true);
+            }
+            
+            return cb.equal(root.get("userId"), userId);
+        };
+
+        return postRepository.findAll(spec, pageable);
     }
 
     /**
@@ -363,22 +419,42 @@ public class PostService {
             post.setImageUrls(updatedPost.getImageUrls());
         }
         
-        // 更新标签（如果提供了新的标签ID集合）
-        if (updatedPost.getTagIds() != null && !updatedPost.getTagIds().isEmpty()) {
+        // 如果提供了标签相关信息，则清除旧标签
+        boolean needUpdateTags = (updatedPost.getTagIds() != null && !updatedPost.getTagIds().isEmpty()) || 
+                          (updatedPost.getTagNames() != null && !updatedPost.getTagNames().isEmpty());
+        
+        if (needUpdateTags) {
             // 清除旧标签
             post.getTags().clear();
             
-            // 添加新标签
-            for (Long tagId : updatedPost.getTagIds()) {
-                PostTag tag = postTagRepository.findById(tagId)
-                        .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
-                post.getTags().add(tag);
+            // 处理标签ID
+            if (updatedPost.getTagIds() != null && !updatedPost.getTagIds().isEmpty()) {
+                for (Long tagId : updatedPost.getTagIds()) {
+                    PostTag tag = postTagRepository.findById(tagId)
+                            .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
+                    post.getTags().add(tag);
+                }
+            }
+            
+            // 处理标签名称
+            if (updatedPost.getTagNames() != null && !updatedPost.getTagNames().isEmpty()) {
+                for (String tagName : updatedPost.getTagNames()) {
+                    if (tagName != null && !tagName.trim().isEmpty()) {
+                        PostTag tag = postTagService.findOrCreateTag(tagName);
+                        // 确保标签已持久化并有ID
+                        if (tag.getId() == null) {
+                            tag = postTagRepository.save(tag);
+                        }
+                        post.getTags().add(tag);
+                    }
+                }
             }
         }
         
         // 记录日志
         log.info("用户 {} 更新了动态 {}", currentUser.getUsername(), postId);
         
+        // 保存更新后的帖子
         return postRepository.save(post);
     }
 
@@ -407,6 +483,10 @@ public class PostService {
             dto.setUserRealName(post.getUser().getRealName());
             dto.setUserAvatar(post.getUser().getAvatar());
         }
+        
+        // 复制标签信息
+        dto.setTags(post.getTags());
+        
         return dto;
     }
 
@@ -437,6 +517,13 @@ public class PostService {
 
     public Page<PostDTO> getAllPosts(String title, String userName, Pageable pageable) {
         Specification<Post> spec = (root, query, cb) -> {
+            // 添加root.fetch关联tags，确保标签被加载
+            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+                root.fetch("tags", JoinType.LEFT);
+                // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
+                query.distinct(true);
+            }
+            
             Predicate predicate = cb.conjunction();
             if (title != null && !title.isEmpty()) {
                 predicate = cb.and(predicate, cb.like(root.get("title"), "%" + title + "%"));
@@ -470,7 +557,23 @@ public class PostService {
                 .stream()
                 .map(FollowDTO::getFollowedId)
                 .collect(Collectors.toList());
-        return postRepository.findByUserIdInOrderByCreateTimeDesc(followingIds, pageable);
+                
+        if (followingIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        
+        Specification<Post> spec = (root, query, cb) -> {
+            // 添加root.fetch关联tags，确保标签被加载
+            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+                root.fetch("tags", JoinType.LEFT);
+                // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
+                query.distinct(true);
+            }
+            
+            return root.get("userId").in(followingIds);
+        };
+
+        return postRepository.findAll(spec, pageable);
     }
 
     /**
@@ -554,7 +657,7 @@ public class PostService {
         PostTag tag = postTagRepository.findById(tagId)
                 .orElseThrow(() -> new IllegalArgumentException("标签不存在"));
 
-        // 添加标签到动态
+        // 添加标签到动态并立即保存
         post.getTags().add(tag);
         return postRepository.save(post);
     }
@@ -600,7 +703,20 @@ public class PostService {
      * @return 包含指定标签的动态列表
      */
     public Page<Post> findPostsByTag(Long tagId, Pageable pageable) {
-        return postRepository.findByTagsId(tagId, pageable);
+        Specification<Post> spec = (root, query, cb) -> {
+            // 添加root.fetch关联tags，确保标签被加载
+            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+                root.fetch("tags", JoinType.LEFT);
+                // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
+                query.distinct(true);
+            }
+            
+            // 通过关联查找包含指定tagId的Posts
+            Join<Post, PostTag> tagJoin = root.join("tags");
+            return cb.equal(tagJoin.get("id"), tagId);
+        };
+
+        return postRepository.findAll(spec, pageable);
     }
 
     /**
@@ -993,5 +1109,35 @@ public class PostService {
         }
         
         return fixedCount;
+    }
+
+    /**
+     * 根据标签名称查找动态
+     * @param tagName 标签名称
+     * @param pageable 分页参数
+     * @return 包含指定标签名称的动态列表
+     */
+    public Page<Post> findPostsByTagName(String tagName, Pageable pageable) {
+        // 根据标签名查找标签对象
+        Optional<PostTag> tagOpt = postTagRepository.findByName(tagName);
+        
+        // 如果标签不存在，返回空结果
+        if (!tagOpt.isPresent()) {
+            return Page.empty(pageable);
+        }
+        
+        // 使用标签ID查询关联的帖子
+        return findPostsByTag(tagOpt.get().getId(), pageable);
+    }
+    
+    /**
+     * 根据标签名称查找动态并返回DTO
+     * @param tagName 标签名称
+     * @param pageable 分页参数
+     * @return 包含指定标签名称的动态DTO列表
+     */
+    public Page<PostDTO> findPostsByTagNameDTO(String tagName, Pageable pageable) {
+        Page<Post> posts = findPostsByTagName(tagName, pageable);
+        return posts.map(this::convertToDTO);
     }
 }
