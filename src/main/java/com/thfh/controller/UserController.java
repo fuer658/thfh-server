@@ -22,12 +22,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.thfh.exception.UserNotLoggedInException;
 
 /**
  * 用户管理控制器
  * 提供用户相关的API接口，包括用户登录、查询、创建、更新和删除等功能
  */
-@Api(tags = "用户管理", description = "用户相关的API接口，包括用户登录、查询、创建、更新和删除等功能")
+@Api(tags = "用户管理")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -123,23 +124,6 @@ public class UserController {
     public Result<UserDTO> getUserById(
             @ApiParam(value = "用户ID", required = true) @PathVariable Long id) {
         return Result.success(userService.getUserDTOById(id));
-    }
-
-    /**
-     * 根据用户名获取用户信息
-     * @param username 用户名
-     * @return 用户信息
-     */
-    @ApiOperation(value = "根据用户名获取用户信息", notes = "通过用户名查询用户的详细信息")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "获取成功"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 404, message = "用户不存在")
-    })
-    @GetMapping("/user-info-username/{username}")
-    public Result<UserDTO> getUserByUsername(
-            @ApiParam(value = "用户名", required = true) @PathVariable String username) {
-        return Result.success(userService.getUserInfo(username));
     }
 
     /**
@@ -278,50 +262,89 @@ public class UserController {
     })
     @GetMapping("/experience")
     public Result<Map<String, Object>> getUserExperience() {
-        User currentUser = userService.getCurrentUser();
-        if (currentUser == null) {
-            throw new RuntimeException("用户未登录");
-        }
-        
-        Map<String, Object> experienceInfo = new HashMap<>();
-        int currentExperience = currentUser.getExperience() != null ? currentUser.getExperience() : 0;
-        int currentLevel = currentUser.getLevel() != null ? currentUser.getLevel() : 1;
-        
-        experienceInfo.put("experience", currentExperience);
-        experienceInfo.put("level", currentLevel);
-        
-        // 使用APP端的升级经验值计算 (通过UserService实现)
-        
-        // 获取下一级所需的总经验值
-        int nextLevelExperience = userService.getExperienceForNextLevel(currentLevel);
-
-        // 计算还需要的经验值
-        int requiredExperience = 0;
-        if (currentLevel < UserService.MAX_LEVEL) {
-            requiredExperience = nextLevelExperience - currentExperience;
-            if (requiredExperience < 0) {
-                requiredExperience = 0;
+        try {
+            User currentUser = userService.getCurrentUser();
+            
+            Map<String, Object> experienceInfo = new HashMap<>();
+            int currentExperience = currentUser.getExperience() != null ? currentUser.getExperience() : 0;
+            int currentLevel = currentUser.getLevel() != null ? currentUser.getLevel() : 1;
+            
+            experienceInfo.put("experience", currentExperience);
+            experienceInfo.put("level", currentLevel);
+            
+            // 使用APP端的升级经验值计算 (通过UserService实现)
+            
+            // 获取下一级所需的总经验值
+            int nextLevelExperience = userService.getExperienceForNextLevel(currentLevel);
+    
+            // 计算还需要的经验值
+            int requiredExperience = 0;
+            if (currentLevel < UserService.MAX_LEVEL) {
+                requiredExperience = nextLevelExperience - currentExperience;
+                if (requiredExperience < 0) {
+                    requiredExperience = 0;
+                }
             }
+            
+            // 获取当前等级的起始经验值
+            int baseExperience = userService.getBaseExperienceForLevel(currentLevel);
+    
+            // 计算当前等级进度百分比
+            int levelProgress = 0;
+            if (currentLevel < UserService.MAX_LEVEL) {
+                int levelExp = nextLevelExperience - baseExperience;
+                int currentLevelExp = currentExperience - baseExperience;
+                levelProgress = (int) (((float) currentLevelExp / levelExp) * 100);
+            } else {
+                levelProgress = 100; // 最高等级进度为100%
+            }
+            
+            experienceInfo.put("requiredExperience", requiredExperience);
+            experienceInfo.put("nextLevelExperience", nextLevelExperience);
+            experienceInfo.put("baseExperience", baseExperience);
+            experienceInfo.put("levelProgress", levelProgress);
+            
+            return Result.success(experienceInfo);
+        } catch (UserNotLoggedInException e) {
+            return Result.error(401, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "获取用户经验值信息失败: " + e.getMessage());
         }
-        
-        // 获取当前等级的起始经验值
-        int baseExperience = userService.getBaseExperienceForLevel(currentLevel);
+    }
 
-        // 计算当前等级进度百分比
-        int levelProgress = 0;
-        if (currentLevel < UserService.MAX_LEVEL) {
-            int levelExp = nextLevelExperience - baseExperience;
-            int currentLevelExp = currentExperience - baseExperience;
-            levelProgress = (int) (((float) currentLevelExp / levelExp) * 100);
-        } else {
-            levelProgress = 100; // 最高等级进度为100%
-        }
-        
-        experienceInfo.put("requiredExperience", requiredExperience);
-        experienceInfo.put("nextLevelExperience", nextLevelExperience);
-        experienceInfo.put("baseExperience", baseExperience);
-        experienceInfo.put("levelProgress", levelProgress);
-        
-        return Result.success(experienceInfo);
+    /**
+     * 通过用户名搜索用户
+     * @param username 用户名
+     * @return 用户信息
+     */
+    @ApiOperation(value = "通过用户名搜索用户", notes = "根据用户名模糊搜索用户，返回匹配的用户列表")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "查询成功"),
+        @ApiResponse(code = 400, message = "参数错误"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
+    @GetMapping("/search-by-username")
+    public Result<List<UserDTO>> searchByUsername(
+            @ApiParam(value = "用户名，支持模糊搜索", required = true) @RequestParam String username) {
+        List<UserDTO> userList = userService.searchByUsername(username);
+        return Result.success(userList);
+    }
+
+    /**
+     * 通过用户名或ID搜索用户
+     * @param keyword 用户名或ID
+     * @return 匹配的用户信息列表
+     */
+    @ApiOperation(value = "通过用户名或ID搜索用户", notes = "根据用户名模糊或ID精确搜索用户，返回匹配的用户列表")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "查询成功"),
+        @ApiResponse(code = 400, message = "参数错误"),
+        @ApiResponse(code = 500, message = "服务器内部错误")
+    })
+    @GetMapping("/search-by-keyword")
+    public Result<List<UserDTO>> searchByKeyword(
+            @ApiParam(value = "用户名或ID，支持用户名模糊和ID精确搜索", required = true) @RequestParam String keyword) {
+        List<UserDTO> userList = userService.searchByKeyword(keyword);
+        return Result.success(userList);
     }
 }

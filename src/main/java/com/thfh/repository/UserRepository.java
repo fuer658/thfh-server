@@ -69,4 +69,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     @Query("SELECT u FROM User u WHERE u.company.id = :companyId AND u.userType = 'ENTERPRISE'")
     Page<User> findByCompanyId(@Param("companyId") Long companyId, Pageable pageable);
+
+    /**
+     * 根据用户名模糊搜索用户
+     * @param username 用户名
+     * @return 匹配的用户列表
+     */
+    List<User> findByUsernameContaining(String username);
 }

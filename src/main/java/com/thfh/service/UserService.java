@@ -11,7 +11,6 @@ import com.thfh.repository.UserInterestRepository;
 import com.thfh.repository.UserRepository;
 import com.thfh.util.JwtUtil;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Optional;
+import com.thfh.exception.UserNotLoggedInException;
 
 /**
  * 用户服务类
@@ -39,20 +40,21 @@ import java.util.stream.Collectors;
  */
 @Service
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final UserInterestRepository userInterestRepository;
+    private final CompanyRepository companyRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private static final String USER_NOT_FOUND_MESSAGE = "用户不存在";
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserInterestRepository userInterestRepository;
-
-    @Autowired
-    private CompanyRepository companyRepository;
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserInterestRepository userInterestRepository, CompanyRepository companyRepository) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.userInterestRepository = userInterestRepository;
+        this.companyRepository = companyRepository;
+    }
 
     // 用户等级经验值常量
     public static final int LEVEL_1_TO_2_EXP = 100;
@@ -209,7 +211,7 @@ public class UserService {
         // 检查当前用户权限
         User currentUser = getCurrentUser();
         User targetUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
 
         if (!hasPermission(currentUser, targetUser)) {
             throw new RuntimeException("没有权限修改该用户信息");
@@ -255,7 +257,7 @@ public class UserService {
         // 检查当前用户权限
         User currentUser = getCurrentUser();
         User targetUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
 
         if (!hasPermission(currentUser, targetUser)) {
             throw new RuntimeException("没有权限删除该用户");
@@ -279,7 +281,7 @@ public class UserService {
         // 检查当前用户权限
         User currentUser = getCurrentUser();
         User targetUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
 
         if (!hasPermission(currentUser, targetUser)) {
             throw new RuntimeException("没有权限修改该用户状态");
@@ -379,7 +381,7 @@ public class UserService {
      */
     public UserDTO getUserInfo(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND_MESSAGE));
         UserDTO userDTO = convertToDTO(user);
         
         // 如果是企业用户，添加公司信息
@@ -407,17 +409,18 @@ public class UserService {
 
     /**
      * 获取当前登录用户
-     * @return 当前登录用户，如果未登录则返回null
+     * @return 当前登录用户
+     * @throws UserNotLoggedInException 当用户未登录时抛出
      */
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || 
+        if (authentication == null || !authentication.isAuthenticated() ||
                 authentication instanceof AnonymousAuthenticationToken) {
-            return null;
+            throw new UserNotLoggedInException("用户未登录");
         }
-        
+
         String username = authentication.getName();
-        return userRepository.findByUsername(username).orElse(null);
+        return userRepository.findByUsername(username).orElseThrow(() -> new UserNotLoggedInException("用户未登录"));
     }
 
     /**
@@ -428,7 +431,7 @@ public class UserService {
      */
     public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE));
     }
 
     /**
@@ -562,5 +565,52 @@ public class UserService {
             default:
                 return 0;
         }
+    }
+
+    /**
+     * 通过用户名模糊搜索用户
+     * @param username 用户名
+     * @return 匹配的用户DTO列表
+     */
+    public List<UserDTO> searchByUsername(String username) {
+        List<User> users = userRepository.findByUsernameContaining(username);
+        return users.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    /**
+     * 通过用户名模糊或ID精确搜索用户
+     * @param keyword 用户名或ID
+     * @return 匹配的用户DTO列表
+     */
+    public List<UserDTO> searchByKeyword(String keyword) {
+        List<User> users = new ArrayList<>();
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return new ArrayList<>(); // 输入为空，返回空列表
+        }
+
+        // 1. 用户名模糊搜索
+        List<User> nameUsers = userRepository.findByUsernameContaining(keyword);
+        users.addAll(nameUsers);
+
+        // 2. 如果关键字是数字，尝试按ID精确搜索并去重
+        if (keyword.matches("^\\d+$")) {
+            try {
+                Long id = Long.valueOf(keyword);
+                Optional<User> idUserOptional = userRepository.findById(id);
+                if (idUserOptional.isPresent()) {
+                    User idUser = idUserOptional.get();
+                    // 检查ID搜索结果是否已包含在用户名搜索结果中，避免重复添加
+                    if (users.stream().noneMatch(u -> u.getId().equals(idUser.getId()))) {
+                        users.add(idUser);
+                    }
+                }
+            } catch (NumberFormatException ignored) {
+                // 不会发生，因为已经通过matches("^\\d+$")判断
+            }
+        }
+
+        // 转换并返回DTO列表
+        return users.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 }
