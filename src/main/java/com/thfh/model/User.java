@@ -58,14 +58,6 @@ public class User {
     @Column(length = 100)
     @ApiModelProperty(value = "个人介绍", example = "我是一名热爱学习的用户")
     private String introduction;
-
-    // 教员特有字段
-    @ApiModelProperty(value = "资质证书", example = "高级教师资格证", notes = "教员特有字段")
-    private String qualification; // 资质证书
-    
-    @ApiModelProperty(value = "专长领域", example = "Java编程,数据结构", notes = "教员特有字段")
-    private String speciality; // 专长领域
-
     // 学员特有字段
     @ApiModelProperty(value = "残疾类型", example = "视力障碍", notes = "学员特有字段")
     private String disability; // 残疾类型

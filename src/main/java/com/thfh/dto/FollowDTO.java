@@ -31,7 +31,7 @@ public class FollowDTO {
     @JsonIgnoreProperties({
             "hibernateLazyInitializer", "handler", "password", "email", "phone",
             "createTime", "updateTime", "lastLoginTime", "status", "roles",
-            "qualification", "speciality", "disability", "points", "birthday"
+            "disability", "points", "birthday"
     })
     private SimpleUserDTO follower;
 
@@ -39,7 +39,7 @@ public class FollowDTO {
     @JsonIgnoreProperties({
             "hibernateLazyInitializer", "handler", "password", "email", "phone",
             "createTime", "updateTime", "lastLoginTime", "status", "roles",
-            "qualification", "speciality", "disability", "points", "birthday"
+            "disability", "points", "birthday"
     })
     private SimpleUserDTO followed;
 

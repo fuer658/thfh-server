@@ -91,18 +91,6 @@ public class UserDTO {
     private String introduction;
     
     /**
-     * 用户资质认证信息
-     */
-    @ApiModelProperty(value = "资质认证信息", notes = "教员特有字段", example = "心理咨询师二级证书")
-    private String qualification;
-    
-    /**
-     * 用户专业特长
-     */
-    @ApiModelProperty(value = "专业特长", notes = "教员特有字段", example = "心理咨询、行为矫正")
-    private String speciality;
-    
-    /**
      * 用户残障情况描述
      */
     @ApiModelProperty(value = "残障情况", notes = "学员特有字段", example = "听力障碍")

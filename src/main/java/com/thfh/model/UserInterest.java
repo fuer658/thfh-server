@@ -28,7 +28,7 @@ public class UserInterest {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @ApiModelProperty(value = "兴趣类型", example = "PATTERN_DESIGN")
+    @ApiModelProperty(value = "兴趣偏好", example = "PATTERN_DESIGN")
     private InterestType interestType;
 
     @Column(nullable = false)
