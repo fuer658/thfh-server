@@ -1,5 +1,6 @@
 package com.thfh.dto;
 
+import com.thfh.model.UserOnlineStatus;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -26,4 +27,8 @@ public class FriendDTO {
     private String introduction;
     @ApiModelProperty("好友等级")
     private Integer level;
+    @ApiModelProperty("好友在线状态")
+    private UserOnlineStatus onlineStatus;
+    @ApiModelProperty("好友最后活跃时间")
+    private Date lastActiveTime;
 } 
