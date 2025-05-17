@@ -240,6 +240,64 @@ public class AuthService {
     }
 
     /**
+     * 刷新JWT令牌
+     * 
+     * @param token 当前JWT令牌
+     * @return 包含新令牌的结果Map
+     * @throws RuntimeException 令牌验证失败时抛出
+     */
+    public Map<String, Object> refreshToken(String token) {
+        try {
+            // 验证令牌是否有效
+            if (!jwtUtil.validateToken(token)) {
+                throw new RuntimeException("无效的令牌");
+            }
+            
+            // 获取用户名
+            String username = jwtUtil.getUsernameFromToken(token);
+            
+            // 获取用户ID（如果存在）
+            Long userId = jwtUtil.getUserIdFromToken(token);
+            
+            // 生成新令牌
+            String newToken;
+            if (userId != null) {
+                newToken = jwtUtil.generateToken(username, userId);
+            } else {
+                newToken = jwtUtil.generateToken(username);
+            }
+            
+            // 尝试获取用户或管理员类型
+            String userType = null;
+            try {
+                Admin admin = adminRepository.findByUsername(username).orElse(null);
+                if (admin != null) {
+                    userType = "admin";
+                } else {
+                    User user = userRepository.findByUsername(username).orElse(null);
+                    if (user != null) {
+                        userType = user.getUserType().name();
+                    }
+                }
+            } catch (Exception e) {
+                // 忽略异常，userType将保持为null
+            }
+            
+            // 返回新令牌
+            Map<String, Object> result = new HashMap<>();
+            result.put("token", newToken);
+            if (userType != null) {
+                result.put("userType", userType);
+            }
+            
+            return result;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("刷新令牌失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 校验JWT Token是否有效
      * @param token 前端传递的JWT Token
      * @return 有效返回true，无效返回false

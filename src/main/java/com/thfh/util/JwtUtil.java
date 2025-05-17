@@ -45,6 +45,35 @@ public class JwtUtil {
                 .compact();
     }
 
+    /**
+     * 刷新令牌
+     * 从原令牌中提取claims，重新生成一个新的令牌
+     *
+     * @param token 原令牌
+     * @return 新的令牌
+     * @throws Exception 如果令牌无效或已过期
+     */
+    public String refreshToken(String token) throws Exception {
+        try {
+            final Claims claims = Jwts.parser()
+                    .setSigningKey(jwtConfig.getSecret())
+                    .parseClaimsJws(token)
+                    .getBody();
+            
+            // 创建新的claims，仅保留关键信息
+            Map<String, Object> newClaims = new HashMap<>();
+            newClaims.put("username", claims.get("username"));
+            if (claims.get("userId") != null) {
+                newClaims.put("userId", claims.get("userId"));
+            }
+            
+            // 创建新令牌
+            return createToken(newClaims);
+        } catch (Exception e) {
+            throw new Exception("无效的令牌或令牌已过期");
+        }
+    }
+
     public String getUsernameFromToken(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(jwtConfig.getSecret())
