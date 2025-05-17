@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -172,4 +173,45 @@ public interface ArtworkRepository extends JpaRepository<Artwork, Long> {
            "AND (:enabled IS NULL OR a.enabled = :enabled))")
     Page<Artwork> searchArtworksComprehensive(@Param("keyword") String keyword, @Param("tagId") Long tagId, 
                                              @Param("type") ArtworkType type, @Param("enabled") Boolean enabled, Pageable pageable);
+    
+    /**
+     * 高级动态搜索作品
+     * 支持多条件组合搜索，包括评分和价格区间
+     *
+     * @param keyword 关键字（匹配标题、描述、创作材料）
+     * @param tagIds 标签ID列表
+     * @param type 作品类型
+     * @param creatorIds 创建者ID列表
+     * @param minScore 最低评分
+     * @param maxScore 最高评分
+     * @param minPrice 最低价格
+     * @param maxPrice 最高价格
+     * @param recommended 是否推荐
+     * @param enabled 是否启用
+     * @param pageable 分页参数
+     * @return 符合条件的作品列表
+     */
+    @Query("SELECT DISTINCT a FROM Artwork a LEFT JOIN a.tags t WHERE " +
+           "(:keyword IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(a.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(a.materials) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:#{#tagIds == null} = true OR t.id IN :tagIds) " +
+           "AND (:type IS NULL OR a.type = :type) " +
+           "AND (:#{#creatorIds == null} = true OR a.creator.id IN :creatorIds) " +
+           "AND (:minScore IS NULL OR a.averageScore >= :minScore) " +
+           "AND (:maxScore IS NULL OR a.averageScore <= :maxScore) " +
+           "AND (:minPrice IS NULL OR a.price >= :minPrice) " +
+           "AND (:maxPrice IS NULL OR a.price <= :maxPrice) " +
+           "AND (:recommended IS NULL OR a.recommended = :recommended) " +
+           "AND (:enabled IS NULL OR a.enabled = :enabled)")
+    Page<Artwork> advancedSearch(
+            @Param("keyword") String keyword,
+            @Param("tagIds") List<Long> tagIds,
+            @Param("type") ArtworkType type,
+            @Param("creatorIds") List<Long> creatorIds,
+            @Param("minScore") BigDecimal minScore,
+            @Param("maxScore") BigDecimal maxScore,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("recommended") Boolean recommended,
+            @Param("enabled") Boolean enabled,
+            Pageable pageable);
 }

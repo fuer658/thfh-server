@@ -40,6 +40,19 @@ public class PostController {
     private UserService userService;
 
     /**
+     * 验证排序方向参数
+     * @param direction 排序方向字符串
+     * @return 验证后的排序方向
+     */
+    private Sort.Direction validateSortDirection(String direction) {
+        try {
+            return Sort.Direction.fromString(direction);
+        } catch (Exception e) {
+            return Sort.Direction.DESC; // 默认降序
+        }
+    }
+
+    /**
      * 发布动态
      */
     @ApiOperation(value = "发布动态", notes = "用户发布新动态，可以包含文本内容、图片和标签等")
@@ -84,8 +97,12 @@ public class PostController {
     public Result<Page<PostDTO>> getUserPosts(
             @ApiParam(value = "用户ID", required = true) @PathVariable Long userId,
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
-            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "排序字段，支持createTime、updateTime、likeCount、commentCount、shareCount、viewCount、title", defaultValue = "createTime") @RequestParam(defaultValue = "createTime") String sortBy,
+            @ApiParam(value = "排序方向，支持ASC或DESC", defaultValue = "DESC") @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = validateSortDirection(direction);
+        String validatedSortBy = postService.validateSortField(sortBy);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
         return Result.success(postService.getUserPostsDTO(userId, pageRequest));
     }
 
@@ -267,8 +284,12 @@ public class PostController {
             @ApiParam(value = "动态标题，用于筛选") @RequestParam(required = false) String title,
             @ApiParam(value = "用户名，用于筛选") @RequestParam(required = false) String userName,
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
-            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "排序字段，支持createTime、updateTime、likeCount、commentCount、shareCount、viewCount、title", defaultValue = "createTime") @RequestParam(defaultValue = "createTime") String sortBy,
+            @ApiParam(value = "排序方向，支持ASC或DESC", defaultValue = "DESC") @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = validateSortDirection(direction);
+        String validatedSortBy = postService.validateSortField(sortBy);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
         return Result.success(postService.getAllPosts(title, userName, pageRequest));
     }
 
@@ -283,8 +304,12 @@ public class PostController {
     @GetMapping("/following")
     public Result<Page<PostDTO>> getFollowingPosts(
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
-            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "排序字段，支持createTime、updateTime、likeCount、commentCount、shareCount、viewCount、title", defaultValue = "createTime") @RequestParam(defaultValue = "createTime") String sortBy,
+            @ApiParam(value = "排序方向，支持ASC或DESC", defaultValue = "DESC") @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = validateSortDirection(direction);
+        String validatedSortBy = postService.validateSortField(sortBy);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
         return Result.success(postService.getFollowingPostsWithUserInfo(pageRequest));
     }
 
@@ -343,9 +368,13 @@ public class PostController {
     @PreAuthorize("hasRole('USER')")
     public Result<Page<PostDTO>> getUserLikedPosts(
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
-            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "排序字段，支持createTime、updateTime、likeCount、commentCount、shareCount、viewCount、title", defaultValue = "createTime") @RequestParam(defaultValue = "createTime") String sortBy,
+            @ApiParam(value = "排序方向，支持ASC或DESC", defaultValue = "DESC") @RequestParam(defaultValue = "DESC") String direction) {
         User currentUser = userService.getCurrentUser();
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        Sort.Direction sortDirection = validateSortDirection(direction);
+        String validatedSortBy = postService.validateSortField(sortBy);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
         return Result.success(postService.getUserLikedPostsDTO(currentUser.getId(), pageRequest));
     }
 
@@ -537,8 +566,45 @@ public class PostController {
     public Result<Page<PostDTO>> getPostsByTagName(
             @ApiParam(value = "标签名称", required = true) @RequestParam String tagName,
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
-            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "排序字段，支持createTime、updateTime、likeCount、commentCount、shareCount、viewCount、title", defaultValue = "createTime") @RequestParam(defaultValue = "createTime") String sortBy,
+            @ApiParam(value = "排序方向，支持ASC或DESC", defaultValue = "DESC") @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = validateSortDirection(direction);
+        String validatedSortBy = postService.validateSortField(sortBy);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
         return Result.success(postService.findPostsByTagNameDTO(tagName, pageRequest));
+    }
+
+    /**
+     * 搜索动态
+     */
+    @ApiOperation(value = "搜索动态", notes = "根据多种条件搜索动态，支持关键字、内容、标签、时间范围等条件组合搜索")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "搜索成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/search")
+    public Result<Page<PostDTO>> searchPosts(
+            @ApiParam(value = "标题关键字") @RequestParam(required = false) String title,
+            @ApiParam(value = "内容关键字") @RequestParam(required = false) String content,
+            @ApiParam(value = "用户名关键字") @RequestParam(required = false) String userName,
+            @ApiParam(value = "用户ID") @RequestParam(required = false) Long userId,
+            @ApiParam(value = "标签名称") @RequestParam(required = false) String tagName,
+            @ApiParam(value = "标签ID") @RequestParam(required = false) Long tagId,
+            @ApiParam(value = "最小点赞数") @RequestParam(required = false) Integer minLikes,
+            @ApiParam(value = "最小评论数") @RequestParam(required = false) Integer minComments,
+            @ApiParam(value = "开始时间，格式：yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) String startTime,
+            @ApiParam(value = "结束时间，格式：yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) String endTime,
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
+            @ApiParam(value = "排序字段，支持createTime、updateTime、likeCount、commentCount、shareCount、viewCount、title", defaultValue = "createTime") @RequestParam(defaultValue = "createTime") String sortBy,
+            @ApiParam(value = "排序方向，支持ASC或DESC", defaultValue = "DESC") @RequestParam(defaultValue = "DESC") String direction) {
+
+        Sort.Direction sortDirection = validateSortDirection(direction);
+        String validatedSortBy = postService.validateSortField(sortBy);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
+        
+        return Result.success(postService.searchPosts(title, content, userName, userId, 
+                tagName, tagId, minLikes, minComments, startTime, endTime, pageRequest));
     }
 }

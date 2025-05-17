@@ -4,6 +4,7 @@ import com.thfh.common.Result;
 import com.thfh.dto.ArtworkDTO;
 import com.thfh.dto.ArtworkScoreDTO;
 import com.thfh.dto.ArtworkUpdateDTO;
+import com.thfh.dto.ArtworkSearchDTO;
 import com.thfh.dto.FollowDTO;
 import com.thfh.dto.TagDTO;
 import com.thfh.model.Artwork;
@@ -616,10 +617,10 @@ public class ArtworkController {
      * @param size 每页数量
      * @return 关注用户的作品列表
      */
-    @ApiOperation(value = "获取已关注用户的作品列表", notes = "获取当前用户关注的所有用户的作品列表")
+    @ApiOperation(value = "获取已关注用户的作品列表", notes = "获取当前用户关注的所有用户的作品列表，支持自定义排序")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "获取成功"),
-            @ApiResponse(code = 401, message = "未授权，请先登录")
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
     })
     @GetMapping("/following")
     public Result<Page<ArtworkDTO>> getFollowingUserArtworks(
@@ -627,11 +628,22 @@ public class ArtworkController {
             @ApiParam(value = "页码", defaultValue = "1") 
             @RequestParam(defaultValue = "1") @PositiveOrZero(message = "页码必须大于或等于0") int page,
             @ApiParam(value = "每页数量", defaultValue = "10") 
-            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size) {
-        log.debug("获取已关注用户的作品列表: 页码={}, 大小={}", page, size);
+            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size,
+            @ApiParam(value = "排序字段（可选，默认为创建时间）") @RequestParam(defaultValue = "createTime") String sortField,
+            @ApiParam(value = "排序方向（可选，默认为降序）") @RequestParam(defaultValue = "desc") String sortDirection) {
+        log.debug("获取已关注用户的作品列表: 页码={}, 大小={}, 排序字段={}, 排序方向={}",
+                 page, size, sortField, sortDirection);
+        
+        // 处理排序
+        Sort sort;
+        if ("asc".equalsIgnoreCase(sortDirection)) {
+            sort = Sort.by(Sort.Direction.ASC, sortField);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, sortField);
+        }
         
         User user = userService.getCurrentUser();
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME));
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
         
         // 获取已关注的用户ID列表
         List<Long> followingIds = followService.getFollowingList(user.getId())
@@ -784,5 +796,47 @@ public class ArtworkController {
      */
     private Page<ArtworkDTO> convertToArtworkDTOPage(Page<Artwork> artworkPage) {
         return artworkPage.map(this::convertToArtworkDTO);
+    }
+
+    /**
+     * 高级动态搜索作品
+     * 
+     * @param searchDTO 搜索条件
+     * @param page 页码
+     * @param size 每页数量
+     * @return 作品列表
+     */
+    @ApiOperation(value = "高级动态搜索作品", notes = "根据多种条件动态搜索作品，支持评分区间、价格区间等多维度过滤")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "搜索成功")
+    })
+    @PostMapping("/advanced-search")
+    public Result<Page<ArtworkDTO>> advancedSearch(
+            @ApiParam(value = "搜索条件", required = true) 
+            @RequestBody ArtworkSearchDTO searchDTO,
+            @ApiParam(value = "页码", defaultValue = "1") 
+            @RequestParam(defaultValue = "1") @PositiveOrZero(message = "页码必须大于或等于0") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") 
+            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size) {
+        
+        log.debug("高级动态搜索作品: 条件={}, 页码={}, 大小={}", searchDTO, page, size);
+        
+        // 处理排序
+        Sort sort;
+        if (searchDTO.getSortDirection() != null && "asc".equalsIgnoreCase(searchDTO.getSortDirection())) {
+            sort = Sort.by(Sort.Direction.ASC, searchDTO.getSortField() != null ? searchDTO.getSortField() : CREATE_TIME);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, searchDTO.getSortField() != null ? searchDTO.getSortField() : CREATE_TIME);
+        }
+        
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
+        
+        // 调用高级搜索方法
+        Page<Artwork> artworkPage = artworkService.advancedSearch(searchDTO, pageRequest);
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);
+        
+        return Result.success(dtoPage);
     }
 }

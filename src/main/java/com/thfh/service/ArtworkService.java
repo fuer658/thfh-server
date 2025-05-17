@@ -1,6 +1,7 @@
 package com.thfh.service;
 
 import com.thfh.dto.ArtworkUpdateDTO;
+import com.thfh.dto.ArtworkSearchDTO;
 import com.thfh.model.Artwork;
 import com.thfh.model.ArtworkTag;
 import com.thfh.model.ArtworkType;
@@ -451,5 +452,28 @@ public class ArtworkService {
      */
     public Page<Artwork> getArtworksByUserId(Long userId, Pageable pageable) {
         return artworkRepository.findByCreatorId(userId, pageable);
+    }
+    
+    /**
+     * 高级动态搜索作品
+     * 
+     * @param searchDTO 搜索条件
+     * @param pageable 分页参数
+     * @return 符合条件的作品分页列表
+     */
+    public Page<Artwork> advancedSearch(ArtworkSearchDTO searchDTO, Pageable pageable) {
+        return artworkRepository.advancedSearch(
+                searchDTO.getKeyword(),
+                searchDTO.getTagIds(),
+                searchDTO.getType(),
+                searchDTO.getCreatorIds(),
+                searchDTO.getMinScore(),
+                searchDTO.getMaxScore(),
+                searchDTO.getMinPrice(),
+                searchDTO.getMaxPrice(),
+                searchDTO.getRecommended(),
+                searchDTO.getEnabled(),
+                pageable
+        );
     }
 }

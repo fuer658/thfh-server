@@ -3,6 +3,8 @@ package com.thfh.service;
 import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.HashSet;
+import java.util.Arrays;
 
 import com.thfh.model.*;
 import com.thfh.repository.*;
@@ -69,6 +71,21 @@ public class PostService {
 
     @Autowired
     private PostTagService postTagService;
+
+    /**
+     * 验证排序字段是否有效，如果无效则回退到默认排序字段"createTime"
+     * @param sortBy 排序字段
+     * @return 验证后的排序字段
+     */
+    public String validateSortField(String sortBy) {
+        // 定义允许的排序字段
+        Set<String> validSortFields = new HashSet<>(Arrays.asList(
+            "createTime", "updateTime", "likeCount", "commentCount", "shareCount", "viewCount", "title"
+        ));
+        
+        // 如果提供的排序字段有效，则使用它，否则回退到默认排序字段
+        return validSortFields.contains(sortBy) ? sortBy : "createTime";
+    }
 
     /**
      * 发布动态
@@ -1139,5 +1156,107 @@ public class PostService {
     public Page<PostDTO> findPostsByTagNameDTO(String tagName, Pageable pageable) {
         Page<Post> posts = findPostsByTagName(tagName, pageable);
         return posts.map(this::convertToDTO);
+    }
+
+    /**
+     * 多条件搜索动态
+     * @param title 标题关键字
+     * @param content 内容关键字
+     * @param userName 用户名关键字
+     * @param userId 用户ID
+     * @param tagName 标签名称
+     * @param tagId 标签ID
+     * @param minLikes 最小点赞数
+     * @param minComments 最小评论数
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @param pageable 分页参数
+     * @return 符合条件的动态DTO分页列表
+     */
+    public Page<PostDTO> searchPosts(String title, String content, String userName, Long userId,
+                                   String tagName, Long tagId, Integer minLikes, Integer minComments, 
+                                   String startTime, String endTime, Pageable pageable) {
+        
+        Specification<Post> spec = (root, query, cb) -> {
+            // 添加root.fetch关联tags，确保标签被加载
+            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+                root.fetch("tags", JoinType.LEFT);
+                // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
+                query.distinct(true);
+            }
+            
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // 标题关键字查询
+            if (title != null && !title.isEmpty()) {
+                predicates.add(cb.like(root.get("title"), "%" + title + "%"));
+            }
+            
+            // 内容关键字查询
+            if (content != null && !content.isEmpty()) {
+                predicates.add(cb.like(root.get("content"), "%" + content + "%"));
+            }
+            
+            // 用户ID查询
+            if (userId != null) {
+                predicates.add(cb.equal(root.get("userId"), userId));
+            }
+            
+            // 用户名查询
+            if (userName != null && !userName.isEmpty()) {
+                Join<Post, User> userJoin = root.join("user");
+                predicates.add(cb.or(
+                    cb.like(userJoin.get("username"), "%" + userName + "%"),
+                    cb.like(userJoin.get("realName"), "%" + userName + "%")
+                ));
+            }
+            
+            // 标签ID查询
+            if (tagId != null) {
+                Join<Post, PostTag> tagJoin = root.join("tags");
+                predicates.add(cb.equal(tagJoin.get("id"), tagId));
+            }
+            
+            // 标签名称查询
+            if (tagName != null && !tagName.isEmpty()) {
+                Join<Post, PostTag> tagJoin = root.join("tags");
+                predicates.add(cb.like(tagJoin.get("name"), "%" + tagName + "%"));
+            }
+            
+            // 最小点赞数查询
+            if (minLikes != null && minLikes > 0) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("likeCount"), minLikes));
+            }
+            
+            // 最小评论数查询
+            if (minComments != null && minComments > 0) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("commentCount"), minComments));
+            }
+            
+            // 时间范围查询
+            try {
+                if (startTime != null && !startTime.isEmpty()) {
+                    LocalDateTime startDateTime = LocalDateTime.parse(startTime, java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("createTime"), startDateTime));
+                }
+                
+                if (endTime != null && !endTime.isEmpty()) {
+                    LocalDateTime endDateTime = LocalDateTime.parse(endTime, java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                    predicates.add(cb.lessThanOrEqualTo(root.get("createTime"), endDateTime));
+                }
+            } catch (Exception e) {
+                log.error("解析时间格式错误", e);
+                // 时间格式错误时忽略时间条件
+            }
+            
+            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        Page<Post> posts = postRepository.findAll(spec, pageable);
+        List<PostDTO> dtoList = posts.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+                
+        return new PageImpl<>(dtoList, pageable, posts.getTotalElements());
     }
 }
