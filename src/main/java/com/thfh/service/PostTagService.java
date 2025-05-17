@@ -31,8 +31,9 @@ public class PostTagService {
     @Transactional
     public PostTag createTag(String name, String description) {
         // 检查标签名是否已存在
-        if (postTagRepository.findByName(name).isPresent()) {
-            throw new IllegalArgumentException("标签名已存在");
+        Optional<PostTag> existingTag = postTagRepository.findByName(name);
+        if (existingTag.isPresent()) {
+            return existingTag.get(); // 返回已有标签，而不是抛出异常
         }
         
         PostTag tag = new PostTag();
@@ -154,6 +155,33 @@ public class PostTagService {
     public Long getTagHotness(Long tagId) {
         List<Post> posts = postRepository.findByTagsId(tagId, Pageable.unpaged()).getContent();
         return posts.stream().mapToLong(post -> post.getViewCount() == null ? 0L : post.getViewCount()).sum();
+    }
+    
+    /**
+     * 查找或创建标签
+     * 如果标签不存在，则创建一个新标签
+     * 
+     * @param name 标签名称
+     * @return 查找到的或创建的标签
+     */
+    @Transactional
+    public PostTag findOrCreateTag(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("标签名不能为空");
+        }
+        
+        String trimmedName = name.trim();
+        // 先查找是否存在
+        Optional<PostTag> existingTag = postTagRepository.findByName(trimmedName);
+        if (existingTag.isPresent()) {
+            return existingTag.get();
+        }
+        
+        // 创建新标签
+        PostTag newTag = new PostTag();
+        newTag.setName(trimmedName);
+        newTag.setEnabled(true);
+        return postTagRepository.save(newTag); // 确保返回的是已持久化的对象
     }
     
     /**
