@@ -5,6 +5,8 @@ import com.thfh.model.ArtworkType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -115,4 +117,59 @@ public interface ArtworkRepository extends JpaRepository<Artwork, Long> {
      * @return 分页后的作品列表
      */
     Page<Artwork> findByCreatorIdInAndEnabledTrue(List<Long> creatorIds, Pageable pageable);
+    
+    /**
+     * 根据作品类型查询作品，支持分页
+     *
+     * @param type 作品类型
+     * @param pageable 分页参数
+     * @return 分页后的作品列表
+     */
+    Page<Artwork> findByType(ArtworkType type, Pageable pageable);
+    
+    /**
+     * 搜索作品
+     * 根据关键字（标题、描述、创作材料）和作品类型进行搜索
+     *
+     * @param keyword 搜索关键字
+     * @param type 作品类型（可选）
+     * @param enabled 是否启用
+     * @param pageable 分页参数
+     * @return 符合条件的作品列表
+     */
+    @Query("SELECT a FROM Artwork a WHERE (a.title LIKE %:keyword% OR a.description LIKE %:keyword% OR a.materials LIKE %:keyword%) " +
+           "AND (:type IS NULL OR a.type = :type) " + 
+           "AND (:enabled IS NULL OR a.enabled = :enabled)")
+    Page<Artwork> searchArtworks(@Param("keyword") String keyword, @Param("type") ArtworkType type, @Param("enabled") Boolean enabled, Pageable pageable);
+    
+    /**
+     * 根据标签ID搜索作品
+     *
+     * @param tagId 标签ID
+     * @param enabled 是否启用
+     * @param pageable 分页参数
+     * @return 符合条件的作品列表
+     */
+    @Query("SELECT a FROM Artwork a JOIN a.tags t WHERE t.id = :tagId " + 
+           "AND (:enabled IS NULL OR a.enabled = :enabled)")
+    Page<Artwork> findByTagId(@Param("tagId") Long tagId, @Param("enabled") Boolean enabled, Pageable pageable);
+    
+    /**
+     * 综合搜索作品
+     * 根据关键字（标题、描述、创作材料）、标签ID和作品类型进行搜索
+     *
+     * @param keyword 搜索关键字
+     * @param tagId 标签ID（可选）
+     * @param type 作品类型（可选）
+     * @param enabled 是否启用
+     * @param pageable 分页参数
+     * @return 符合条件的作品列表
+     */
+    @Query("SELECT DISTINCT a FROM Artwork a LEFT JOIN a.tags t WHERE " + 
+           "((:keyword IS NULL OR a.title LIKE %:keyword% OR a.description LIKE %:keyword% OR a.materials LIKE %:keyword%) " +
+           "AND (:tagId IS NULL OR t.id = :tagId) " +
+           "AND (:type IS NULL OR a.type = :type) " +
+           "AND (:enabled IS NULL OR a.enabled = :enabled))")
+    Page<Artwork> searchArtworksComprehensive(@Param("keyword") String keyword, @Param("tagId") Long tagId, 
+                                             @Param("type") ArtworkType type, @Param("enabled") Boolean enabled, Pageable pageable);
 }

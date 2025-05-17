@@ -175,9 +175,11 @@ public class ArtworkController {
      * @param title 作品标题（可选）
      * @param studentId 学生ID（可选）
      * @param enabled 是否启用（可选）
+     * @param sortField 排序字段（可选，默认为创建时间）
+     * @param sortDirection 排序方向（可选，默认为降序）
      * @return 作品列表
      */
-    @ApiOperation(value = "获取作品列表", notes = "根据查询条件获取作品分页列表，支持按标题、学生ID和启用状态筛选")
+    @ApiOperation(value = "获取作品列表", notes = "根据查询条件获取作品分页列表，支持按标题、学生ID和启用状态筛选，并支持自定义排序")
     @ApiResponses({
             @ApiResponse(code = 200, message = "获取成功")
     })
@@ -189,11 +191,109 @@ public class ArtworkController {
             @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size,
             @ApiParam(value = "作品标题（可选）") @RequestParam(required = false) String title,
             @ApiParam(value = "学生ID（可选）") @RequestParam(required = false) Long studentId,
-            @ApiParam(value = "是否启用（可选）") @RequestParam(required = false) Boolean enabled) {
-        log.debug("获取作品列表: 页码={}, 大小={}, 标题={}, 学生ID={}, 启用状态={}", page, size, title, studentId, enabled);
+            @ApiParam(value = "是否启用（可选）") @RequestParam(required = false) Boolean enabled,
+            @ApiParam(value = "排序字段（可选，默认为创建时间）") @RequestParam(defaultValue = "createTime") String sortField,
+            @ApiParam(value = "排序方向（可选，默认为降序）") @RequestParam(defaultValue = "desc") String sortDirection) {
+        log.debug("获取作品列表: 页码={}, 大小={}, 标题={}, 学生ID={}, 启用状态={}, 排序字段={}, 排序方向={}", 
+                 page, size, title, studentId, enabled, sortField, sortDirection);
+        
+        // 处理排序
+        Sort sort;
+        if ("asc".equalsIgnoreCase(sortDirection)) {
+            sort = Sort.by(Sort.Direction.ASC, sortField);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, sortField);
+        }
+        
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
+        Page<Artwork> artworkPage = artworkService.getArtworks(title, studentId, enabled, pageRequest);
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);
+        
+        return Result.success(dtoPage);
+    }
+
+    /**
+     * 搜索作品
+     * 
+     * @param keyword 搜索关键字
+     * @param tagId 标签ID（可选）
+     * @param type 作品类型（可选）
+     * @param enabled 是否启用（可选，默认为true）
+     * @param page 页码
+     * @param size 每页数量
+     * @param sortField 排序字段（可选，默认为创建时间）
+     * @param sortDirection 排序方向（可选，默认为降序）
+     * @return 作品列表
+     */
+    @ApiOperation(value = "搜索作品", notes = "根据关键字、标签ID和作品类型搜索作品，支持分页和排序")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "搜索成功")
+    })
+    @GetMapping("/search")
+    public Result<Page<ArtworkDTO>> searchArtworks(
+            @ApiParam(value = "搜索关键字（可选）") @RequestParam(required = false) String keyword,
+            @ApiParam(value = "标签ID（可选）") @RequestParam(required = false) Long tagId,
+            @ApiParam(value = "作品类型（可选）") @RequestParam(required = false) ArtworkType type,
+            @ApiParam(value = "是否启用（可选，默认为true）") @RequestParam(required = false) Boolean enabled,
+            @ApiParam(value = "页码", defaultValue = "1") 
+            @RequestParam(defaultValue = "1") @PositiveOrZero(message = "页码必须大于或等于0") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") 
+            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size,
+            @ApiParam(value = "排序字段（可选，默认为创建时间）") @RequestParam(defaultValue = "createTime") String sortField,
+            @ApiParam(value = "排序方向（可选，默认为降序）") @RequestParam(defaultValue = "desc") String sortDirection) {
+        
+        log.debug("搜索作品: 关键字={}, 标签ID={}, 类型={}, 启用状态={}, 页码={}, 大小={}, 排序字段={}, 排序方向={}", 
+                 keyword, tagId, type, enabled, page, size, sortField, sortDirection);
+        
+        // 处理排序
+        Sort sort;
+        if ("asc".equalsIgnoreCase(sortDirection)) {
+            sort = Sort.by(Sort.Direction.ASC, sortField);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, sortField);
+        }
+        
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
+        
+        // 调用综合搜索方法
+        Page<Artwork> artworkPage = artworkService.searchArtworksComprehensive(keyword, tagId, type, enabled, pageRequest);
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);
+        
+        return Result.success(dtoPage);
+    }
+    
+    /**
+     * 根据标签搜索作品
+     * 
+     * @param tagId 标签ID
+     * @param enabled 是否启用（可选，默认为true）
+     * @param page 页码
+     * @param size 每页数量
+     * @return 作品列表
+     */
+    @ApiOperation(value = "根据标签搜索作品", notes = "根据标签ID搜索作品，支持分页")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "搜索成功")
+    })
+    @GetMapping("/search/tag/{tagId}")
+    public Result<Page<ArtworkDTO>> searchArtworksByTag(
+            @ApiParam(value = "标签ID", required = true) 
+            @PathVariable @Positive(message = "标签ID必须为正数") Long tagId,
+            @ApiParam(value = "是否启用（可选，默认为true）") @RequestParam(required = false) Boolean enabled,
+            @ApiParam(value = "页码", defaultValue = "1") 
+            @RequestParam(defaultValue = "1") @PositiveOrZero(message = "页码必须大于或等于0") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") 
+            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size) {
+        
+        log.debug("根据标签搜索作品: 标签ID={}, 启用状态={}, 页码={}, 大小={}", tagId, enabled, page, size);
         
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME));
-        Page<Artwork> artworkPage = artworkService.getArtworks(title, studentId, enabled, pageRequest);
+        
+        Page<Artwork> artworkPage = artworkService.searchArtworksByTag(tagId, enabled, pageRequest);
         
         // 转换为DTO
         Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);

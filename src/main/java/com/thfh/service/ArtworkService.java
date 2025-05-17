@@ -149,6 +149,74 @@ public class ArtworkService {
     }
 
     /**
+     * 搜索作品
+     * 根据关键字（标题、描述、创作材料）搜索作品
+     * 
+     * @param keyword 搜索关键字
+     * @param type 作品类型（可选）
+     * @param enabled 是否启用
+     * @param pageable 分页参数
+     * @return 符合条件的作品分页列表
+     */
+    public Page<Artwork> searchArtworks(String keyword, ArtworkType type, Boolean enabled, Pageable pageable) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            if (type != null) {
+                return artworkRepository.findByType(type, pageable);
+            } else {
+                return getAllArtworks(pageable);
+            }
+        }
+        return artworkRepository.searchArtworks(keyword, type, enabled, pageable);
+    }
+    
+    /**
+     * 根据标签搜索作品
+     * 
+     * @param tagId 标签ID
+     * @param enabled 是否启用
+     * @param pageable 分页参数
+     * @return 符合条件的作品分页列表
+     */
+    public Page<Artwork> searchArtworksByTag(Long tagId, Boolean enabled, Pageable pageable) {
+        return artworkRepository.findByTagId(tagId, enabled, pageable);
+    }
+    
+    /**
+     * 综合搜索作品
+     * 支持同时按关键字、标签ID和作品类型搜索
+     * 
+     * @param keyword 搜索关键字（可选）
+     * @param tagId 标签ID（可选）
+     * @param type 作品类型（可选）
+     * @param enabled 是否启用（默认为true）
+     * @param pageable 分页参数
+     * @return 符合条件的作品分页列表
+     */
+    public Page<Artwork> searchArtworksComprehensive(String keyword, Long tagId, ArtworkType type, Boolean enabled, Pageable pageable) {
+        // 处理空关键字
+        if ((keyword == null || keyword.trim().isEmpty()) && tagId == null && type == null) {
+            if (enabled != null) {
+                return artworkRepository.findByEnabled(enabled, pageable);
+            } else {
+                return getAllArtworks(pageable);
+            }
+        }
+        
+        // 默认只搜索启用的作品
+        if (enabled == null) {
+            enabled = true;
+        }
+        
+        return artworkRepository.searchArtworksComprehensive(
+            (keyword != null && !keyword.trim().isEmpty()) ? keyword : null, 
+            tagId, 
+            type, 
+            enabled, 
+            pageable
+        );
+    }
+
+    /**
      * 删除作品
      * @param artworkId 作品ID
      */
