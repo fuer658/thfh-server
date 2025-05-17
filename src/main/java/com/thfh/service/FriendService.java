@@ -121,11 +121,21 @@ public class FriendService {
         dto.setUpdatedAt(req.getUpdatedAt());
         User fromUser = userRepository.findById(req.getFromUserId()).orElse(null);
         User toUser = userRepository.findById(req.getToUserId()).orElse(null);
-        dto.setFromUserName(fromUser != null ? fromUser.getUsername() : null);
-        dto.setToUserName(toUser != null ? toUser.getUsername() : null);
+        if (fromUser != null) {
+            dto.setFromUserName(fromUser.getUsername());
+            dto.setFromUserAvatar(fromUser.getAvatar());
+            dto.setFromUserIntroduction(fromUser.getIntroduction());
+            dto.setFromUserLevel(fromUser.getLevel());
+        }
+        if (toUser != null) {
+            dto.setToUserName(toUser.getUsername());
+            dto.setToUserAvatar(toUser.getAvatar());
+            dto.setToUserIntroduction(toUser.getIntroduction());
+            dto.setToUserLevel(toUser.getLevel());
+        }
         return dto;
     }
-
+    
     public List<FriendRequestDTO> getReceivedFriendRequests(Long userId, String status) {
         List<FriendRequest> list;
         if (status == null || status.isEmpty()) {
@@ -137,6 +147,7 @@ public class FriendService {
         if (list == null) return Collections.emptyList();
         return list.stream().map(this::toDTO).collect(Collectors.toList());
     }
+    
     public List<FriendRequestDTO> getSentFriendRequests(Long userId, String status) {
         List<FriendRequest> list;
         if (status == null || status.isEmpty()) {
@@ -148,6 +159,7 @@ public class FriendService {
         if (list == null) return Collections.emptyList();
         return list.stream().map(this::toDTO).collect(Collectors.toList());
     }
+    
     private Integer parseStatus(String status) {
         switch (status.toLowerCase()) {
             case "pending": return 0;
@@ -156,14 +168,17 @@ public class FriendService {
             default: return null;
         }
     }
+    
     public String blockFriend(Long userId, Long targetUserId) {
         blacklistService.addToBlacklist(userId, targetUserId);
         return "拉黑成功";
     }
+    
     public String unblockFriend(Long userId, Long targetUserId) {
         blacklistService.removeFromBlacklist(userId, targetUserId);
         return "解除拉黑成功";
     }
+    
     public String setFriendRemark(Long userId, Long friendId, String remark) {
         Friend friend = friendRepository.findByUserIdAndFriendId(userId, friendId);
         if (friend == null) {
@@ -173,10 +188,12 @@ public class FriendService {
         friendRepository.save(friend);
         return "备注设置成功";
     }
+    
     public FriendDTO getFriendDetail(Long userId, Long friendId) {
         Friend friend = friendRepository.findByUserIdAndFriendId(userId, friendId);
         return friend == null ? null : toFriendDTO(friend);
     }
+    
     public String cancelFriendRequest(Long requestId, Long userId) {
         FriendRequest request = friendRequestRepository.findById(requestId).orElse(null);
         if (request == null) {
@@ -209,9 +226,14 @@ public class FriendService {
         dto.setFriendId(friend.getFriendId());
         dto.setRemark(friend.getRemark());
         dto.setCreatedAt(friend.getCreatedAt());
-        // 查找好友用户名
+        // 查找好友用户名、头像、简介和等级
         User user = userRepository.findById(friend.getFriendId()).orElse(null);
-        dto.setFriendName(user != null ? user.getUsername() : null);
+        if (user != null) {
+            dto.setFriendName(user.getUsername());
+            dto.setAvatar(user.getAvatar());
+            dto.setIntroduction(user.getIntroduction());
+            dto.setLevel(user.getLevel());
+        }
         return dto;
     }
 } 

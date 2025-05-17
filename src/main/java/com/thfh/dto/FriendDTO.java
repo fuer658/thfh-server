@@ -20,4 +20,10 @@ public class FriendDTO {
     private String remark;
     @ApiModelProperty("成为好友时间")
     private Date createdAt;
+    @ApiModelProperty("好友头像URL")
+    private String avatar;
+    @ApiModelProperty("好友个人简介")
+    private String introduction;
+    @ApiModelProperty("好友等级")
+    private Integer level;
 } 
