@@ -4,6 +4,10 @@ import com.thfh.model.Friend;
 import com.thfh.model.FriendRequest;
 import com.thfh.repository.FriendRepository;
 import com.thfh.repository.FriendRequestRepository;
+import com.thfh.repository.UserRepository;
+import com.thfh.model.User;
+import com.thfh.dto.FriendRequestDTO;
+import com.thfh.dto.FriendDTO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 @Api(tags = "好友业务逻辑")
 @Service
@@ -19,11 +24,13 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final BlacklistService blacklistService;
+    private final UserRepository userRepository;
 
-    public FriendService(FriendRepository friendRepository, FriendRequestRepository friendRequestRepository, BlacklistService blacklistService) {
+    public FriendService(FriendRepository friendRepository, FriendRequestRepository friendRequestRepository, BlacklistService blacklistService, UserRepository userRepository) {
         this.friendRepository = friendRepository;
         this.friendRequestRepository = friendRequestRepository;
         this.blacklistService = blacklistService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -88,8 +95,9 @@ public class FriendService {
      * 查询好友列表
      */
     @ApiOperation("查询好友列表")
-    public List<Friend> listFriends(Long userId) {
-        return friendRepository.findByUserId(userId);
+    public List<FriendDTO> listFriends(Long userId) {
+        List<Friend> friends = friendRepository.findByUserId(userId);
+        return friends.stream().map(this::toFriendDTO).collect(Collectors.toList());
     }
 
     /**
@@ -103,25 +111,42 @@ public class FriendService {
         return "已删除好友";
     }
 
-    public List<FriendRequest> getReceivedFriendRequests(Long userId, String status) {
-        if (status == null || status.isEmpty()) {
-            List<FriendRequest> list = friendRequestRepository.findByToUserId(userId);
-            return list != null ? list : Collections.emptyList();
-        } else {
-            Integer statusInt = parseStatus(status);
-            List<FriendRequest> list = friendRequestRepository.findByToUserIdAndStatus(userId, statusInt);
-            return list != null ? list : Collections.emptyList();
-        }
+    private FriendRequestDTO toDTO(FriendRequest req) {
+        FriendRequestDTO dto = new FriendRequestDTO();
+        dto.setId(req.getId());
+        dto.setFromUserId(req.getFromUserId());
+        dto.setToUserId(req.getToUserId());
+        dto.setStatus(req.getStatus());
+        dto.setCreatedAt(req.getCreatedAt());
+        dto.setUpdatedAt(req.getUpdatedAt());
+        User fromUser = userRepository.findById(req.getFromUserId()).orElse(null);
+        User toUser = userRepository.findById(req.getToUserId()).orElse(null);
+        dto.setFromUserName(fromUser != null ? fromUser.getUsername() : null);
+        dto.setToUserName(toUser != null ? toUser.getUsername() : null);
+        return dto;
     }
-    public List<FriendRequest> getSentFriendRequests(Long userId, String status) {
+
+    public List<FriendRequestDTO> getReceivedFriendRequests(Long userId, String status) {
+        List<FriendRequest> list;
         if (status == null || status.isEmpty()) {
-            List<FriendRequest> list = friendRequestRepository.findByFromUserId(userId);
-            return list != null ? list : Collections.emptyList();
+            list = friendRequestRepository.findByToUserId(userId);
         } else {
             Integer statusInt = parseStatus(status);
-            List<FriendRequest> list = friendRequestRepository.findByFromUserIdAndStatus(userId, statusInt);
-            return list != null ? list : Collections.emptyList();
+            list = friendRequestRepository.findByToUserIdAndStatus(userId, statusInt);
         }
+        if (list == null) return Collections.emptyList();
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+    public List<FriendRequestDTO> getSentFriendRequests(Long userId, String status) {
+        List<FriendRequest> list;
+        if (status == null || status.isEmpty()) {
+            list = friendRequestRepository.findByFromUserId(userId);
+        } else {
+            Integer statusInt = parseStatus(status);
+            list = friendRequestRepository.findByFromUserIdAndStatus(userId, statusInt);
+        }
+        if (list == null) return Collections.emptyList();
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
     }
     private Integer parseStatus(String status) {
         switch (status.toLowerCase()) {
@@ -148,8 +173,9 @@ public class FriendService {
         friendRepository.save(friend);
         return "备注设置成功";
     }
-    public Friend getFriendDetail(Long userId, Long friendId) {
-        return friendRepository.findByUserIdAndFriendId(userId, friendId);
+    public FriendDTO getFriendDetail(Long userId, Long friendId) {
+        Friend friend = friendRepository.findByUserIdAndFriendId(userId, friendId);
+        return friend == null ? null : toFriendDTO(friend);
     }
     public String cancelFriendRequest(Long requestId, Long userId) {
         FriendRequest request = friendRequestRepository.findById(requestId).orElse(null);
@@ -174,5 +200,18 @@ public class FriendService {
     @ApiOperation("判断两用户是否为好友")
     public boolean isFriend(Long userId, Long friendId) {
         return friendRepository.findByUserIdAndFriendId(userId, friendId) != null;
+    }
+
+    private FriendDTO toFriendDTO(Friend friend) {
+        FriendDTO dto = new FriendDTO();
+        dto.setId(friend.getId());
+        dto.setUserId(friend.getUserId());
+        dto.setFriendId(friend.getFriendId());
+        dto.setRemark(friend.getRemark());
+        dto.setCreatedAt(friend.getCreatedAt());
+        // 查找好友用户名
+        User user = userRepository.findById(friend.getFriendId()).orElse(null);
+        dto.setFriendName(user != null ? user.getUsername() : null);
+        return dto;
     }
 } 

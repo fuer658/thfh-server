@@ -2,6 +2,8 @@ package com.thfh.controller;
 
 import com.thfh.model.Friend;
 import com.thfh.model.FriendRequest;
+import com.thfh.dto.FriendRequestDTO;
+import com.thfh.dto.FriendDTO;
 import com.thfh.service.FriendService;
 import com.thfh.common.Result;
 import io.swagger.annotations.Api;
@@ -45,10 +47,11 @@ public class FriendController {
 
     /**
      * 查询好友列表
+     * @apiNote 返回内容包含好友用户名friendName
      */
-    @ApiOperation("查询好友列表")
+    @ApiOperation(value = "查询好友列表", notes = "返回内容包含好友用户名friendName")
     @GetMapping("/list")
-    public Result<List<Friend>> listFriends(
+    public Result<List<FriendDTO>> listFriends(
             @ApiParam(value = "用户ID", required = true) @RequestParam Long userId) {
         return Result.success(friendService.listFriends(userId));
     }
@@ -69,7 +72,7 @@ public class FriendController {
      */
     @ApiOperation("查询我收到的好友请求（支持筛选待处理/全部）")
     @GetMapping("/request/received")
-    public Result<List<FriendRequest>> getReceivedFriendRequests(
+    public Result<List<FriendRequestDTO>> getReceivedFriendRequests(
             @ApiParam(value = "用户ID", required = true) @RequestParam Long userId,
             @ApiParam(value = "请求状态(pending/accepted/rejected)", required = false) @RequestParam(required = false) String status) {
         return Result.success(friendService.getReceivedFriendRequests(userId, status));
@@ -80,7 +83,7 @@ public class FriendController {
      */
     @ApiOperation("查询我发出的好友请求（支持筛选待处理/全部）")
     @GetMapping("/request/sent")
-    public Result<List<FriendRequest>> getSentFriendRequests(
+    public Result<List<FriendRequestDTO>> getSentFriendRequests(
             @ApiParam(value = "用户ID", required = true) @RequestParam Long userId,
             @ApiParam(value = "请求状态(pending/accepted/rejected)", required = false) @RequestParam(required = false) String status) {
         return Result.success(friendService.getSentFriendRequests(userId, status));
@@ -122,10 +125,11 @@ public class FriendController {
 
     /**
      * 查询好友详情
+     * @apiNote 返回内容包含好友用户名friendName
      */
-    @ApiOperation("查询好友详情")
+    @ApiOperation(value = "查询好友详情", notes = "返回内容包含好友用户名friendName")
     @GetMapping("/detail")
-    public Result<Friend> getFriendDetail(
+    public Result<FriendDTO> getFriendDetail(
             @ApiParam(value = "用户ID", required = true) @RequestParam Long userId,
             @ApiParam(value = "好友ID", required = true) @RequestParam Long friendId) {
         return Result.success(friendService.getFriendDetail(userId, friendId));

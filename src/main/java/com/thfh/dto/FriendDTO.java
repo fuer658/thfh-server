@@ -1,0 +1,23 @@
+package com.thfh.dto;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import java.util.Date;
+
+@ApiModel("好友DTO，带用户名")
+@Data
+public class FriendDTO {
+    @ApiModelProperty("主键ID")
+    private Long id;
+    @ApiModelProperty("用户ID")
+    private Long userId;
+    @ApiModelProperty("好友ID")
+    private Long friendId;
+    @ApiModelProperty("好友用户名")
+    private String friendName;
+    @ApiModelProperty("好友备注")
+    private String remark;
+    @ApiModelProperty("成为好友时间")
+    private Date createdAt;
+} 

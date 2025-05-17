@@ -304,7 +304,7 @@ public class UserService {
      */
     public UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
-        BeanUtils.copyProperties(user, dto);
+        BeanUtils.copyProperties(user, dto, "password");
 
         // 转换生日日期为字符串格式
         if (user.getBirthday() != null) {
