@@ -51,4 +51,20 @@ public interface ArtworkScoreRepository extends JpaRepository<ArtworkScore, Long
      */
     @Query("SELECT SUM(s.score) FROM ArtworkScore s WHERE s.artwork.id = :artworkId")
     Optional<BigDecimal> calculateTotalScore(@Param("artworkId") Long artworkId);
+
+    /**
+     * 统计有评分记录的不同用户数量
+     * 
+     * @return 不同用户的数量
+     */
+    @Query("SELECT COUNT(DISTINCT s.user.id) FROM ArtworkScore s")
+    long countDistinctUser();
+    
+    /**
+     * 统计有评分记录的不同作品数量
+     * 
+     * @return 不同作品的数量
+     */
+    @Query("SELECT COUNT(DISTINCT s.artwork.id) FROM ArtworkScore s")
+    long countDistinctArtwork();
 }

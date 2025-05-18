@@ -71,3 +71,10 @@ logging:
     root: INFO
     com.thfh: INFO
     org.springframework: WARN
+
+# 推荐系统配置
+recommendation:
+  data:
+    path: ./recommendation-data
+  rebuild:
+    interval: 48  # 每48小时重建一次推荐模型

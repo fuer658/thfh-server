@@ -214,4 +214,21 @@ public interface ArtworkRepository extends JpaRepository<Artwork, Long> {
             @Param("recommended") Boolean recommended,
             @Param("enabled") Boolean enabled,
             Pageable pageable);
+            
+    /**
+     * 根据多个ID查询已启用的作品
+     * 
+     * @param ids 作品ID列表
+     * @return 作品列表
+     */
+    List<Artwork> findByIdInAndEnabledTrue(List<Long> ids);
+    
+    /**
+     * 查询评分高且浏览量大的热门作品，支持分页
+     * 
+     * @param pageable 分页参数
+     * @return 热门作品列表
+     */
+    @Query("SELECT a FROM Artwork a WHERE a.enabled = true ORDER BY a.averageScore DESC, a.viewCount DESC")
+    Page<Artwork> findByEnabledTrueOrderByAverageScoreDescViewCountDesc(Pageable pageable);
 }

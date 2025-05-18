@@ -16,6 +16,7 @@ import com.thfh.service.ArtworkScoreService;
 import com.thfh.service.UserService;
 import com.thfh.service.FollowService;
 import com.thfh.service.ArtworkBrowseHistoryService;
+import com.thfh.service.RecommendationService;
 import com.thfh.exception.ResourceNotFoundException;
 
 import io.swagger.annotations.Api;
@@ -72,6 +73,7 @@ public class ArtworkController {
     private final AdminService adminService;
     private final FollowService followService;
     private final ArtworkBrowseHistoryService artworkBrowseHistoryService;
+    private final RecommendationService recommendationService;
 
     /**
      * 发布作品
@@ -180,6 +182,7 @@ public class ArtworkController {
      * @param enabled 是否启用（可选）
      * @param sortField 排序字段（可选，默认为创建时间）
      * @param sortDirection 排序方向（可选，默认为降序）
+     * @param useRecommend 是否使用推荐算法（可选，默认为true）
      * @return 作品列表
      */
     @ApiOperation(value = "获取作品列表", notes = "根据查询条件获取作品分页列表，支持按标题、学生ID和启用状态筛选，并支持自定义排序")
@@ -196,9 +199,10 @@ public class ArtworkController {
             @ApiParam(value = "学生ID（可选）") @RequestParam(required = false) Long studentId,
             @ApiParam(value = "是否启用（可选）") @RequestParam(required = false) Boolean enabled,
             @ApiParam(value = "排序字段（可选，默认为创建时间）") @RequestParam(defaultValue = "createTime") String sortField,
-            @ApiParam(value = "排序方向（可选，默认为降序）") @RequestParam(defaultValue = "desc") String sortDirection) {
-        log.debug("获取作品列表: 页码={}, 大小={}, 标题={}, 学生ID={}, 启用状态={}, 排序字段={}, 排序方向={}", 
-                 page, size, title, studentId, enabled, sortField, sortDirection);
+            @ApiParam(value = "排序方向（可选，默认为降序）") @RequestParam(defaultValue = "desc") String sortDirection,
+            @ApiParam(value = "是否使用推荐算法（可选，默认为true）") @RequestParam(defaultValue = "true") Boolean useRecommend) {
+        log.debug("获取作品列表: 页码={}, 大小={}, 标题={}, 学生ID={}, 启用状态={}, 排序字段={}, 排序方向={}, 使用推荐={}", 
+                 page, size, title, studentId, enabled, sortField, sortDirection, useRecommend);
         
         // 处理排序
         Sort sort;
@@ -209,7 +213,17 @@ public class ArtworkController {
         }
         
         PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
-        Page<Artwork> artworkPage = artworkService.getArtworks(title, studentId, enabled, pageRequest);
+        
+        // 确定是否使用推荐功能
+        Page<Artwork> artworkPage;
+        
+        // 如果指定了标题、学生ID或启用状态，则不使用推荐功能
+        if (title != null || studentId != null || enabled != null || !useRecommend) {
+            artworkPage = artworkService.getArtworks(title, studentId, enabled, pageRequest);
+        } else {
+            // 使用推荐功能获取作品列表
+            artworkPage = recommendationService.getRecommendedArtworks(pageRequest);
+        }
         
         // 转换为DTO
         Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);
@@ -841,6 +855,73 @@ public class ArtworkController {
         
         // 调用高级搜索方法
         Page<Artwork> artworkPage = artworkService.advancedSearch(searchDTO, pageRequest);
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);
+        
+        return Result.success(dtoPage);
+    }
+
+    @ApiOperation(value = "获取指定类型的作品列表", notes = "根据作品类型获取作品列表，支持分页和排序")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功")
+    })
+    @GetMapping("/type/{type}")
+    public Result<Page<ArtworkDTO>> getArtworksByType(
+            @ApiParam(value = "作品类型", required = true) 
+            @PathVariable ArtworkType type,
+            @ApiParam(value = "是否启用（可选，默认为true）") @RequestParam(required = false) Boolean enabled,
+            @ApiParam(value = "页码", defaultValue = "1") 
+            @RequestParam(defaultValue = "1") @PositiveOrZero(message = "页码必须大于或等于0") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") 
+            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size,
+            @ApiParam(value = "排序字段（可选，默认为创建时间）") @RequestParam(defaultValue = "createTime") String sortField,
+            @ApiParam(value = "排序方向（可选，默认为降序）") @RequestParam(defaultValue = "desc") String sortDirection) {
+        
+        log.debug("获取{}类型作品列表: 页码={}, 大小={}, 启用状态={}, 排序字段={}, 排序方向={}", 
+                 type.getDescription(), page, size, enabled, sortField, sortDirection);
+        
+        // 处理排序
+        Sort sort;
+        if ("asc".equalsIgnoreCase(sortDirection)) {
+            sort = Sort.by(Sort.Direction.ASC, sortField);
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, sortField);
+        }
+        
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
+        
+        // 获取指定类型的作品
+        Page<Artwork> artworkPage = artworkService.searchArtworksComprehensive(null, null, type, enabled, pageRequest);
+        
+        // 转换为DTO
+        Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);
+        
+        return Result.success(dtoPage);
+    }
+
+    /**
+     * 获取推荐作品列表
+     * @param page 页码
+     * @param size 每页数量
+     * @return 推荐作品列表
+     */
+    @ApiOperation(value = "获取推荐作品列表", notes = "根据用户历史评分和浏览记录，使用LibRec推荐算法获取个性化推荐作品")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "获取成功")
+    })
+    @GetMapping("/recommended")
+    public Result<Page<ArtworkDTO>> getRecommendedArtworks(
+            @ApiParam(value = "页码", defaultValue = "1") 
+            @RequestParam(defaultValue = "1") @PositiveOrZero(message = "页码必须大于或等于0") int page,
+            @ApiParam(value = "每页数量", defaultValue = "10") 
+            @RequestParam(defaultValue = "10") @Positive(message = "每页数量必须大于0") int size) {
+        log.debug("获取推荐作品列表: 页码={}, 大小={}", page, size);
+        
+        PageRequest pageRequest = PageRequest.of(page - 1, size);
+        
+        // 调用推荐服务获取推荐作品
+        Page<Artwork> artworkPage = recommendationService.getRecommendedArtworks(pageRequest);
         
         // 转换为DTO
         Page<ArtworkDTO> dtoPage = convertToArtworkDTOPage(artworkPage);

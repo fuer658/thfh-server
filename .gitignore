@@ -57,3 +57,5 @@ uploads/
 
 # Cursor specific files
 .cursor/rules/
+
+recommendation-data/ratings.txt
