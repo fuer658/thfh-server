@@ -198,7 +198,30 @@ public class PostService {
         if (posts.isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "动态不存在");
         }
+        
+        // 获取动态后，增加浏览量
+        incrementViewCount(postId);
+        
         return posts.get(0);
+    }
+
+    /**
+     * 增加动态浏览量
+     * 注意：此方法不会记录浏览历史，只会增加浏览计数
+     * 如需同时记录浏览历史，请使用PostBrowseHistoryService
+     *
+     * @param postId 动态ID
+     * @return 更新后的动态
+     */
+    @Transactional
+    public Post incrementViewCount(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "动态不存在"));
+        
+        // 增加浏览量
+        post.setViewCount(post.getViewCount() + 1);
+        
+        return postRepository.save(post);
     }
 
     /**

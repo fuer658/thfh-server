@@ -8,6 +8,7 @@ import com.thfh.model.User;
 import com.thfh.dto.PostCommentDTO;
 import com.thfh.service.PostService;
 import com.thfh.service.UserService;
+import com.thfh.service.PostRecommendationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -38,6 +39,9 @@ public class PostController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PostRecommendationService postRecommendationService;
 
     /**
      * 验证排序方向参数
@@ -274,7 +278,7 @@ public class PostController {
     /**
      * 获取所有动态列表
      */
-    @ApiOperation(value = "获取所有动态列表", notes = "获取系统中的所有动态，支持按标题和用户名筛选")
+    @ApiOperation(value = "获取所有动态列表", notes = "获取系统中的所有动态，支持按标题和用户名筛选，默认返回推荐动态")
     @ApiResponses({
         @ApiResponse(code = 200, message = "获取成功"),
         @ApiResponse(code = 401, message = "未授权，请先登录")
@@ -283,14 +287,39 @@ public class PostController {
     public Result<Page<PostDTO>> getAllPosts(
             @ApiParam(value = "动态标题，用于筛选") @RequestParam(required = false) String title,
             @ApiParam(value = "用户名，用于筛选") @RequestParam(required = false) String userName,
+            @ApiParam(value = "是否使用推荐算法，默认为true") @RequestParam(defaultValue = "true") boolean useRecommendation,
             @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
             @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
             @ApiParam(value = "排序字段，支持createTime、updateTime、likeCount、commentCount、shareCount、viewCount、title", defaultValue = "createTime") @RequestParam(defaultValue = "createTime") String sortBy,
             @ApiParam(value = "排序方向，支持ASC或DESC", defaultValue = "DESC") @RequestParam(defaultValue = "DESC") String direction) {
-        Sort.Direction sortDirection = validateSortDirection(direction);
-        String validatedSortBy = postService.validateSortField(sortBy);
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
-        return Result.success(postService.getAllPosts(title, userName, pageRequest));
+        
+        // 如果指定了标题或用户名作为筛选条件，或者明确不使用推荐，则使用普通查询
+        if ((title != null && !title.isEmpty()) || (userName != null && !userName.isEmpty()) || !useRecommendation) {
+            Sort.Direction sortDirection = validateSortDirection(direction);
+            String validatedSortBy = postService.validateSortField(sortBy);
+            PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, validatedSortBy));
+            return Result.success(postService.getAllPosts(title, userName, pageRequest));
+        } else {
+            // 否则使用推荐算法获取动态
+            PageRequest pageRequest = PageRequest.of(page - 1, size);
+            return Result.success(postRecommendationService.getRecommendedPosts(pageRequest));
+        }
+    }
+
+    /**
+     * 获取推荐动态列表
+     */
+    @ApiOperation(value = "获取推荐动态列表", notes = "根据用户兴趣、浏览历史和行为获取个性化推荐动态")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "获取成功"),
+        @ApiResponse(code = 401, message = "未授权，请先登录")
+    })
+    @GetMapping("/recommended")
+    public Result<Page<PostDTO>> getRecommendedPosts(
+            @ApiParam(value = "页码，从1开始", defaultValue = "1") @RequestParam(defaultValue = "1") int page,
+            @ApiParam(value = "每页记录数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.of(page - 1, size);
+        return Result.success(postRecommendationService.getRecommendedPosts(pageRequest));
     }
 
     /**

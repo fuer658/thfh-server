@@ -7,7 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
@@ -29,4 +32,12 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
      */
     @Query("SELECT pl.post FROM PostLike pl WHERE pl.userId = ?1")
     Page<Post> findPostsByUserId(Long userId, Pageable pageable);
+    
+    /**
+     * 获取用户点赞的动态ID列表
+     * @param userId 用户ID
+     * @return 用户点赞过的动态ID列表
+     */
+    @Query("SELECT pl.postId FROM PostLike pl WHERE pl.userId = :userId")
+    List<Long> findPostIdsByUserId(@Param("userId") Long userId);
 }
