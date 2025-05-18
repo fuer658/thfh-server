@@ -15,6 +15,7 @@ import com.thfh.service.ArtworkService;
 import com.thfh.service.ArtworkScoreService;
 import com.thfh.service.UserService;
 import com.thfh.service.FollowService;
+import com.thfh.service.ArtworkBrowseHistoryService;
 import com.thfh.exception.ResourceNotFoundException;
 
 import io.swagger.annotations.Api;
@@ -70,6 +71,7 @@ public class ArtworkController {
     private final ArtworkScoreService artworkScoreService;
     private final AdminService adminService;
     private final FollowService followService;
+    private final ArtworkBrowseHistoryService artworkBrowseHistoryService;
 
     /**
      * 发布作品
@@ -561,8 +563,14 @@ public class ArtworkController {
             @PathVariable @Positive(message = "作品ID必须为正数") Long artworkId) {
         log.debug("获取作品详情: {}", artworkId);
         
-        // 增加浏览量
-        artworkService.incrementViewCount(artworkId);
+        // 检查用户是否登录，若登录则记录浏览历史
+        try {
+            artworkBrowseHistoryService.recordBrowseHistory(artworkId);
+        } catch (Exception e) {
+            // 用户未登录或其他异常，只增加浏览量不记录历史
+            log.debug("记录浏览历史失败，可能用户未登录: {}", e.getMessage());
+            artworkService.incrementViewCount(artworkId);
+        }
         
         // 获取作品信息
         Artwork artwork = artworkService.getArtworkById(artworkId)
