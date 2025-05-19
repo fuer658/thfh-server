@@ -98,10 +98,10 @@ public class AuthController {
 
     /**
      * 刷新JWT令牌
-     * @param request 请求对象，包含当前的JWT令牌
+     * @param request 刷新令牌请求，包含刷新令牌和是否同时刷新刷新令牌的选项
      * @return 新的JWT令牌和用户类型
      */
-    @ApiOperation(value = "刷新JWT令牌", notes = "使用当前的JWT令牌获取新的令牌，避免令牌过期")
+    @ApiOperation(value = "刷新JWT令牌", notes = "使用刷新令牌获取新的访问令牌，避免令牌过期")
     @ApiResponses({
         @ApiResponse(code = 200, message = "刷新成功"),
         @ApiResponse(code = 400, message = "请求参数错误"),
@@ -111,7 +111,7 @@ public class AuthController {
     public Result<Map<String, Object>> refreshToken(
             @ApiParam(value = "刷新令牌请求", required = true) @Valid @RequestBody RefreshTokenRequest request) {
         try {
-            Map<String, Object> result = authService.refreshToken(request.getToken());
+            Map<String, Object> result = authService.refreshToken(request.getRefreshToken(), request.getRefreshBoth());
             return Result.success(result, "令牌刷新成功");
         } catch (Exception e) {
             return Result.error(401, e.getMessage());

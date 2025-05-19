@@ -1,6 +1,7 @@
 package com.thfh.config;
 
 import com.thfh.util.JwtUtil;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -46,7 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * @throws IOException 如果处理过程中发生IO异常
      */
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, 
+                                   @NonNull HttpServletResponse response, 
+                                   @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         try {
             // 从请求中获取JWT令牌
