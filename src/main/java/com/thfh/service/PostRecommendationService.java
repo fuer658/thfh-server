@@ -306,8 +306,11 @@ public class PostRecommendationService {
         };
         
         // 按照创建时间降序获取最多50条动态
-        List<Post> posts = postRepository.findAll(spec, PageRequest.of(0, 50, 
+        List<Post> originalPosts = postRepository.findAll(spec, PageRequest.of(0, 50, 
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createTime"))).getContent();
+        
+        // 创建一个新的可修改列表，然后进行排序
+        List<Post> posts = new ArrayList<>(originalPosts);
         
         // 按热度排序
         posts.sort((a, b) -> {
@@ -335,8 +338,11 @@ public class PostRecommendationService {
         };
         
         // 按照创建时间降序获取最多30条动态
-        return postRepository.findAll(spec, PageRequest.of(0, 30, 
+        List<Post> originalPosts = postRepository.findAll(spec, PageRequest.of(0, 30, 
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createTime"))).getContent();
+                
+        // 创建一个新的可修改列表返回
+        return new ArrayList<>(originalPosts);
     }
     
     /**

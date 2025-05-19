@@ -231,4 +231,20 @@ public interface ArtworkRepository extends JpaRepository<Artwork, Long> {
      */
     @Query("SELECT a FROM Artwork a WHERE a.enabled = true ORDER BY a.averageScore DESC, a.viewCount DESC")
     Page<Artwork> findByEnabledTrueOrderByAverageScoreDescViewCountDesc(Pageable pageable);
+
+    /**
+     * 查询最新发布的已启用作品，支持分页
+     * 
+     * @param pageable 分页参数
+     * @return 最新作品列表
+     */
+    Page<Artwork> findByEnabledTrueOrderByCreateTimeDesc(Pageable pageable);
+
+    /**
+     * 查询编辑推荐的已启用作品（按更新时间倒序），支持分页
+     * 
+     * @param pageable 分页参数
+     * @return 编辑推荐作品列表
+     */
+    Page<Artwork> findByEnabledTrueAndRecommendedTrueOrderByUpdateTimeDesc(Pageable pageable);
 }
