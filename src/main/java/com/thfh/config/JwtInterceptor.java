@@ -2,6 +2,7 @@ package com.thfh.config;
 
 import com.thfh.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -32,7 +33,9 @@ public class JwtInterceptor implements HandlerInterceptor {
      * @return 如果验证通过返回true，否则返回false
      */
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(@NonNull HttpServletRequest request, 
+                           @NonNull HttpServletResponse response, 
+                           @NonNull Object handler) {
         String token = request.getHeader("Authorization");
         
         // 登录和注册接口不需要验证

@@ -12,6 +12,8 @@ import com.thfh.repository.AdminRepository;
 import com.thfh.repository.CompanyRepository;
 import com.thfh.repository.UserRepository;
 import com.thfh.util.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +26,8 @@ import java.util.Map;
 
 @Service
 public class AuthService {
+    private final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     @Autowired
     private AdminRepository adminRepository;
 
@@ -40,65 +44,55 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     public Map<String, Object> login(LoginDTO loginDTO, javax.servlet.http.HttpServletRequest request) {
-        // 先尝试管理员登录
+        // 尝试作为管理员登录
         try {
             Admin admin = adminRepository.findByUsername(loginDTO.getUsername())
-                    .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
-
-            if (!admin.getEnabled()) {
-                throw new RuntimeException("账号已被禁用");
-            }
-
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+            
             if (!passwordEncoder.matches(loginDTO.getPassword(), admin.getPassword())) {
-                throw new RuntimeException("用户名或密码错误");
+                throw new RuntimeException("密码错误");
             }
-
-            // 更新最后登录时间
-            admin.setLastLoginTime(LocalDateTime.now());
-            adminRepository.save(admin);
-
-            // 生成token
+            
+            // 生成JWT令牌
             String token = jwtUtil.generateToken(admin.getUsername());
-
+            String refreshToken = jwtUtil.generateRefreshToken(admin.getUsername());
+            
+            // 返回登录结果
             Map<String, Object> result = new HashMap<>();
             result.put("token", token);
+            result.put("refreshToken", refreshToken);
             result.put("userType", "admin");
+            
+            // 记录日志
+            log.info("管理员登录成功: {}", admin.getUsername());
+            
             return result;
         } catch (RuntimeException e) {
-            // 如果不是管理员，尝试普通用户登录
-            User user = userRepository.findByUsername(loginDTO.getUsername())
-                    .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
-
-            if (!user.getEnabled()) {
-                throw new RuntimeException("账号已被禁用");
-            }
-
-            if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-                throw new RuntimeException("用户名或密码错误");
-            }
-
-            // 更新最后登录时间和最近登录IP
-            user.setLastLoginTime(LocalDateTime.now());
-            if (request != null) {
-                String ip = request.getHeader("X-Forwarded-For");
-                if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-                    ip = request.getRemoteAddr();
-                } else {
-                    // X-Forwarded-For 可能有多个IP，取第一个
-                    ip = ip.split(",")[0].trim();
-                }
-                user.setRecentLoginIp(ip);
-            }
-            userRepository.save(user);
-
-            // 生成包含用户ID的token
-            String token = jwtUtil.generateToken(user.getUsername(), user.getId());
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("token", token);
-            result.put("userType", user.getUserType().name());
-            return result;
+            // 管理员不存在或密码错误，尝试作为普通用户登录
         }
+        
+        // 尝试作为普通用户登录
+        User user = userRepository.findByUsername(loginDTO.getUsername())
+            .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+            throw new RuntimeException("密码错误");
+        }
+        
+        // 生成JWT令牌
+        String token = jwtUtil.generateToken(user.getUsername(), user.getId());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getId());
+        
+        // 返回登录结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+        result.put("refreshToken", refreshToken);
+        result.put("userType", user.getUserType().name());
+        
+        // 记录日志
+        log.info("用户登录成功: {}", user.getUsername());
+        
+        return result;
     }
     
     /**
@@ -243,29 +237,43 @@ public class AuthService {
     /**
      * 刷新JWT令牌
      * 
-     * @param token 当前JWT令牌
+     * @param refreshToken 刷新令牌
+     * @param refreshBoth 是否同时刷新刷新令牌
      * @return 包含新令牌的结果Map
      * @throws RuntimeException 令牌验证失败时抛出
      */
-    public Map<String, Object> refreshToken(String token) {
+    public Map<String, Object> refreshToken(String refreshToken, boolean refreshBoth) {
         try {
-            // 验证令牌是否有效
-            if (!jwtUtil.validateToken(token)) {
-                throw new RuntimeException("无效的令牌");
+            // 验证刷新令牌是否有效
+            if (!jwtUtil.validateRefreshToken(refreshToken)) {
+                throw new RuntimeException("无效的刷新令牌");
             }
             
             // 获取用户名
-            String username = jwtUtil.getUsernameFromToken(token);
+            String username = jwtUtil.getUsernameFromToken(refreshToken);
             
             // 获取用户ID（如果存在）
-            Long userId = jwtUtil.getUserIdFromToken(token);
+            Long userId = jwtUtil.getUserIdFromToken(refreshToken);
             
-            // 生成新令牌
-            String newToken;
-            if (userId != null) {
-                newToken = jwtUtil.generateToken(username, userId);
+            Map<String, Object> result = new HashMap<>();
+            
+            if (refreshBoth) {
+                // 刷新访问令牌和刷新令牌
+                try {
+                    Map<String, String> tokens = jwtUtil.refreshBothTokens(refreshToken);
+                    result.put("token", tokens.get("accessToken"));
+                    result.put("refreshToken", tokens.get("refreshToken"));
+                } catch (Exception e) {
+                    throw new RuntimeException("刷新令牌失败: " + e.getMessage());
+                }
             } else {
-                newToken = jwtUtil.generateToken(username);
+                // 只刷新访问令牌
+                try {
+                    String newToken = jwtUtil.refreshAccessToken(refreshToken);
+                    result.put("token", newToken);
+                } catch (Exception e) {
+                    throw new RuntimeException("刷新令牌失败: " + e.getMessage());
+                }
             }
             
             // 尝试获取用户或管理员类型
@@ -284,9 +292,6 @@ public class AuthService {
                 // 忽略异常，userType将保持为null
             }
             
-            // 返回新令牌
-            Map<String, Object> result = new HashMap<>();
-            result.put("token", newToken);
             if (userType != null) {
                 result.put("userType", userType);
             }
