@@ -71,6 +71,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Page<User> findByCompanyId(@Param("companyId") Long companyId, Pageable pageable);
 
     /**
+     * 根据手机号精确查找用户
+     * @param phone 手机号
+     * @return 用户对象
+     */
+    Optional<User> findByPhone(String phone);
+
+    /**
      * 根据用户名模糊搜索用户
      * @param username 用户名
      * @return 匹配的用户列表

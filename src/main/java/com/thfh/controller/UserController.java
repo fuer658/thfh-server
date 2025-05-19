@@ -331,11 +331,11 @@ public class UserController {
     }
 
     /**
-     * 通过用户名或ID搜索用户
-     * @param keyword 用户名或ID
+     * 通过用户名或手机号搜索用户
+     * @param keyword 用户名或手机号
      * @return 匹配的用户信息列表
      */
-    @ApiOperation(value = "通过用户名或ID搜索用户", notes = "根据用户名模糊或ID精确搜索用户，返回匹配的用户列表")
+    @ApiOperation(value = "通过用户名或手机号搜索用户", notes = "根据用户名模糊搜索或手机号精确搜索用户，返回匹配的用户列表")
     @ApiResponses({
         @ApiResponse(code = 200, message = "查询成功"),
         @ApiResponse(code = 400, message = "参数错误"),
@@ -343,7 +343,7 @@ public class UserController {
     })
     @GetMapping("/search-by-keyword")
     public Result<List<UserDTO>> searchByKeyword(
-            @ApiParam(value = "用户名或ID，支持用户名模糊和ID精确搜索", required = true) @RequestParam String keyword) {
+            @ApiParam(value = "用户名或手机号，支持用户名模糊和手机号精确搜索", required = true) @RequestParam String keyword) {
         List<UserDTO> userList = userService.searchByKeyword(keyword);
         return Result.success(userList);
     }

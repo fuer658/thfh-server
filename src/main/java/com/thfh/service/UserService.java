@@ -589,24 +589,19 @@ public class UserService {
             return new ArrayList<>(); // 输入为空，返回空列表
         }
 
-        // 1. 用户名模糊搜索
+        // 1. 用户名模糊搜索（包含数字用户名）
         List<User> nameUsers = userRepository.findByUsernameContaining(keyword);
         users.addAll(nameUsers);
 
-        // 2. 如果关键字是数字，尝试按ID精确搜索并去重
-        if (keyword.matches("^\\d+$")) {
-            try {
-                Long id = Long.valueOf(keyword);
-                Optional<User> idUserOptional = userRepository.findById(id);
-                if (idUserOptional.isPresent()) {
-                    User idUser = idUserOptional.get();
-                    // 检查ID搜索结果是否已包含在用户名搜索结果中，避免重复添加
-                    if (users.stream().noneMatch(u -> u.getId().equals(idUser.getId()))) {
-                        users.add(idUser);
-                    }
+        // 2. 如果输入符合手机号格式，尝试按手机号精确搜索并去重
+        if (keyword.matches("^1[3-9]\\d{9}$")) {
+            Optional<User> phoneUserOptional = userRepository.findByPhone(keyword);
+            if (phoneUserOptional.isPresent()) {
+                User phoneUser = phoneUserOptional.get();
+                // 检查是否已包含在用户名搜索结果中，避免重复添加
+                if (users.stream().noneMatch(u -> u.getId().equals(phoneUser.getId()))) {
+                    users.add(phoneUser);
                 }
-            } catch (NumberFormatException ignored) {
-                // 不会发生，因为已经通过matches("^\\d+$")判断
             }
         }
 

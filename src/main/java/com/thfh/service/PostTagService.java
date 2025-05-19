@@ -177,11 +177,23 @@ public class PostTagService {
             return existingTag.get();
         }
         
-        // 创建新标签
-        PostTag newTag = new PostTag();
-        newTag.setName(trimmedName);
-        newTag.setEnabled(true);
-        return postTagRepository.save(newTag); // 确保返回的是已持久化的对象
+        try {
+            // 创建新标签
+            PostTag newTag = new PostTag();
+            newTag.setName(trimmedName);
+            newTag.setEnabled(true);
+            PostTag savedTag = postTagRepository.save(newTag);
+            return savedTag; // 返回已保存的标签，确保ID已生成
+        } catch (Exception e) {
+            // 可能在保存过程中出现唯一约束冲突（并发情况）
+            // 再次尝试查找标签
+            existingTag = postTagRepository.findByName(trimmedName);
+            if (existingTag.isPresent()) {
+                return existingTag.get();
+            }
+            // 如果还是找不到，则抛出原始异常
+            throw e;
+        }
     }
     
     /**

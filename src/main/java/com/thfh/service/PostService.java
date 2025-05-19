@@ -95,16 +95,18 @@ public class PostService {
         User currentUser = userService.getCurrentUser();
         post.setUserId(currentUser.getId());
         
+        // 先清空标签集合，避免潜在的重复问题
+        post.getTags().clear();
+        
         // 处理标签名称，确保所有标签都被持久化
         if (post.getTagNames() != null && !post.getTagNames().isEmpty()) {
             for (String tagName : post.getTagNames()) {
                 if (tagName != null && !tagName.trim().isEmpty()) {
                     PostTag tag = postTagService.findOrCreateTag(tagName);
                     // 确保标签已持久化并有ID
-                    if (tag.getId() == null) {
-                        tag = postTagRepository.save(tag);
+                    if (tag.getId() != null) {  // 这里修改为检查ID是否不为空
+                        post.getTags().add(tag);
                     }
-                    post.getTags().add(tag);
                 }
             }
         }
@@ -114,7 +116,10 @@ public class PostService {
             for (Long tagId : post.getTagIds()) {
                 PostTag tag = postTagRepository.findById(tagId)
                         .orElseThrow(() -> new BusinessException(ErrorCode.PARAMETER_ERROR, "标签不存在: " + tagId));
-                post.getTags().add(tag);
+                // 确保不会重复添加同一个标签
+                if (!post.getTags().contains(tag)) {
+                    post.getTags().add(tag);
+                }
             }
         }
         
@@ -472,7 +477,10 @@ public class PostService {
                 for (Long tagId : updatedPost.getTagIds()) {
                     PostTag tag = postTagRepository.findById(tagId)
                             .orElseThrow(() -> new IllegalArgumentException("标签不存在: " + tagId));
-                    post.getTags().add(tag);
+                    // 确保不会重复添加同一个标签
+                    if (!post.getTags().contains(tag)) {
+                        post.getTags().add(tag);
+                    }
                 }
             }
             
@@ -481,11 +489,10 @@ public class PostService {
                 for (String tagName : updatedPost.getTagNames()) {
                     if (tagName != null && !tagName.trim().isEmpty()) {
                         PostTag tag = postTagService.findOrCreateTag(tagName);
-                        // 确保标签已持久化并有ID
-                        if (tag.getId() == null) {
-                            tag = postTagRepository.save(tag);
+                        // 确保标签已持久化并有ID，并且不会重复添加
+                        if (tag.getId() != null && !post.getTags().contains(tag)) {
+                            post.getTags().add(tag);
                         }
-                        post.getTags().add(tag);
                     }
                 }
             }
