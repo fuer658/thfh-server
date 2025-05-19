@@ -232,7 +232,7 @@ public class RecommendationService {
             }
             
             if (curatedNeeded > 0) {
-                 Page<Artwork> curatedPage = getCuratedArtworks(PageRequest.of(0, curatedNeeded + 5)); 
+                 Page<Artwork> curatedPage = getCuratedArtworks(PageRequest.of(0, curatedNeeded + 3)); 
                  for (Artwork artwork : curatedPage.getContent()) {
                     if (addedArtworkIds.add(artwork.getId()) && finalRecommendedArtworks.size() < pageable.getPageSize()) {
                         finalRecommendedArtworks.add(artwork);
@@ -246,7 +246,7 @@ public class RecommendationService {
         if (finalRecommendedArtworks.size() < pageable.getPageSize()) {
             int popularNeeded = pageable.getPageSize() - finalRecommendedArtworks.size();
             if (popularNeeded > 0) {
-                Page<Artwork> popularPage = getPopularArtworks(PageRequest.of(0, popularNeeded + 5)); 
+                Page<Artwork> popularPage = getPopularArtworks(PageRequest.of(0, popularNeeded + 3)); 
                 for (Artwork artwork : popularPage.getContent()) {
                     if (addedArtworkIds.add(artwork.getId()) && finalRecommendedArtworks.size() < pageable.getPageSize()) {
                         finalRecommendedArtworks.add(artwork);
@@ -260,7 +260,7 @@ public class RecommendationService {
         if (finalRecommendedArtworks.size() < pageable.getPageSize()) {
             int latestNeeded = pageable.getPageSize() - finalRecommendedArtworks.size();
             if (latestNeeded > 0) {
-                Page<Artwork> latestPage = getLatestArtworks(PageRequest.of(0, latestNeeded + 5));
+                Page<Artwork> latestPage = getLatestArtworks(PageRequest.of(0, latestNeeded + 3));
                 for (Artwork artwork : latestPage.getContent()) {
                     if (addedArtworkIds.add(artwork.getId()) && finalRecommendedArtworks.size() < pageable.getPageSize()) {
                         finalRecommendedArtworks.add(artwork);

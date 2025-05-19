@@ -13,7 +13,11 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name = "artworks")
+@Table(name = "artworks", indexes = {
+    @Index(name = "idx_artwork_popular", columnList = "enabled, averageScore, viewCount"),
+    @Index(name = "idx_artwork_latest", columnList = "enabled, createTime"),
+    @Index(name = "idx_artwork_curated", columnList = "enabled, recommended, updateTime")
+})
 @ApiModel(value = "作品", description = "艺术作品信息")
 public class Artwork {
     @ApiModelProperty(value = "作品ID", example = "1")
