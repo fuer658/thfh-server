@@ -31,4 +31,6 @@ public class FriendDTO {
     private UserOnlineStatus onlineStatus;
     @ApiModelProperty("好友最后活跃时间")
     private Date lastActiveTime;
+    @ApiModelProperty("好友真实姓名")
+    private String realName;
 } 

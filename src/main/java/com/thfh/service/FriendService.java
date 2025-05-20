@@ -240,6 +240,7 @@ public class FriendService {
             dto.setAvatar(user.getAvatar());
             dto.setIntroduction(user.getIntroduction());
             dto.setLevel(user.getLevel());
+            dto.setRealName(user.getRealName());
             
             // 获取好友在线状态
             UserOnlineRecord onlineRecord = userOnlineRecordRepository.findTopByUserOrderByUpdateTimeDesc(user).orElse(null);
