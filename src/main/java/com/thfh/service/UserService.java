@@ -89,21 +89,10 @@ public class UserService {
         };
 
         Page<User> userPage = userRepository.findAll(spec,
-                 PageRequest.of(queryDTO.getPageNum() - 1, queryDTO.getPageSize()));
+                PageRequest.of(queryDTO.getPageNum() - 1, queryDTO.getPageSize()));
 
-        // 批量获取用户兴趣
-        List<Long> userIds = userPage.getContent().stream()
-                                     .map(User::getId)
-                                     .collect(Collectors.toList());
-        List<UserInterest> userInterests = userInterestRepository.findByUserIdIn(userIds);
-        
-        // 将兴趣映射到用户ID
-        Map<Long, List<InterestType>> userInterestMap = userInterests.stream()
-                .collect(Collectors.groupingBy(ui -> ui.getUser().getId(),
-                                               Collectors.mapping(UserInterest::getInterestType, Collectors.toList())));
-
-        return userPage.map(user -> convertToDTO(user, userInterestMap.getOrDefault(user.getId(), new ArrayList<>())));
-     }
+        return userPage.map(this::convertToDTO);
+    }
 
     /**
      * 检查当前用户是否有权限操作目标用户
@@ -312,70 +301,43 @@ public class UserService {
      * 
      * @param user 用户实体对象
      * @return 转换后的UserDTO对象
-     * @param interests 用户的兴趣列表（已预加载）
-     */
-     public UserDTO convertToDTO(User user, List<InterestType> interests) {
-         UserDTO dto = new UserDTO();
-         BeanUtils.copyProperties(user, dto, "password");
-
-         // 转换生日日期为字符串格式
-         if (user.getBirthday() != null) {
-             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-             dto.setBirthday(user.getBirthday().format(formatter));
-         }
-
-         // 转换创建时间为字符串格式
-         if (user.getCreateTime() != null) {
-             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-             dto.setCreateTime(user.getCreateTime().format(formatter));
-         }
-
-         // 转换最后登录时间为字符串格式
-         if (user.getLastLoginTime() != null) {
-             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-             dto.setLastLoginTime(user.getLastLoginTime().format(formatter));
-         }
-
-         // 转换更新时间为字符串格式
-         if (user.getUpdateTime() != null) {
-             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-             dto.setUpdateTime(user.getUpdateTime().format(formatter));
-         }
-
-         // 设置用户兴趣 (使用传入的已预加载的兴趣列表)
-         dto.setInterests(interests);
-
-         return dto;
-     }
-
-    /**
-     * 将User实体对象转换为UserDTO对象 (不加载兴趣)
-     *
-     * @param user 用户实体对象
-     * @return 转换后的UserDTO对象
      */
     public UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         BeanUtils.copyProperties(user, dto, "password");
 
-        // 转换日期为字符串格式
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        // 转换生日日期为字符串格式
         if (user.getBirthday() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             dto.setBirthday(user.getBirthday().format(formatter));
         }
 
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        // 转换创建时间为字符串格式
         if (user.getCreateTime() != null) {
-            dto.setCreateTime(user.getCreateTime().format(dateTimeFormatter));
-        }
-        if (user.getLastLoginTime() != null) {
-            dto.setLastLoginTime(user.getLastLoginTime().format(dateTimeFormatter));
-        }
-        if (user.getUpdateTime() != null) {
-            dto.setUpdateTime(user.getUpdateTime().format(dateTimeFormatter));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dto.setCreateTime(user.getCreateTime().format(formatter));
         }
 
-        // 不加载用户兴趣
+        // 转换最后登录时间为字符串格式
+        if (user.getLastLoginTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dto.setLastLoginTime(user.getLastLoginTime().format(formatter));
+        }
+
+        // 转换更新时间为字符串格式
+        if (user.getUpdateTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dto.setUpdateTime(user.getUpdateTime().format(formatter));
+        }
+        
+        // 获取用户兴趣
+        List<UserInterest> userInterests = userInterestRepository.findByUser(user);
+        if (userInterests != null && !userInterests.isEmpty()) {
+            List<InterestType> interests = userInterests.stream()
+                    .map(UserInterest::getInterestType)
+                    .collect(Collectors.toList());
+            dto.setInterests(interests);
+        }
 
         return dto;
     }

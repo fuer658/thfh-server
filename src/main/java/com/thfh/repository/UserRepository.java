@@ -57,7 +57,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param companyId 公司ID
      * @return 该公司的所有企业用户列表
      */
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.company WHERE u.company.id = :companyId AND u.userType = 'ENTERPRISE'")
+    @Query("SELECT u FROM User u WHERE u.company.id = :companyId AND u.userType = 'ENTERPRISE'")
     List<User> findByCompanyId(@Param("companyId") Long companyId);
     
     /**
@@ -67,7 +67,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param pageable 分页参数
      * @return 分页后的企业用户列表
      */
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.company WHERE u.company.id = :companyId AND u.userType = 'ENTERPRISE'")
+    @Query("SELECT u FROM User u WHERE u.company.id = :companyId AND u.userType = 'ENTERPRISE'")
     Page<User> findByCompanyId(@Param("companyId") Long companyId, Pageable pageable);
 
     /**

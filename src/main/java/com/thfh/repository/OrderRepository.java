@@ -48,9 +48,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
      * @param pageable 分页参数
      * @return 分页后的订单列表
      */
-    @Query("SELECT DISTINCT o FROM Order o " +
-            "LEFT JOIN FETCH o.user u " +
-            "LEFT JOIN FETCH o.artwork a " +
+    @Query("SELECT o FROM Order o " +
+            "LEFT JOIN o.user u " +
             "WHERE (:orderNo is null OR o.orderNo LIKE CONCAT('%', :orderNo, '%')) " +
             "AND (:username is null OR u.username LIKE CONCAT('%', :username, '%')) " +
             "AND (:status is null OR o.status = :status)")
@@ -91,18 +90,9 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
      * @param pageable 分页参数
      * @return 订单分页列表
      */
-     Page<Order> findByUserId(Long userId, Pageable pageable);
+    Page<Order> findByUserId(Long userId, Pageable pageable);
 
-     /**
-      * 根据用户ID分页查询订单，并预加载关联的用户和艺术品信息
-      * @param userId 用户ID
-      * @param pageable 分页参数
-      * @return 订单分页列表
-      */
-     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.user u LEFT JOIN FETCH o.artwork a WHERE o.user.id = :userId")
-     Page<Order> findByUserIdWithJoinFetch(@Param("userId") Long userId, Pageable pageable);
-
-     /**
+    /**
      * 根据用户ID和状态分页查询订单
      * @param userId 用户ID
      * @param status 订单状态
@@ -110,17 +100,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
      * @return 订单分页列表
      */
     Page<Order> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
-
-    /**
-     * 根据用户ID和状态分页查询订单，并预加载关联的用户和艺术品信息
-     * @param userId 用户ID
-     * @param status 订单状态
-     * @param pageable 分页参数
-     * @return 订单分页列表
-     */
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.user u LEFT JOIN FETCH o.artwork a WHERE o.user.id = :userId AND o.status = :status")
-    Page<Order> findByUserIdAndStatusWithJoinFetch(@Param("userId") Long userId, @Param("status") String status, Pageable pageable);
-
 
     Optional<Order> findByUserIdAndArtworkIdAndStatus(Long userId, Long artworkId, String status);
 }

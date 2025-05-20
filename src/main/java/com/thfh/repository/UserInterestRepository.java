@@ -25,16 +25,9 @@ public interface UserInterestRepository extends JpaRepository<UserInterest, Long
      * @param userId 用户ID
      * @return 用户兴趣关联列表
      */
-     List<UserInterest> findByUserId(Long userId);
-
-     /**
-      * 根据用户ID列表查询所有兴趣
-      * @param userIds 用户ID列表
-      * @return 用户兴趣关联列表
-      */
-     List<UserInterest> findByUserIdIn(List<Long> userIds);
-
-     /**
+    List<UserInterest> findByUserId(Long userId);
+    
+    /**
      * 根据用户和兴趣类型查询是否存在
      * @param user 用户实体
      * @param interestType 兴趣类型
