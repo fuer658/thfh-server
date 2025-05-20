@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import com.thfh.dto.OrderDTO;
 import com.thfh.dto.ArtworkDTO;
@@ -112,38 +113,25 @@ public class OrderService {
      * @return 分页后的订单列表
      */
     @Transactional(readOnly = true)
-    public Page<Order> getOrders(OrderQueryDTO queryDTO) {
+    public Page<OrderDTO> getOrders(OrderQueryDTO queryDTO) {
         Sort sort = Sort.by(Sort.Direction.DESC, "createTime");
         PageRequest pageRequest = PageRequest.of(queryDTO.getPageNum() - 1, queryDTO.getPageSize(), sort);
 
-        // 先获取分页数据
-        Page<Order> orderPage = orderRepository.findByCondition(
+        // 直接使用带有JOIN FETCH的分页查询
+        Page<Order> orderPage = orderRepository.findByConditionWithJoinFetch(
                 queryDTO.getOrderNo(),
                 queryDTO.getUsername(),
-                queryDTO.getStatus(),
-                pageRequest
-        );
+                queryDTO.getStatus()
+        ).stream().collect(Collectors.collectingAndThen(
+                Collectors.toList(),
+                list -> {
+                    int start = (int) pageRequest.getOffset();
+                    int end = Math.min((start + pageRequest.getPageSize()), list.size());
+                    return new PageImpl<>(list.subList(start, end), pageRequest, list.size());
+                }
+        ));
 
-        // 如果有数据，再获取完整的关联数据
-        if (!orderPage.isEmpty()) {
-            List<Order> ordersWithJoinFetch = orderRepository.findByConditionWithJoinFetch(
-                    queryDTO.getOrderNo(),
-                    queryDTO.getUsername(),
-                    queryDTO.getStatus()
-            );
-
-            // 手动分页
-            int start = (int) pageRequest.getOffset();
-            int end = Math.min((start + pageRequest.getPageSize()), ordersWithJoinFetch.size());
-
-            return new PageImpl<>(
-                    ordersWithJoinFetch.subList(start, end),
-                    pageRequest,
-                    orderPage.getTotalElements()
-            );
-        }
-
-        return orderPage;
+        return toOrderDTOPage(orderPage);
     }
     
     /**
@@ -291,9 +279,9 @@ public class OrderService {
         PageRequest pageRequest = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Order> orderPage;
         if (status != null && !status.isEmpty()) {
-            orderPage = orderRepository.findByUserIdAndStatus(currentUser.getId(), status, pageRequest);
+            orderPage = orderRepository.findByUserIdAndStatusWithJoinFetch(currentUser.getId(), status, pageRequest);
         } else {
-            orderPage = orderRepository.findByUserId(currentUser.getId(), pageRequest);
+            orderPage = orderRepository.findByUserIdWithJoinFetch(currentUser.getId(), pageRequest);
         }
         return toOrderDTOPage(orderPage);
     }
