@@ -202,19 +202,11 @@ public class UserController {
     @GetMapping("/findByCompany/{companyId}")
     public Result<List<UserDTO>> findUsersByCompanyId(
             @ApiParam(value = "公司ID", required = true) @PathVariable Long companyId) {
-        try {
-            List<User> users = userService.findUsersByCompanyId(companyId);
-            List<UserDTO> userDTOs = users.stream()
-                    .map(user -> userService.convertToDTO(user))
-                    .collect(Collectors.toList());
-            return Result.success(userDTOs);
-        } catch (IllegalArgumentException e) {
-            return Result.error(400, e.getMessage());
-        } catch (ResourceNotFoundException e) {
-            return Result.error(404, e.getMessage());
-        } catch (Exception e) {
-            return Result.error(500, "查询用户失败: " + e.getMessage());
-        }
+        List<User> users = userService.findUsersByCompanyId(companyId);
+        List<UserDTO> userDTOs = users.stream()
+                .map(user -> userService.convertToDTO(user))
+                .collect(Collectors.toList());
+        return Result.success(userDTOs);
     }
 
     /**
@@ -237,18 +229,10 @@ public class UserController {
             @ApiParam(value = "公司ID", required = true) @PathVariable Long companyId,
             @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int pageNum,
             @ApiParam(value = "每页大小", defaultValue = "10") @RequestParam(defaultValue = "10") int pageSize) {
-        try {
-            Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
-            Page<User> userPage = userService.findUsersByCompanyId(companyId, pageable);
-            Page<UserDTO> userDTOPage = userPage.map(user -> userService.convertToDTO(user));
-            return Result.success(userDTOPage);
-        } catch (IllegalArgumentException e) {
-            return Result.error(400, e.getMessage());
-        } catch (ResourceNotFoundException e) {
-            return Result.error(404, e.getMessage());
-        } catch (Exception e) {
-            return Result.error(500, "查询用户失败: " + e.getMessage());
-        }
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
+        Page<User> userPage = userService.findUsersByCompanyId(companyId, pageable);
+        Page<UserDTO> userDTOPage = userPage.map(user -> userService.convertToDTO(user));
+        return Result.success(userDTOPage);
     }
 
     /**
@@ -262,54 +246,37 @@ public class UserController {
     })
     @GetMapping("/experience")
     public Result<Map<String, Object>> getUserExperience() {
-        try {
-            User currentUser = userService.getCurrentUser();
-            
-            Map<String, Object> experienceInfo = new HashMap<>();
-            int currentExperience = currentUser.getExperience() != null ? currentUser.getExperience() : 0;
-            int currentLevel = currentUser.getLevel() != null ? currentUser.getLevel() : 1;
-            
-            experienceInfo.put("experience", currentExperience);
-            experienceInfo.put("level", currentLevel);
-            
-            // 使用APP端的升级经验值计算 (通过UserService实现)
-            
-            // 获取下一级所需的总经验值
-            int nextLevelExperience = userService.getExperienceForNextLevel(currentLevel);
-    
-            // 计算还需要的经验值
-            int requiredExperience = 0;
-            if (currentLevel < UserService.MAX_LEVEL) {
-                requiredExperience = nextLevelExperience - currentExperience;
-                if (requiredExperience < 0) {
-                    requiredExperience = 0;
-                }
-            }
-            
-            // 获取当前等级的起始经验值
-            int baseExperience = userService.getBaseExperienceForLevel(currentLevel);
-    
-            // 计算当前等级进度百分比
-            int levelProgress = 0;
-            if (currentLevel < UserService.MAX_LEVEL) {
-                int levelExp = nextLevelExperience - baseExperience;
-                int currentLevelExp = currentExperience - baseExperience;
-                levelProgress = (int) (((float) currentLevelExp / levelExp) * 100);
-            } else {
-                levelProgress = 100; // 最高等级进度为100%
-            }
-            
-            experienceInfo.put("requiredExperience", requiredExperience);
-            experienceInfo.put("nextLevelExperience", nextLevelExperience);
-            experienceInfo.put("baseExperience", baseExperience);
-            experienceInfo.put("levelProgress", levelProgress);
-            
-            return Result.success(experienceInfo);
-        } catch (UserNotLoggedInException e) {
-            return Result.error(401, e.getMessage());
-        } catch (Exception e) {
-            return Result.error(500, "获取用户经验值信息失败: " + e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new UserNotLoggedInException("未授权，请先登录");
         }
+        Map<String, Object> experienceInfo = new HashMap<>();
+        int currentExperience = currentUser.getExperience() != null ? currentUser.getExperience() : 0;
+        int currentLevel = currentUser.getLevel() != null ? currentUser.getLevel() : 1;
+        experienceInfo.put("experience", currentExperience);
+        experienceInfo.put("level", currentLevel);
+        int nextLevelExperience = userService.getExperienceForNextLevel(currentLevel);
+        int requiredExperience = 0;
+        if (currentLevel < UserService.MAX_LEVEL) {
+            requiredExperience = nextLevelExperience - currentExperience;
+            if (requiredExperience < 0) {
+                requiredExperience = 0;
+            }
+        }
+        int baseExperience = userService.getBaseExperienceForLevel(currentLevel);
+        int levelProgress = 0;
+        if (currentLevel < UserService.MAX_LEVEL) {
+            int levelExp = nextLevelExperience - baseExperience;
+            int currentLevelExp = currentExperience - baseExperience;
+            levelProgress = (int) (((float) currentLevelExp / levelExp) * 100);
+        } else {
+            levelProgress = 100;
+        }
+        experienceInfo.put("requiredExperience", requiredExperience);
+        experienceInfo.put("nextLevelExperience", nextLevelExperience);
+        experienceInfo.put("baseExperience", baseExperience);
+        experienceInfo.put("levelProgress", levelProgress);
+        return Result.success(experienceInfo);
     }
 
     /**

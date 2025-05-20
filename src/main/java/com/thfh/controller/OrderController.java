@@ -239,12 +239,7 @@ public class OrderController {
 
     @GetMapping("/cart/check/{artworkId}")
     public Result<Boolean> checkArtworkInCart(@PathVariable Long artworkId) {
-        try {
-            boolean exists = orderService.checkArtworkInCart(artworkId);
-            return Result.success(exists);
-        } catch (Exception e) {
-            log.error("检查购物车失败", e);
-            return Result.error("检查购物车失败：" + e.getMessage());
-        }
+        boolean exists = orderService.checkArtworkInCart(artworkId);
+        return Result.success(exists);
     }
 } 

@@ -46,22 +46,16 @@ public class CourseFileController {
     })
     @PostMapping(value = "/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Result<Map<String, String>> uploadCourseCover(
-            @ApiParam(value = "图片文件", required = true) @RequestParam("file") MultipartFile file) {
-        try {
-            // 验证当前用户是否为教师
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            String fileUrl = courseFileService.uploadCourseFile(file, "cover");
-            Map<String, String> result = new HashMap<>();
-            result.put("url", fileUrl);
-            result.put("message", "封面图片上传成功");
-            return Result.success(result);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+            @ApiParam(value = "图片文件", required = true) @RequestParam("file") MultipartFile file) throws Exception {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.thfh.exception.UserNotLoggedInException("未授权，请先登录");
         }
+        String fileUrl = courseFileService.uploadCourseFile(file, "cover");
+        Map<String, String> result = new HashMap<>();
+        result.put("url", fileUrl);
+        result.put("message", "封面图片上传成功");
+        return Result.success(result);
     }
     
     /**
@@ -78,22 +72,16 @@ public class CourseFileController {
     })
     @PostMapping(value = "/video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Result<Map<String, String>> uploadCourseVideo(
-            @ApiParam(value = "视频文件", required = true) @RequestParam("file") MultipartFile file) {
-        try {
-            // 验证当前用户是否为教师
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            String fileUrl = courseFileService.uploadCourseFile(file, "video");
-            Map<String, String> result = new HashMap<>();
-            result.put("url", fileUrl);
-            result.put("message", "视频上传成功");
-            return Result.success(result);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+            @ApiParam(value = "视频文件", required = true) @RequestParam("file") MultipartFile file) throws Exception {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.thfh.exception.UserNotLoggedInException("未授权，请先登录");
         }
+        String fileUrl = courseFileService.uploadCourseFile(file, "video");
+        Map<String, String> result = new HashMap<>();
+        result.put("url", fileUrl);
+        result.put("message", "视频上传成功");
+        return Result.success(result);
     }
     
     /**
@@ -112,22 +100,16 @@ public class CourseFileController {
     @PostMapping(value = "/material", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Result<Map<String, String>> uploadCourseMaterial(
             @ApiParam(value = "文件", required = true) @RequestParam("file") MultipartFile file,
-            @ApiParam(value = "文件描述", required = false) @RequestParam(value = "description", required = false) String description) {
-        try {
-            // 验证当前用户是否为教师
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            String fileUrl = courseFileService.uploadCourseFile(file, "material", description);
-            Map<String, String> result = new HashMap<>();
-            result.put("url", fileUrl);
-            result.put("message", "课程材料上传成功");
-            return Result.success(result);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+            @ApiParam(value = "文件描述", required = false) @RequestParam(value = "description", required = false) String description) throws Exception {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.thfh.exception.UserNotLoggedInException("未授权，请先登录");
         }
+        String fileUrl = courseFileService.uploadCourseFile(file, "material", description);
+        Map<String, String> result = new HashMap<>();
+        result.put("url", fileUrl);
+        result.put("message", "课程材料上传成功");
+        return Result.success(result);
     }
     
     /**
@@ -144,41 +126,26 @@ public class CourseFileController {
     })
     @PostMapping(value = "/materials/batch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Result<Map<String, Object>> batchUploadCourseMaterials(
-            @ApiParam(value = "文件列表", required = true) @RequestParam("files") MultipartFile[] files) {
-        try {
-            // 验证当前用户是否为教师
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            if (files.length == 0) {
-                return Result.error("未选择任何文件");
-            }
-            
-            // 存储上传结果
-            String[] urls = new String[files.length];
-            int successCount = 0;
-            
-            for (int i = 0; i < files.length; i++) {
-                try {
-                    String fileUrl = courseFileService.uploadCourseFile(files[i], "material");
-                    urls[i] = fileUrl;
-                    successCount++;
-                } catch (Exception e) {
-                    urls[i] = "上传失败: " + e.getMessage();
-                }
-            }
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("urls", urls);
-            result.put("totalCount", files.length);
-            result.put("successCount", successCount);
-            result.put("message", successCount + "个文件上传成功，" + (files.length - successCount) + "个失败");
-            
-            return Result.success(result);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+            @ApiParam(value = "文件列表", required = true) @RequestParam("files") MultipartFile[] files) throws Exception {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.thfh.exception.UserNotLoggedInException("未授权，请先登录");
         }
+        if (files.length == 0) {
+            throw new IllegalArgumentException("未选择任何文件");
+        }
+        String[] urls = new String[files.length];
+        int successCount = 0;
+        for (int i = 0; i < files.length; i++) {
+            String fileUrl = courseFileService.uploadCourseFile(files[i], "material");
+            urls[i] = fileUrl;
+            successCount++;
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("urls", urls);
+        result.put("totalCount", files.length);
+        result.put("successCount", successCount);
+        result.put("message", successCount + "个文件上传成功，" + (files.length - successCount) + "个失败");
+        return Result.success(result);
     }
 } 

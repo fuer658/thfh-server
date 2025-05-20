@@ -19,7 +19,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.thfh.exception.UserNotLoggedInException;
+import org.springframework.security.access.AccessDeniedException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,13 +68,9 @@ public class UserUploadController {
             @ApiParam(value = "上传文件", required = true) @RequestParam("file") MultipartFile file,
             @ApiParam(value = "文件分类") @RequestParam(value = "category", required = false) String category,
             @ApiParam(value = "文件描述") @RequestParam(value = "description", required = false) String description,
-            @ApiParam(value = "是否私有") @RequestParam(value = "isPrivate", required = false) Boolean isPrivate) {
-        try {
-            UserUpload upload = uploadService.uploadFile(file, category, description, isPrivate);
-            return Result.success(UserUploadDTO.fromEntity(upload));
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
+            @ApiParam(value = "是否私有") @RequestParam(value = "isPrivate", required = false) Boolean isPrivate) throws IOException {
+        UserUpload upload = uploadService.uploadFile(file, category, description, isPrivate);
+        return Result.success(UserUploadDTO.fromEntity(upload));
     }
     
     /**
@@ -89,21 +88,15 @@ public class UserUploadController {
     })
     @GetMapping
     public Result<List<UserUploadDTO>> getUserFiles() {
-        try {
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            List<UserUpload> uploads = uploadService.getUserFiles(currentUser.getId());
-            List<UserUploadDTO> dtoList = uploads.stream()
-                    .map(UserUploadDTO::fromEntity)
-                    .collect(Collectors.toList());
-            
-            return Result.success(dtoList);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new UserNotLoggedInException("未授权，请先登录");
         }
+        List<UserUpload> uploads = uploadService.getUserFiles(currentUser.getId());
+        List<UserUploadDTO> dtoList = uploads.stream()
+                .map(UserUploadDTO::fromEntity)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
     
     /**
@@ -125,21 +118,15 @@ public class UserUploadController {
     @GetMapping("/type/{fileType}")
     public Result<List<UserUploadDTO>> getUserFilesByType(
             @ApiParam(value = "文件类型", required = true) @PathVariable String fileType) {
-        try {
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            List<UserUpload> uploads = uploadService.getUserFilesByType(currentUser.getId(), fileType);
-            List<UserUploadDTO> dtoList = uploads.stream()
-                    .map(UserUploadDTO::fromEntity)
-                    .collect(Collectors.toList());
-            
-            return Result.success(dtoList);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new UserNotLoggedInException("未授权，请先登录");
         }
+        List<UserUpload> uploads = uploadService.getUserFilesByType(currentUser.getId(), fileType);
+        List<UserUploadDTO> dtoList = uploads.stream()
+                .map(UserUploadDTO::fromEntity)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
     
     /**
@@ -161,21 +148,15 @@ public class UserUploadController {
     @GetMapping("/category/{category}")
     public Result<List<UserUploadDTO>> getUserFilesByCategory(
             @ApiParam(value = "文件分类", required = true) @PathVariable String category) {
-        try {
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            List<UserUpload> uploads = uploadService.getUserFilesByCategory(currentUser.getId(), category);
-            List<UserUploadDTO> dtoList = uploads.stream()
-                    .map(UserUploadDTO::fromEntity)
-                    .collect(Collectors.toList());
-            
-            return Result.success(dtoList);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new UserNotLoggedInException("未授权，请先登录");
         }
+        List<UserUpload> uploads = uploadService.getUserFilesByCategory(currentUser.getId(), category);
+        List<UserUploadDTO> dtoList = uploads.stream()
+                .map(UserUploadDTO::fromEntity)
+                .collect(Collectors.toList());
+        return Result.success(dtoList);
     }
     
     /**
@@ -200,20 +181,14 @@ public class UserUploadController {
     public Result<Page<UserUploadDTO>> getUserFilesPage(
             @ApiParam(value = "页码", defaultValue = "0") @RequestParam(defaultValue = "0") int page,
             @ApiParam(value = "每页大小", defaultValue = "20") @RequestParam(defaultValue = "20") int size) {
-        try {
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "uploadTime"));
-            Page<UserUpload> uploadPage = uploadService.getUserFilesPage(currentUser.getId(), pageable);
-            Page<UserUploadDTO> dtoPage = uploadPage.map(UserUploadDTO::fromEntity);
-            
-            return Result.success(dtoPage);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new UserNotLoggedInException("未授权，请先登录");
         }
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "uploadTime"));
+        Page<UserUpload> uploadPage = uploadService.getUserFilesPage(currentUser.getId(), pageable);
+        Page<UserUploadDTO> dtoPage = uploadPage.map(UserUploadDTO::fromEntity);
+        return Result.success(dtoPage);
     }
     
     /**
@@ -241,20 +216,14 @@ public class UserUploadController {
             @ApiParam(value = "搜索关键词", required = true) @RequestParam String keyword,
             @ApiParam(value = "页码", defaultValue = "0") @RequestParam(defaultValue = "0") int page,
             @ApiParam(value = "每页大小", defaultValue = "20") @RequestParam(defaultValue = "20") int size) {
-        try {
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "uploadTime"));
-            Page<UserUpload> uploadPage = uploadService.searchUserFiles(currentUser.getId(), keyword, pageable);
-            Page<UserUploadDTO> dtoPage = uploadPage.map(UserUploadDTO::fromEntity);
-            
-            return Result.success(dtoPage);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new UserNotLoggedInException("未授权，请先登录");
         }
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "uploadTime"));
+        Page<UserUpload> uploadPage = uploadService.searchUserFiles(currentUser.getId(), keyword, pageable);
+        Page<UserUploadDTO> dtoPage = uploadPage.map(UserUploadDTO::fromEntity);
+        return Result.success(dtoPage);
     }
     
     /**
@@ -278,23 +247,19 @@ public class UserUploadController {
     @GetMapping("/{id}")
     public Result<UserUploadDTO> getUploadDetail(
             @ApiParam(value = "文件ID", required = true) @PathVariable Long id) {
-        try {
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                return Result.error("未授权，请先登录");
-            }
-            
-            UserUpload upload = uploadService.getFileById(id);
-            
-            // 验证文件所有权
-            if (!upload.getUserId().equals(currentUser.getId())) {
-                return Result.error("无权访问此文件");
-            }
-            
-            return Result.success(UserUploadDTO.fromEntity(upload));
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new UserNotLoggedInException("未授权，请先登录");
         }
+        
+        UserUpload upload = uploadService.getFileById(id);
+        
+        // 验证文件所有权
+        if (!upload.getUserId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("无权访问此文件");
+        }
+        
+        return Result.success(UserUploadDTO.fromEntity(upload));
     }
     
     /**
@@ -317,13 +282,9 @@ public class UserUploadController {
     })
     @DeleteMapping("/{id}")
     public Result<Void> deleteUpload(
-            @ApiParam(value = "文件ID", required = true) @PathVariable Long id) {
-        try {
-            uploadService.deleteFile(id);
-            return Result.success(null);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
+            @ApiParam(value = "文件ID", required = true) @PathVariable Long id) throws IOException {
+        uploadService.deleteFile(id);
+        return Result.success(null);
     }
     
     /**
@@ -356,11 +317,7 @@ public class UserUploadController {
             @ApiParam(value = "文件分类") @RequestParam(required = false) String category,
             @ApiParam(value = "文件描述") @RequestParam(required = false) String description,
             @ApiParam(value = "是否私有") @RequestParam(required = false) Boolean isPrivate) {
-        try {
-            UserUpload upload = uploadService.updateFileInfo(id, category, description, isPrivate);
-            return Result.success(UserUploadDTO.fromEntity(upload));
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
+        UserUpload upload = uploadService.updateFileInfo(id, category, description, isPrivate);
+        return Result.success(UserUploadDTO.fromEntity(upload));
     }
 }

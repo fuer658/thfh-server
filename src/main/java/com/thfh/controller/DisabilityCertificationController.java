@@ -116,7 +116,7 @@ public class DisabilityCertificationController {
             DisabilityCertificationDTO certification = certificationService.submitCertification(userId, request);
             return Result.success(certification);
         } catch (IOException e) {
-            return Result.error("文件上传失败: " + e.getMessage());
+            throw new RuntimeException("文件上传失败: " + e.getMessage());
         }
     }
 

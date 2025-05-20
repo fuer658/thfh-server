@@ -209,28 +209,22 @@ public class JobController {
     @GetMapping("/{jobId}/company-users")
     public Result<List<UserDTO>> getJobCompanyUsers(
             @ApiParam(value = "职位ID", required = true) @PathVariable Long jobId) {
-        try {
-            // 获取职位信息
-            Job job = jobService.getJobById(jobId);
-            if (job == null) {
-                return Result.error(404, "职位不存在");
-            }
-            
-            // 获取公司ID
-            Long companyId = job.getCompany().getId();
-            
-            // 获取企业用户列表
-            List<User> users = userService.findUsersByCompanyId(companyId);
-            List<UserDTO> userDTOs = users.stream()
-                    .map(user -> userService.convertToDTO(user))
-                    .collect(Collectors.toList());
-                    
-            return Result.success(userDTOs);
-        } catch (ResourceNotFoundException e) {
-            return Result.error(404, e.getMessage());
-        } catch (Exception e) {
-            return Result.error(500, "查询企业用户失败: " + e.getMessage());
+        // 获取职位信息
+        Job job = jobService.getJobById(jobId);
+        if (job == null) {
+            throw new ResourceNotFoundException("职位不存在");
         }
+        
+        // 获取公司ID
+        Long companyId = job.getCompany().getId();
+        
+        // 获取企业用户列表
+        List<User> users = userService.findUsersByCompanyId(companyId);
+        List<UserDTO> userDTOs = users.stream()
+                .map(user -> userService.convertToDTO(user))
+                .collect(Collectors.toList());
+                    
+        return Result.success(userDTOs);
     }
     
     /**

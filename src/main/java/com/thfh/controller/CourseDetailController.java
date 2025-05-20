@@ -45,9 +45,9 @@ public class CourseDetailController {
             CourseDetail courseDetail = courseDetailService.getCourseDetailByCourseId(courseId);
             return Result.success(courseDetail);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("获取课程详情失败: " + e.getMessage());
+            throw new RuntimeException("获取课程详情失败: " + e.getMessage());
         }
     }
     
@@ -73,9 +73,9 @@ public class CourseDetailController {
             CourseDetail updatedDetail = courseDetailService.saveCourseDetail(courseDetail);
             return Result.success(updatedDetail);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("更新课程详情失败: " + e.getMessage());
+            throw new RuntimeException("更新课程详情失败: " + e.getMessage());
         }
     }
     
@@ -98,9 +98,9 @@ public class CourseDetailController {
             List<CourseChapter> chapters = courseDetailService.getChaptersByCourseId(courseId);
             return Result.success(chapters);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("获取章节列表失败: " + e.getMessage());
+            throw new RuntimeException("获取章节列表失败: " + e.getMessage());
         }
     }
     
@@ -125,9 +125,9 @@ public class CourseDetailController {
             CourseChapter newChapter = courseDetailService.addChapter(courseId, chapter);
             return Result.success(newChapter);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("添加章节失败: " + e.getMessage());
+            throw new RuntimeException("添加章节失败: " + e.getMessage());
         }
     }
     
@@ -152,9 +152,9 @@ public class CourseDetailController {
             CourseChapter updatedChapter = courseDetailService.updateChapter(chapterId, chapter);
             return Result.success(updatedChapter);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("更新章节失败: " + e.getMessage());
+            throw new RuntimeException("更新章节失败: " + e.getMessage());
         }
     }
     
@@ -177,9 +177,9 @@ public class CourseDetailController {
             courseDetailService.deleteChapter(chapterId);
             return Result.success(null);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("删除章节失败: " + e.getMessage());
+            throw new RuntimeException("删除章节失败: " + e.getMessage());
         }
     }
     
@@ -202,9 +202,9 @@ public class CourseDetailController {
             List<CourseSection> sections = courseDetailService.getSectionsByChapterId(chapterId);
             return Result.success(sections);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("获取小节列表失败: " + e.getMessage());
+            throw new RuntimeException("获取小节列表失败: " + e.getMessage());
         }
     }
     
@@ -230,9 +230,9 @@ public class CourseDetailController {
             }
             return Result.success(section);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("获取小节详情失败: " + e.getMessage());
+            throw new RuntimeException("获取小节详情失败: " + e.getMessage());
         }
     }
     
@@ -257,9 +257,9 @@ public class CourseDetailController {
             CourseSection newSection = courseDetailService.addSection(chapterId, section);
             return Result.success(newSection);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("添加小节失败: " + e.getMessage());
+            throw new RuntimeException("添加小节失败: " + e.getMessage());
         }
     }
     
@@ -284,9 +284,9 @@ public class CourseDetailController {
             CourseSection updatedSection = courseDetailService.updateSection(sectionId, section);
             return Result.success(updatedSection);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("更新小节失败: " + e.getMessage());
+            throw new RuntimeException("更新小节失败: " + e.getMessage());
         }
     }
     
@@ -309,9 +309,9 @@ public class CourseDetailController {
             courseDetailService.deleteSection(sectionId);
             return Result.success(null);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("删除小节失败: " + e.getMessage());
+            throw new RuntimeException("删除小节失败: " + e.getMessage());
         }
     }
     
@@ -334,9 +334,9 @@ public class CourseDetailController {
             List<CourseSubSection> subSections = courseDetailService.getSubSectionsBySectionId(sectionId);
             return Result.success(subSections);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("获取子小节列表失败: " + e.getMessage());
+            throw new RuntimeException("获取子小节列表失败: " + e.getMessage());
         }
     }
     
@@ -355,9 +355,9 @@ public class CourseDetailController {
             CourseSubSection newSubSection = courseDetailService.addSubSection(sectionId, subSection);
             return Result.success(newSubSection);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("添加子小节失败: " + e.getMessage());
+            throw new RuntimeException("添加子小节失败: " + e.getMessage());
         }
     }
     
@@ -376,9 +376,9 @@ public class CourseDetailController {
             CourseSubSection updatedSubSection = courseDetailService.updateSubSection(subSectionId, subSection);
             return Result.success(updatedSubSection);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("更新子小节失败: " + e.getMessage());
+            throw new RuntimeException("更新子小节失败: " + e.getMessage());
         }
     }
     
@@ -394,9 +394,9 @@ public class CourseDetailController {
             courseDetailService.deleteSubSection(subSectionId);
             return Result.success(null);
         } catch (EntityNotFoundException e) {
-            return Result.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
-            return Result.error("删除子小节失败: " + e.getMessage());
+            throw new RuntimeException("删除子小节失败: " + e.getMessage());
         }
     }
 } 
