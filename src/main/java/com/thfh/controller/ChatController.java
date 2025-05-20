@@ -32,7 +32,6 @@ import java.util.Map;
 public class ChatController {
 
     private static final String USER_ID_ATTR = "userId";
-    private static final String MESSAGE_KEY = "message";
 
     private final ChatService chatService;
 

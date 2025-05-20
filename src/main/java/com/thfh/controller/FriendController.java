@@ -1,7 +1,5 @@
 package com.thfh.controller;
 
-import com.thfh.model.Friend;
-import com.thfh.model.FriendRequest;
 import com.thfh.dto.FriendRequestDTO;
 import com.thfh.dto.FriendDTO;
 import com.thfh.service.FriendService;

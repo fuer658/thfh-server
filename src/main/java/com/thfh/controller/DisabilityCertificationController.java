@@ -78,16 +78,18 @@ public class DisabilityCertificationController {
 
                 // 生成唯一的文件名
                 String originalFilename = file.getOriginalFilename();
-                String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                String filename = UUID.randomUUID().toString() + extension;
-
-                // 保存文件
-                Path filePath = uploadPath.resolve(filename);
-                Files.copy(file.getInputStream(), filePath);
-
-                // 设置文件URL
-                String fileUrl = serverUrlUtil.getFileUrl(filename);
-                request.setCertificateImage(fileUrl);
+                if (originalFilename != null && !originalFilename.isEmpty()) {
+                    String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                    String filename = UUID.randomUUID().toString() + extension;
+                
+                    // 保存文件
+                    Path filePath = uploadPath.resolve(filename);
+                    Files.copy(file.getInputStream(), filePath);
+                
+                    // 设置文件URL
+                    String fileUrl = serverUrlUtil.getFileUrl(filename);
+                    request.setCertificateImage(fileUrl);
+                }
             } else if (request.getCertificateFile() != null && !request.getCertificateFile().isEmpty()) {
                 // 如果通过DTO中的certificateFile上传文件
                 MultipartFile certificateFile = request.getCertificateFile();
@@ -100,16 +102,18 @@ public class DisabilityCertificationController {
 
                 // 生成唯一的文件名
                 String originalFilename = certificateFile.getOriginalFilename();
-                String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                String filename = UUID.randomUUID().toString() + extension;
-
-                // 保存文件
-                Path filePath = uploadPath.resolve(filename);
-                Files.copy(certificateFile.getInputStream(), filePath);
-
-                // 设置文件URL
-                String fileUrl = serverUrlUtil.getFileUrl(filename);
-                request.setCertificateImage(fileUrl);
+                if (originalFilename != null && !originalFilename.isEmpty()) {
+                    String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                    String filename = UUID.randomUUID().toString() + extension;
+                
+                    // 保存文件
+                    Path filePath = uploadPath.resolve(filename);
+                    Files.copy(certificateFile.getInputStream(), filePath);
+                
+                    // 设置文件URL
+                    String fileUrl = serverUrlUtil.getFileUrl(filename);
+                    request.setCertificateImage(fileUrl);
+                }
             }
             
             Long userId = Long.parseLong(userDetails.getUsername());

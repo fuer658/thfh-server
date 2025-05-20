@@ -31,7 +31,6 @@ import java.util.Map;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
 
     @Autowired
     private OrderService orderService;

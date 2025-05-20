@@ -26,15 +26,18 @@ import java.util.Map;
  * 课程管理控制器
  * 提供课程的增删改查和状态切换等功能
  */
-@Api(tags = "课程管理", description = "课程相关的API接口，包括课程查询、创建、更新和删除等功能")
+@Api(tags = "课程管理")
 @RestController
 @RequestMapping("/api/courses")
 public class CourseController {
-    @Autowired
-    private CourseManagementService courseManagementService;
 
-    @Autowired
+    private CourseManagementService courseManagementService;
     private UserService userService;
+
+    public CourseController(CourseManagementService courseManagementService, UserService userService) {
+        this.courseManagementService = courseManagementService;
+        this.userService = userService;
+    }
 
     /**
      * 获取课程列表
@@ -327,5 +330,24 @@ public class CourseController {
             @ApiParam(value = "排序字段", example = "viewCount") @RequestParam(defaultValue = "viewCount") String sortBy
     ) {
         return Result.success(courseManagementService.getHotCourses(page, size, sortBy));
+    }
+
+    /**
+     * 积分购买课程
+     * @param id 课程ID
+     * @return 积分扣除记录
+     */
+    @ApiOperation(value = "积分购买课程", notes = "使用积分购买指定课程，扣除积分并加入课程")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "购买成功"),
+        @ApiResponse(code = 400, message = "请求参数错误或积分不足"),
+        @ApiResponse(code = 401, message = "未授权，请先登录"),
+        @ApiResponse(code = 404, message = "课程不存在")
+    })
+    @PostMapping("/{id}/purchase-by-points")
+    public Result<com.thfh.dto.PointsRecordDTO> purchaseCourseByPoints(
+            @ApiParam(value = "课程ID", required = true) @PathVariable Long id) {
+        User currentUser = userService.getCurrentUser();
+        return Result.success(courseManagementService.purchaseCourseByPoints(id, currentUser.getId()));
     }
 }
