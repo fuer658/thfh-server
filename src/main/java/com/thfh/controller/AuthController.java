@@ -110,12 +110,8 @@ public class AuthController {
     @PostMapping("/refresh-token")
     public Result<Map<String, Object>> refreshToken(
             @ApiParam(value = "刷新令牌请求", required = true) @Valid @RequestBody RefreshTokenRequest request) {
-        try {
-            Map<String, Object> result = authService.refreshToken(request.getRefreshToken(), request.getRefreshBoth());
-            return Result.success(result, "令牌刷新成功");
-        } catch (Exception e) {
-            return Result.error(401, e.getMessage());
-        }
+        Map<String, Object> result = authService.refreshToken(request.getRefreshToken(), request.getRefreshBoth());
+        return Result.success(result, "令牌刷新成功");
     }
 
     /**
@@ -157,5 +153,21 @@ public class AuthController {
         } catch (RuntimeException e) {
             return Result.error(401, e.getMessage());
         }
+    }
+
+    /**
+     * 校验刷新Token是否有效
+     * @param request 包含refreshToken字段的请求体
+     * @return Result<Boolean> 有效true，无效false
+     */
+    @ApiOperation(value = "校验刷新Token", notes = "校验前端传递的刷新Token是否有效")
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "校验成功"),
+        @ApiResponse(code = 400, message = "请求参数错误")
+    })
+    @PostMapping("/verify-refresh-token")
+    public Result<Boolean> verifyRefreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        boolean valid = authService.validateRefreshToken(request.getRefreshToken());
+        return Result.success(valid, valid ? "刷新Token有效" : "刷新Token无效或已过期");
     }
 }

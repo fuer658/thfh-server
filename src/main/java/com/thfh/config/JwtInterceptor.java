@@ -40,7 +40,9 @@ public class JwtInterceptor implements HandlerInterceptor {
         
         // 登录和注册接口不需要验证
         if (request.getRequestURI().equals("/api/auth/login") || 
-            request.getRequestURI().equals("/api/auth/register")) {
+            request.getRequestURI().equals("/api/auth/register") ||
+            request.getRequestURI().equals("/api/auth/refresh") ||
+            request.getRequestURI().equals("/api/auth/refresh-token")) {
             return true;
         }
 

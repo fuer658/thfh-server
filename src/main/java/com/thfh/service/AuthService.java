@@ -246,7 +246,7 @@ public class AuthService {
         try {
             // 验证刷新令牌是否有效
             if (!jwtUtil.validateRefreshToken(refreshToken)) {
-                throw new RuntimeException("无效的刷新令牌");
+                throw new com.thfh.exception.JwtException("无效的刷新令牌");
             }
             
             // 获取用户名
@@ -259,21 +259,13 @@ public class AuthService {
             
             if (refreshBoth) {
                 // 刷新访问令牌和刷新令牌
-                try {
-                    Map<String, String> tokens = jwtUtil.refreshBothTokens(refreshToken);
-                    result.put("token", tokens.get("accessToken"));
-                    result.put("refreshToken", tokens.get("refreshToken"));
-                } catch (Exception e) {
-                    throw new RuntimeException("刷新令牌失败: " + e.getMessage());
-                }
+                Map<String, String> tokens = jwtUtil.refreshBothTokens(refreshToken);
+                result.put("token", tokens.get("accessToken"));
+                result.put("refreshToken", tokens.get("refreshToken"));
             } else {
                 // 只刷新访问令牌
-                try {
-                    String newToken = jwtUtil.refreshAccessToken(refreshToken);
-                    result.put("token", newToken);
-                } catch (Exception e) {
-                    throw new RuntimeException("刷新令牌失败: " + e.getMessage());
-                }
+                String newToken = jwtUtil.refreshAccessToken(refreshToken);
+                result.put("token", newToken);
             }
             
             // 尝试获取用户或管理员类型
@@ -298,6 +290,8 @@ public class AuthService {
             
             return result;
             
+        } catch (com.thfh.exception.JwtException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("刷新令牌失败: " + e.getMessage());
         }
@@ -337,5 +331,14 @@ public class AuthService {
         userRepository.save(user);
         
         return "密码修改成功";
+    }
+
+    /**
+     * 校验刷新Token是否有效
+     * @param refreshToken 刷新Token
+     * @return 有效返回true，无效返回false
+     */
+    public boolean validateRefreshToken(String refreshToken) {
+        return jwtUtil.validateRefreshToken(refreshToken);
     }
 }
