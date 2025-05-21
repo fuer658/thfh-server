@@ -151,7 +151,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         log.debug("参数类型不匹配: {}", e.getMessage());
-        return Result.error(ErrorCode.PARAMETER_ERROR.getCode(), "参数类型不匹配: " + e.getName() + "应为" + e.getRequiredType().getSimpleName() + "类型");
+        return Result.error(ErrorCode.PARAMETER_ERROR.getCode(), "参数类型不匹配: " + e.getName() + "应为" + (e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "类型") + "类型");
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.thfh.service;
 
-import com.thfh.common.Result;
 import com.thfh.dto.PostDTO;
 import com.thfh.exception.BusinessException;
 import com.thfh.exception.ErrorCode;
@@ -10,7 +9,6 @@ import com.thfh.model.User;
 import com.thfh.repository.PostBrowseHistoryRepository;
 import com.thfh.repository.PostRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -26,17 +24,19 @@ import java.util.stream.Collectors;
 @Service
 public class PostBrowseHistoryService {
 
-    @Autowired
-    private PostBrowseHistoryRepository postBrowseHistoryRepository;
+    private static final String POST_NOT_FOUND = "动态不存在";
 
-    @Autowired
-    private PostRepository postRepository;
+    private final PostBrowseHistoryRepository postBrowseHistoryRepository;
+    private final PostRepository postRepository;
+    private final UserService userService;
+    private final PostService postService;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private PostService postService;
+    public PostBrowseHistoryService(PostBrowseHistoryRepository postBrowseHistoryRepository, PostRepository postRepository, UserService userService, PostService postService) {
+        this.postBrowseHistoryRepository = postBrowseHistoryRepository;
+        this.postRepository = postRepository;
+        this.userService = userService;
+        this.postService = postService;
+    }
 
     /**
      * 记录或更新用户浏览动态的记录
@@ -53,7 +53,7 @@ public class PostBrowseHistoryService {
 
         // 查询动态是否存在
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "动态不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, POST_NOT_FOUND));
 
         // 增加动态浏览量
         post.setViewCount(post.getViewCount() + 1);
@@ -95,7 +95,7 @@ public class PostBrowseHistoryService {
         // 转换为动态DTO列表
         return historyPage.map(history -> {
             Post post = postRepository.findById(history.getPostId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "动态不存在"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, POST_NOT_FOUND));
             return postService.toPostDTO(post);
         });
     }
@@ -118,7 +118,7 @@ public class PostBrowseHistoryService {
         // 转换为动态DTO列表
         return historyPage.map(history -> {
             Post post = postRepository.findById(history.getPostId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "动态不存在"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, POST_NOT_FOUND));
             return postService.toPostDTO(post);
         });
     }
@@ -140,7 +140,7 @@ public class PostBrowseHistoryService {
         return postIds.stream()
                 .map(postId -> {
                     Post post = postRepository.findById(postId)
-                            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "动态不存在"));
+                            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, POST_NOT_FOUND));
                     return postService.toPostDTO(post);
                 })
                 .collect(Collectors.toList());

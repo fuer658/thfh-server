@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import com.thfh.exception.BusinessException;
+import com.thfh.exception.ErrorCode;
 
 /**
  * 订单评价文件服务
@@ -38,8 +42,11 @@ public class OrderCommentFileService {
     @Value("${file.upload-dir}")
     private String baseUploadDir;
     
-    @Autowired
-    private ServerUrlUtil serverUrlUtil;
+    private final ServerUrlUtil serverUrlUtil;
+    
+    public OrderCommentFileService(ServerUrlUtil serverUrlUtil) {
+        this.serverUrlUtil = serverUrlUtil;
+    }
     
     /**
      * 上传评价图片
@@ -90,7 +97,7 @@ public class OrderCommentFileService {
         // 构建文件目录路径
         // 格式：baseUploadDir/order/comment/images|videos/YYYYMMDD/filename.ext
         String relativePath = subDir + "/" + datePath;
-        String fullPath = baseUploadDir + "/" + relativePath;
+        String fullPath = baseUploadDir + File.separator + relativePath;
         
         // 创建目录
         Path dirPath = Paths.get(fullPath);
@@ -100,6 +107,9 @@ public class OrderCommentFileService {
         
         // 生成唯一文件名
         String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IOException("文件名不能为空");
+        }
         String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         String newFilename = UUID.randomUUID().toString() + extension;
         
@@ -119,16 +129,14 @@ public class OrderCommentFileService {
         if (fileUrl == null || fileUrl.isEmpty()) {
             return;
         }
-
         try {
             // 从URL中提取文件名
             String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
             Path filePath = Paths.get(baseUploadDir, fileName);
-            
             // 删除文件
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
-            throw new RuntimeException("删除文件失败: " + e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除文件失败: " + e.getMessage());
         }
     }
 } 

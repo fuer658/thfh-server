@@ -1,7 +1,5 @@
 package com.thfh.service;
 
-import com.thfh.common.Result;
-import com.thfh.dto.ArtworkDTO;
 import com.thfh.exception.BusinessException;
 import com.thfh.exception.ErrorCode;
 import com.thfh.model.Artwork;
@@ -11,7 +9,6 @@ import com.thfh.model.ArtworkType;
 import com.thfh.repository.ArtworkBrowseHistoryRepository;
 import com.thfh.repository.ArtworkRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -28,23 +25,22 @@ import java.util.ArrayList;
 
 import com.thfh.dto.ArtworkBrowseHistoryDTO;
 import com.thfh.dto.TagDTO;
-import org.springframework.beans.BeanUtils;
 
 @Slf4j
 @Service
 public class ArtworkBrowseHistoryService {
 
-    @Autowired
-    private ArtworkBrowseHistoryRepository artworkBrowseHistoryRepository;
+    private final ArtworkBrowseHistoryRepository artworkBrowseHistoryRepository;
+    private final ArtworkRepository artworkRepository;
+    private final UserService userService;
+    private final ArtworkService artworkService;
 
-    @Autowired
-    private ArtworkRepository artworkRepository;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ArtworkService artworkService;
+    public ArtworkBrowseHistoryService(ArtworkBrowseHistoryRepository artworkBrowseHistoryRepository, ArtworkRepository artworkRepository, UserService userService, ArtworkService artworkService) {
+        this.artworkBrowseHistoryRepository = artworkBrowseHistoryRepository;
+        this.artworkRepository = artworkRepository;
+        this.userService = userService;
+        this.artworkService = artworkService;
+    }
 
     /**
      * 记录或更新用户浏览作品的记录

@@ -82,7 +82,6 @@ public class CourseFileService {
         
         // 记录文件信息
         String originalFilename = file.getOriginalFilename();
-        long fileSize = file.getSize();
         String contentType = file.getContentType();
 
         // 获取文件扩展名

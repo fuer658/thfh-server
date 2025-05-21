@@ -3,7 +3,6 @@ package com.thfh.controller;
 import com.thfh.common.Result;
 import com.thfh.dto.UserDTO;
 import com.thfh.dto.UserQueryDTO;
-import com.thfh.exception.ResourceNotFoundException;
 import com.thfh.model.User;
 import com.thfh.service.UserService;
 import io.swagger.annotations.Api;

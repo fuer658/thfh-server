@@ -23,7 +23,7 @@ import java.util.Map;
  * 认证控制器
  * 提供用户和管理员登录、登出和获取用户信息等认证功能
  */
-@Api(tags = "认证管理", description = "用户和管理员登录、登出和获取用户信息等认证功能")
+@Api(tags = "认证管理")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -33,7 +33,6 @@ public class AuthController {
     /**
      * 用户登录
      * @param loginDTO 登录信息，包含用户名和密码
-     * @param request HTTP请求对象，用于获取用户名
      * @return 登录结果，包含token和用户信息
      */
     @ApiOperation(value = "用户登录", notes = "提供用户名和密码，验证身份后返回Token和用户信息")
@@ -44,9 +43,8 @@ public class AuthController {
     })
     @PostMapping("/login")
     public Result<Map<String, Object>> login(
-            @ApiParam(value = "登录信息", required = true) @Valid @RequestBody LoginDTO loginDTO,
-            @ApiParam(value = "HTTP请求对象", hidden = true) HttpServletRequest request) {
-        return Result.success(authService.login(loginDTO, request));
+            @ApiParam(value = "登录信息", required = true) @Valid @RequestBody LoginDTO loginDTO) {
+        return Result.success(authService.login(loginDTO));
     }
     
     /**

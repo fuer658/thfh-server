@@ -1,8 +1,6 @@
 package com.thfh.service;
 
 import com.thfh.dto.PostDTO;
-import com.thfh.exception.BusinessException;
-import com.thfh.exception.ErrorCode;
 import com.thfh.model.Post;
 import com.thfh.model.PostTag;
 import com.thfh.model.User;
@@ -35,23 +33,22 @@ import java.util.stream.Collectors;
 @Service
 public class PostRecommendationService {
 
-    @Autowired
-    private PostRepository postRepository;
+    private static final String CREATE_TIME = "createTime";
+    private final PostRepository postRepository;
+    private final PostBrowseHistoryRepository postBrowseHistoryRepository;
+    private final PostLikeRepository postLikeRepository;
+    private final UserService userService;
+    private final UserInterestRepository userInterestRepository;
+    private final PostService postService;
 
-    @Autowired
-    private PostBrowseHistoryRepository postBrowseHistoryRepository;
-
-    @Autowired
-    private PostLikeRepository postLikeRepository;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private UserInterestRepository userInterestRepository;
-
-    @Autowired
-    private PostService postService;
+    public PostRecommendationService(PostRepository postRepository, PostBrowseHistoryRepository postBrowseHistoryRepository, PostLikeRepository postLikeRepository, UserService userService, UserInterestRepository userInterestRepository, PostService postService) {
+        this.postRepository = postRepository;
+        this.postBrowseHistoryRepository = postBrowseHistoryRepository;
+        this.postLikeRepository = postLikeRepository;
+        this.userService = userService;
+        this.userInterestRepository = userInterestRepository;
+        this.postService = postService;
+    }
     
     /**
      * 获取推荐动态列表
@@ -307,7 +304,7 @@ public class PostRecommendationService {
         
         // 按照创建时间降序获取最多50条动态
         List<Post> originalPosts = postRepository.findAll(spec, PageRequest.of(0, 50, 
-                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createTime"))).getContent();
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, CREATE_TIME))).getContent();
         
         // 创建一个新的可修改列表，然后进行排序
         List<Post> posts = new ArrayList<>(originalPosts);
@@ -339,7 +336,7 @@ public class PostRecommendationService {
         
         // 按照创建时间降序获取最多30条动态
         List<Post> originalPosts = postRepository.findAll(spec, PageRequest.of(0, 30, 
-                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createTime"))).getContent();
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, CREATE_TIME))).getContent();
                 
         // 创建一个新的可修改列表返回
         return new ArrayList<>(originalPosts);
@@ -414,7 +411,7 @@ public class PostRecommendationService {
             // 按创建时间降序排序
             Page<Post> postPage = postRepository.findAll(spec, 
                     PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
-                            org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createTime")));
+                            org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, CREATE_TIME)));
             
             // 转换为DTO
             return postPage.map(postService::toPostDTO);

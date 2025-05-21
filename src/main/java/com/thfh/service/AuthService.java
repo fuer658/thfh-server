@@ -28,29 +28,32 @@ import java.util.Map;
 public class AuthService {
     private final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-    @Autowired
-    private AdminRepository adminRepository;
+    private static final String TOKEN = "token";
+    private static final String REFRESH_TOKEN = "refreshToken";
+    private static final String USER_TYPE = "userType";
 
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private CompanyRepository companyRepository;
+    private final AdminRepository adminRepository;
+    private final UserRepository userRepository;
+    private final CompanyRepository companyRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public AuthService(AdminRepository adminRepository, UserRepository userRepository, CompanyRepository companyRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+        this.adminRepository = adminRepository;
+        this.userRepository = userRepository;
+        this.companyRepository = companyRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+    }
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    public Map<String, Object> login(LoginDTO loginDTO, javax.servlet.http.HttpServletRequest request) {
+    public Map<String, Object> login(LoginDTO loginDTO) {
         // 尝试作为管理员登录
         try {
             Admin admin = adminRepository.findByUsername(loginDTO.getUsername())
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new com.thfh.exception.BusinessException(com.thfh.exception.ErrorCode.USER_NOT_EXIST, "用户不存在"));
             
             if (!passwordEncoder.matches(loginDTO.getPassword(), admin.getPassword())) {
-                throw new RuntimeException("密码错误");
+                throw new com.thfh.exception.BusinessException(com.thfh.exception.ErrorCode.USERNAME_OR_PASSWORD_ERROR, "密码错误");
             }
             
             // 生成JWT令牌
@@ -59,24 +62,24 @@ public class AuthService {
             
             // 返回登录结果
             Map<String, Object> result = new HashMap<>();
-            result.put("token", token);
-            result.put("refreshToken", refreshToken);
-            result.put("userType", "admin");
+            result.put(TOKEN, token);
+            result.put(REFRESH_TOKEN, refreshToken);
+            result.put(USER_TYPE, "admin");
             
             // 记录日志
             log.info("管理员登录成功: {}", admin.getUsername());
             
             return result;
-        } catch (RuntimeException e) {
+        } catch (com.thfh.exception.BusinessException e) {
             // 管理员不存在或密码错误，尝试作为普通用户登录
         }
         
         // 尝试作为普通用户登录
         User user = userRepository.findByUsername(loginDTO.getUsername())
-            .orElseThrow(() -> new RuntimeException("用户不存在"));
+            .orElseThrow(() -> new com.thfh.exception.BusinessException(com.thfh.exception.ErrorCode.USER_NOT_EXIST, "用户不存在"));
         
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-            throw new RuntimeException("密码错误");
+            throw new com.thfh.exception.BusinessException(com.thfh.exception.ErrorCode.USERNAME_OR_PASSWORD_ERROR, "密码错误");
         }
         
         // 生成JWT令牌
@@ -85,9 +88,9 @@ public class AuthService {
         
         // 返回登录结果
         Map<String, Object> result = new HashMap<>();
-        result.put("token", token);
-        result.put("refreshToken", refreshToken);
-        result.put("userType", user.getUserType().name());
+        result.put(TOKEN, token);
+        result.put(REFRESH_TOKEN, refreshToken);
+        result.put(USER_TYPE, user.getUserType().name());
         
         // 记录日志
         log.info("用户登录成功: {}", user.getUsername());
@@ -252,20 +255,17 @@ public class AuthService {
             // 获取用户名
             String username = jwtUtil.getUsernameFromToken(refreshToken);
             
-            // 获取用户ID（如果存在）
-            Long userId = jwtUtil.getUserIdFromToken(refreshToken);
-            
             Map<String, Object> result = new HashMap<>();
             
             if (refreshBoth) {
                 // 刷新访问令牌和刷新令牌
                 Map<String, String> tokens = jwtUtil.refreshBothTokens(refreshToken);
-                result.put("token", tokens.get("accessToken"));
-                result.put("refreshToken", tokens.get("refreshToken"));
+                result.put(TOKEN, tokens.get("accessToken"));
+                result.put(REFRESH_TOKEN, tokens.get("refreshToken"));
             } else {
                 // 只刷新访问令牌
                 String newToken = jwtUtil.refreshAccessToken(refreshToken);
-                result.put("token", newToken);
+                result.put(TOKEN, newToken);
             }
             
             // 尝试获取用户或管理员类型
@@ -285,7 +285,7 @@ public class AuthService {
             }
             
             if (userType != null) {
-                result.put("userType", userType);
+                result.put(USER_TYPE, userType);
             }
             
             return result;

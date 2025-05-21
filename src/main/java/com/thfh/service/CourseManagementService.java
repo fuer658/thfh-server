@@ -23,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
@@ -44,8 +43,6 @@ import com.thfh.exception.ErrorCode;
  */
 @Service
 public class CourseManagementService {
-    private final String baseUploadDir;
-    private final String serverPort;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final UserCourseInteractionRepository userCourseInteractionRepository;
@@ -80,8 +77,6 @@ public class CourseManagementService {
     private static final String STUDENT_COUNT = "studentCount";
 
     public CourseManagementService(
-            @Value("${file.upload-dir}") String baseUploadDir,
-            @Value("${server.port}") String serverPort,
             CourseRepository courseRepository,
             UserRepository userRepository,
             UserCourseInteractionRepository userCourseInteractionRepository,
@@ -89,8 +84,6 @@ public class CourseManagementService {
             CourseTagService courseTagService,
             UserService userService,
             PointsService pointsService) {
-        this.baseUploadDir = baseUploadDir;
-        this.serverPort = serverPort;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.userCourseInteractionRepository = userCourseInteractionRepository;
