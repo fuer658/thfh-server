@@ -163,7 +163,12 @@ public class ChatController {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "未获取到用户ID，请重新登录");
         }
         if (!(userIdObj instanceof Long)) {
-            throw new BusinessException(ErrorCode.PARAMETER_ERROR, "用户ID类型错误");
+            try {
+                return Long.valueOf(userIdObj.toString());
+            } catch (Exception e) {
+                log.error("用户ID类型转换失败: {}", userIdObj);
+                throw new BusinessException(ErrorCode.PARAMETER_ERROR, "用户ID类型错误");
+            }
         }
         return (Long) userIdObj;
     }

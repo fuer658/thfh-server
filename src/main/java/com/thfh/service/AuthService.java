@@ -131,6 +131,11 @@ public class AuthService {
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
         
+        // 设置经验值、等级和补签卡的默认值
+        user.setExperience(0);
+        user.setLevel(1);
+        user.setMakeupCards(0);
+        
         // 企业用户处理
         if (UserType.ENTERPRISE.equals(user.getUserType())) {
             Company company = null;

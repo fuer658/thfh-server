@@ -60,10 +60,13 @@ public class ChatService {
                     log.warn("接收者不存在, receiverId={}", receiverId);
                     return new ResourceNotFoundException("接收者不存在");
                 });
-        if (content == null || content.trim().isEmpty()) {
-            log.warn("消息内容为空, senderId={}, receiverId={}", senderId, receiverId);
-            throw new BusinessException(ErrorCode.PARAMETER_ERROR, "消息内容不能为空");
+        if(messageType.equals("TEXT")){
+            if (content == null || content.trim().isEmpty()) {
+                log.warn("消息内容为空, senderId={}, receiverId={}", senderId, receiverId);
+                throw new BusinessException(ErrorCode.PARAMETER_ERROR, "消息内容不能为空");
+            }
         }
+
         ChatMessage message = new ChatMessage();
         message.setSender(sender);
         message.setReceiver(receiver);
