@@ -330,23 +330,4 @@ public class CourseController {
     ) {
         return Result.success(courseManagementService.getHotCourses(page, size, sortBy));
     }
-
-    /**
-     * 积分购买课程
-     * @param id 课程ID
-     * @return 积分扣除记录
-     */
-    @ApiOperation(value = "积分购买课程", notes = "使用积分购买指定课程，扣除积分并加入课程")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "购买成功"),
-        @ApiResponse(code = 400, message = "请求参数错误或积分不足"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 404, message = "课程不存在")
-    })
-    @PostMapping("/{id}/purchase-by-points")
-    public Result<com.thfh.dto.PointsRecordDTO> purchaseCourseByPoints(
-            @ApiParam(value = "课程ID", required = true) @PathVariable Long id) {
-        User currentUser = userService.getCurrentUser();
-        return Result.success(courseManagementService.purchaseCourseByPoints(id, currentUser.getId()));
-    }
 }

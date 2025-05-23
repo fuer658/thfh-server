@@ -540,52 +540,6 @@ public class CourseManagementService {
     }
 
     /**
-     * 积分购买课程
-     * @param courseId 课程ID
-     * @param userId 用户ID
-     * @return 积分扣除记录DTO
-     */
-    @Transactional
-    public PointsRecordDTO purchaseCourseByPoints(Long courseId, Long userId) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_EXIST, COURSE_NOT_FOUND));
-        if (!course.getEnabled()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, COURSE_NOT_ENABLED);
-        }
-        if (course.getPointsPrice() == null || course.getPointsPrice() <= 0) {
-            throw new BusinessException(ErrorCode.PARAMETER_ERROR, POINTS_NOT_SUPPORT);
-        }
-        User student = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_EXIST, USER_NOT_FOUND));
-        if (student.getUserType() != UserType.STUDENT) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, ONLY_STUDENT_CAN_JOIN);
-        }
-        if (userCourseRepository.existsByUserAndCourse(student, course)) {
-            throw new BusinessException(ErrorCode.CONFLICT, ALREADY_PURCHASED);
-        }
-        Integer currentPoints = student.getPoints();
-        if (currentPoints == null || currentPoints < course.getPointsPrice()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, POINTS_NOT_ENOUGH);
-        }
-        // 扣除积分并记录
-        com.thfh.dto.PointsAdjustDTO adjustDTO = new com.thfh.dto.PointsAdjustDTO();
-        adjustDTO.setStudentId(userId);
-        adjustDTO.setPoints(-course.getPointsPrice());
-        adjustDTO.setDescription("积分购买课程：" + course.getTitle());
-        adjustDTO.setIncludeExperience(false);
-        com.thfh.dto.PointsRecordDTO recordDTO = pointsService.adjustPoints(adjustDTO);
-        // 添加选课记录
-        UserCourse userCourse = new UserCourse();
-        userCourse.setUser(student);
-        userCourse.setCourse(course);
-        userCourseRepository.save(userCourse);
-        // 更新课程学习人数
-        course.setStudentCount(course.getStudentCount() + 1);
-        courseRepository.save(course);
-        return recordDTO;
-    }
-
-    /**
      * 将Course实体转换为CourseDTO
      * @param course 课程实体
      * @return 课程DTO对象

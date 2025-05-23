@@ -54,6 +54,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理请求参数错误或业务逻辑错误的异常
+     * @param e 请求参数错误或业务逻辑错误的异常
+     * @return 错误响应
+     */
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleBadRequestException(BadRequestException e) {
+        log.info("请求错误: {}", e.getMessage());
+        return Result.error(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+    }
+
+    /**
      * 处理请求处理器未找到异常
      * @param e 处理器未找到异常
      * @return 错误响应
