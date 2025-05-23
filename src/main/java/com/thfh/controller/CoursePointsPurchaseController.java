@@ -1,7 +1,9 @@
 package com.thfh.controller;
 
 import com.thfh.model.CoursePointsPurchase;
+import com.thfh.model.User;
 import com.thfh.service.CoursePointsPurchaseService;
+import com.thfh.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -30,6 +32,9 @@ public class CoursePointsPurchaseController {
 
     @Autowired
     private CoursePointsPurchaseService purchaseService;
+    
+    @Autowired
+    private UserService userService;
 
     /**
      * 使用积分购买课程
@@ -37,12 +42,11 @@ public class CoursePointsPurchaseController {
     @PostMapping("/points/{courseId}")
     @ApiOperation(value = "积分购买课程", notes = "用户使用积分购买指定课程")
     public ResponseEntity<CoursePointsPurchase> purchaseCourseWithPoints(
-            @ApiParam(value = "课程ID", required = true) @PathVariable Long courseId,
-            Principal principal) {
+            @ApiParam(value = "课程ID", required = true) @PathVariable Long courseId) {
         
-        // 假设 Principal 中存的是用户ID的字符串形式
-        Long userId = Long.parseLong(principal.getName());
-        CoursePointsPurchase purchase = purchaseService.purchaseCourseWithPoints(userId, courseId);
+        // 使用userService获取当前用户
+        User currentUser = userService.getCurrentUser();
+        CoursePointsPurchase purchase = purchaseService.purchaseCourseWithPoints(currentUser.getId(), courseId);
         return ResponseEntity.ok(purchase);
     }
 
@@ -53,12 +57,12 @@ public class CoursePointsPurchaseController {
     @ApiOperation(value = "获取用户购买记录", notes = "分页获取当前用户的课程购买记录")
     public ResponseEntity<Page<CoursePointsPurchase>> getUserPurchaseHistory(
             @ApiParam(value = "页码", defaultValue = "0") @RequestParam(defaultValue = "0") int page,
-            @ApiParam(value = "每页条数", defaultValue = "10") @RequestParam(defaultValue = "10") int size,
-            Principal principal) {
+            @ApiParam(value = "每页条数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
         
-        Long userId = Long.parseLong(principal.getName());
+        // 使用userService获取当前用户
+        User currentUser = userService.getCurrentUser();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        Page<CoursePointsPurchase> purchaseHistory = purchaseService.getUserPurchaseRecords(userId, pageable);
+        Page<CoursePointsPurchase> purchaseHistory = purchaseService.getUserPurchaseRecords(currentUser.getId(), pageable);
         return ResponseEntity.ok(purchaseHistory);
     }
 
@@ -68,11 +72,11 @@ public class CoursePointsPurchaseController {
     @GetMapping("/check/{courseId}")
     @ApiOperation(value = "检查购买状态", notes = "检查当前用户是否已购买指定课程")
     public ResponseEntity<Map<String, Boolean>> checkPurchaseStatus(
-            @ApiParam(value = "课程ID", required = true) @PathVariable Long courseId,
-            Principal principal) {
+            @ApiParam(value = "课程ID", required = true) @PathVariable Long courseId) {
         
-        Long userId = Long.parseLong(principal.getName());
-        boolean hasPurchased = purchaseService.hasPurchasedCourse(userId, courseId);
+        // 使用userService获取当前用户
+        User currentUser = userService.getCurrentUser();
+        boolean hasPurchased = purchaseService.hasPurchasedCourse(currentUser.getId(), courseId);
         
         // 使用Java 8兼容的方式创建Map
         Map<String, Boolean> result = new HashMap<>();
@@ -87,14 +91,15 @@ public class CoursePointsPurchaseController {
     @GetMapping("/{purchaseId}")
     @ApiOperation(value = "获取购买记录详情", notes = "根据购买记录ID获取详细信息")
     public ResponseEntity<?> getPurchaseDetails(
-            @ApiParam(value = "购买记录ID", required = true) @PathVariable Long purchaseId,
-            Principal principal) {
+            @ApiParam(value = "购买记录ID", required = true) @PathVariable Long purchaseId) {
+        
+        // 使用userService获取当前用户
+        User currentUser = userService.getCurrentUser();
         
         return purchaseService.getPurchaseDetails(purchaseId)
                 .map(purchase -> {
                     // 检查是否是自己的购买记录
-                    Long userId = Long.parseLong(principal.getName());
-                    if (!purchase.getUser().getId().equals(userId)) {
+                    if (!purchase.getUser().getId().equals(currentUser.getId())) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("无权访问此购买记录");
                     }
                     return ResponseEntity.ok(purchase);
