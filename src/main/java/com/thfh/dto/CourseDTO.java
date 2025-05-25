@@ -16,7 +16,7 @@ public class CourseDTO {
     /**
      * 课程ID，唯一标识
      */
-    @Schema(description = "课程ID", description = "唯一标识", example = "1")
+    @Schema(description = "课程ID - 唯一标识", example = "1")
     private Long id;
     
     /**

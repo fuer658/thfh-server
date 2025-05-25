@@ -89,6 +89,15 @@ public class User {
     @Schema(description = "粉丝数量 - 关注该用户的其他用户数量", example = "20")
     private Integer followersCount;
 
+    @Schema(description = "经验值", example = "100")
+    private Integer experience;
+
+    @Schema(description = "等级", example = "1")
+    private Integer level;
+
+    @Schema(description = "个人介绍", example = "这是我的个人介绍")
+    private String introduction;
+
     @Schema(description = "是否是VIP用户", example = "false")
     private Boolean vip;
 
@@ -121,6 +130,13 @@ public class User {
 
     @Schema(description = "企业ID - 如果用户类型是企业人员，关联的企业ID", example = "1")
     private Long companyId;
+
+    @Schema(description = "企业名称", example = "ABC公司")
+    private String companyName;
+
+    @Schema(description = "企业详情")
+    @OneToOne
+    private CompanyDetails companyDetails;
 
     @Schema(description = "教员ID - 如果用户是学员，关联的教员ID", example = "2")
     private Long teacherId;
@@ -174,6 +190,15 @@ public class User {
         }
         if (followersCount == null) {
             followersCount = 0;
+        }
+        if (experience == null) {
+            experience = 0;
+        }
+        if (level == null) {
+            level = 1;
+        }
+        if (introduction == null) {
+            introduction = "";
         }
     }
 

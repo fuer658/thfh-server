@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @Schema(description = "企业相册信息 - 包含企业相册的详细信息")
 public class CompanyAlbumDTO {
-    @Schema(description = "相册ID", description = "唯一标识", example = "1")
+    @Schema(description = "相册ID - 唯一标识", example = "1")
     private Long id;
     
     @Schema(description = "标题", required = true, example = "公司环境展示")

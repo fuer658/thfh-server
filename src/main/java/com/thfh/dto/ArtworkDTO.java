@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 @Schema(description = "艺术作品信息 - 包含艺术作品的详细信息")
 public class ArtworkDTO {
-    @Schema(description = "作品ID", description = "唯一标识", example = "1")
+    @Schema(description = "作品ID - 唯一标识", example = "1")
     private Long id;
     
     @Schema(description = "作品标题", required = true, example = "彩虹之光")

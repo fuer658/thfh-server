@@ -15,7 +15,7 @@ public class JobApplicationDTO {
     /**
      * 申请ID
      */
-    @Schema(description = "申请ID", description = "唯一标识", example = "1")
+    @Schema(description = "申请ID - 唯一标识", example = "1")
     private Long id;
     
     /**

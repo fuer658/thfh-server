@@ -13,19 +13,19 @@ public class AdminDTO {
     /**
      * 管理员ID，唯一标识
      */
-    @Schema(description = "管理员ID", description = "唯一标识", example = "1")
+    @Schema(description = "管理员ID - 唯一标识", example = "1")
     private Long id;
     
     /**
      * 管理员用户名，用于登录
      */
-    @Schema(description = "用户名", required = true, description = "用于登录系统", example = "admin123")
+    @Schema(description = "用户名 - 用于登录系统", required = true, example = "admin123")
     private String username;
     
     /**
      * 管理员密码，用于登录验证
      */
-    @Schema(description = "密码", description = "创建管理员时必填，更新时可不填", example = "password123")
+    @Schema(description = "密码 - 创建管理员时必填，更新时可不填", example = "password123")
     private String password;
     
     /**

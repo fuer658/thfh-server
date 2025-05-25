@@ -140,7 +140,7 @@ public class ArtworkController {
         Artwork artwork = artworkService.getArtworkById(artworkId)
                 .orElseThrow(() -> new ResourceNotFoundException(ARTWORK_NOT_FOUND + artworkId));
                 
-        artworkScoreService.scoreArtwork(artworkId, user.getId(), scoreDTO.getScore(), user, artwork);
+        artworkScoreService.scoreArtwork(artworkId, user.getId(), BigDecimal.valueOf(scoreDTO.getScore()), user, artwork);
         
         log.info("用户 {} 成功为作品 {} 评分", user.getUsername(), artworkId);
         return Result.success(null, "评分成功");

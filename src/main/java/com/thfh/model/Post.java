@@ -123,6 +123,35 @@ public class Post {
     
     @Schema(description = "视频URL", example = "https://example.com/video.mp4")
     private String videoUrl;
+
+    @ManyToMany
+    @JoinTable(
+        name = "post_tags",
+        joinColumns = @JoinColumn(name = "post_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @Schema(description = "动态标签集合")
+    private Set<PostTag> tags = new HashSet<>();
+
+    @Transient
+    @Schema(description = "标签名称列表")
+    private List<String> tagNames;
+
+    @Transient 
+    @Schema(description = "标签ID列表")
+    private List<Long> tagIds;
+
+    public List<String> getTagNames() {
+        return tags.stream()
+                .map(PostTag::getName)
+                .collect(Collectors.toList());
+    }
+
+    public List<Long> getTagIds() {
+        return tags.stream()
+                .map(PostTag::getId)
+                .collect(Collectors.toList());
+    }
     
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("post")

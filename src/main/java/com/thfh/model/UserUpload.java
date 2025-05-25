@@ -28,6 +28,45 @@ public class UserUpload {
     @JoinColumn(name = "user_id", nullable = false)
     @Schema(description = "上传用户")
     private User user;
+
+    @Schema(description = "文件URL")
+    private String url;
+
+    @Schema(description = "文件描述")
+    private String description;
+
+    @Schema(description = "文件分类")
+    private String category;
+
+    @Schema(description = "是否私有")
+    private Boolean isPrivate;
+
+    @Schema(description = "是否启用") 
+    private Boolean isEnabled;
+
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public Boolean getIsPrivate() {
+        return isPrivate;
+    }
+
+    public Boolean getIsEnabled() {
+        return isEnabled;
+    }
     
     @Schema(description = "文件名", example = "profile.jpg")
     private String fileName;
@@ -74,6 +113,18 @@ public class UserUpload {
     @Schema(description = "备注", example = "用户头像")
     private String remark;
     
+    @Schema(description = "文件描述", example = "个人资料图片")
+    private String description;
+    
+    @Schema(description = "文件分类", example = "PROFILE")
+    private String category;
+    
+    @Schema(description = "是否私有", example = "false")
+    private Boolean isPrivate;
+    
+    @Schema(description = "是否启用", example = "true")
+    private Boolean isEnabled;
+    
     @PrePersist
     public void prePersist() {
         if (uploadTime == null) {
@@ -90,6 +141,18 @@ public class UserUpload {
         }
         if (status == null) {
             status = "ACTIVE";
+        }
+        if (description == null) {
+            description = "";
+        }
+        if (category == null) {
+            category = "DEFAULT";
+        }
+        if (isPrivate == null) {
+            isPrivate = false;
+        }
+        if (isEnabled == null) {
+            isEnabled = true;
         }
     }
 }
