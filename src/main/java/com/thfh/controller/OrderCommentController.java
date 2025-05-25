@@ -6,11 +6,11 @@ import com.thfh.model.OrderComment;
 import com.thfh.service.OrderCommentService;
 import com.thfh.service.OrderCommentFileService;
 import com.thfh.common.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * 订单评价控制器
  */
-@Api(tags = "订单评价", description = "提供订单评价的创建、查询等功能")
+@Tag(name = "订单评价", description = "提供订单评价的创建、查询等功能")
 @RestController
 @RequestMapping("/api/order-comments")
 public class OrderCommentController {
@@ -41,19 +41,19 @@ public class OrderCommentController {
      * @param commentDTO 评价数据
      * @return 创建的评价
      */
-    @ApiOperation(value = "创建订单评价(JSON)", notes = "对已完成的订单进行评价，使用JSON请求体")
+    @Operation(summary = "创建订单评价(JSON)", description = "对已完成的订单进行评价，使用JSON请求体")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "评价成功"),
-        @ApiResponse(code = 400, message = "参数错误"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 403, message = "无权评价该订单"),
-        @ApiResponse(code = 404, message = "订单不存在")
+        @ApiResponse(responseCode = "200", description = "评价成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "403", description = "无权评价该订单"),
+        @ApiResponse(responseCode = "404", description = "订单不存在")
     })
     @PostMapping(value = "/{orderId}/json", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ROLE_USER')")
     public Result<OrderCommentDTO> createCommentWithJson(
-            @ApiParam(value = "订单ID", required = true) @PathVariable Long orderId,
-            @ApiParam(value = "评价数据", required = true) @RequestBody OrderCommentCreateDTO commentDTO) {
+            @Parameter(description = "订单ID", required = true) @PathVariable Long orderId,
+            @Parameter(description = "评价数据", required = true) @RequestBody OrderCommentCreateDTO commentDTO) {
         
         try {
             OrderComment comment = orderCommentService.createComment(
@@ -78,22 +78,22 @@ public class OrderCommentController {
      * @param video 评价视频
      * @return 创建的评价
      */
-    @ApiOperation(value = "创建订单评价", notes = "对已完成的订单进行评价")
+    @Operation(summary = "创建订单评价", description = "对已完成的订单进行评价")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "评价成功"),
-        @ApiResponse(code = 400, message = "参数错误"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 403, message = "无权评价该订单"),
-        @ApiResponse(code = 404, message = "订单不存在")
+        @ApiResponse(responseCode = "200", description = "评价成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "403", description = "无权评价该订单"),
+        @ApiResponse(responseCode = "404", description = "订单不存在")
     })
     @PostMapping(value = "/{orderId}", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ROLE_USER')")
     public Result<OrderCommentDTO> createComment(
-            @ApiParam(value = "订单ID", required = true) @PathVariable Long orderId,
-            @ApiParam(value = "评价内容", required = true) @RequestParam String content,
-            @ApiParam(value = "评分（1-10分）", required = true) @RequestParam Integer score,
-            @ApiParam(value = "评价图片") @RequestParam(required = false) List<MultipartFile> images,
-            @ApiParam(value = "评价视频") @RequestParam(required = false) MultipartFile video) {
+            @Parameter(description = "订单ID", required = true) @PathVariable Long orderId,
+            @Parameter(description = "评价内容", required = true) @RequestParam String content,
+            @Parameter(description = "评分（1-10分）", required = true) @RequestParam Integer score,
+            @Parameter(description = "评价图片") @RequestParam(required = false) List<MultipartFile> images,
+            @Parameter(description = "评价视频") @RequestParam(required = false) MultipartFile video) {
         
         try {
             // 处理图片上传
@@ -123,14 +123,14 @@ public class OrderCommentController {
      * @param orderId 订单ID
      * @return 评价列表
      */
-    @ApiOperation(value = "获取订单评价列表", notes = "获取指定订单的所有评价")
+    @Operation(summary = "获取订单评价列表", description = "获取指定订单的所有评价")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "获取成功"),
-        @ApiResponse(code = 404, message = "订单不存在")
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "404", description = "订单不存在")
     })
     @GetMapping("/order/{orderId}")
     public Result<List<OrderCommentDTO>> getCommentsByOrderId(
-            @ApiParam(value = "订单ID", required = true) @PathVariable Long orderId) {
+            @Parameter(description = "订单ID", required = true) @PathVariable Long orderId) {
         List<OrderCommentDTO> comments = orderCommentService.getCommentsByOrderId(orderId);
         return Result.success(comments);
     }
@@ -142,16 +142,16 @@ public class OrderCommentController {
      * @param pageSize 每页数量
      * @return 评价分页
      */
-    @ApiOperation(value = "获取艺术品评价", notes = "获取指定艺术品的评价分页列表")
+    @Operation(summary = "获取艺术品评价", description = "获取指定艺术品的评价分页列表")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "获取成功"),
-        @ApiResponse(code = 404, message = "艺术品不存在")
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "404", description = "艺术品不存在")
     })
     @GetMapping("/artwork/{artworkId}")
     public Result<Page<OrderCommentDTO>> getCommentsByArtworkId(
-            @ApiParam(value = "艺术品ID", required = true) @PathVariable Long artworkId,
-            @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int pageNum,
-            @ApiParam(value = "每页数量", defaultValue = "10") @RequestParam(defaultValue = "10") int pageSize) {
+            @Parameter(description = "艺术品ID", required = true) @PathVariable Long artworkId,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
+            @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int pageSize) {
         Page<OrderCommentDTO> page = orderCommentService.getCommentsByArtworkId(artworkId, pageNum, pageSize);
         return Result.success(page);
     }
@@ -162,16 +162,16 @@ public class OrderCommentController {
      * @param pageSize 每页数量
      * @return 评价分页
      */
-    @ApiOperation(value = "获取我的评价", notes = "获取当前登录用户的评价分页列表")
+    @Operation(summary = "获取我的评价", description = "获取当前登录用户的评价分页列表")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "获取成功"),
-        @ApiResponse(code = 401, message = "未授权，请先登录")
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录")
     })
     @GetMapping("/my")
     @PreAuthorize("hasRole('ROLE_USER')")
     public Result<Page<OrderCommentDTO>> getCurrentUserComments(
-            @ApiParam(value = "页码", defaultValue = "1") @RequestParam(defaultValue = "1") int pageNum,
-            @ApiParam(value = "每页数量", defaultValue = "10") @RequestParam(defaultValue = "10") int pageSize) {
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
+            @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int pageSize) {
         Page<OrderCommentDTO> page = orderCommentService.getCurrentUserComments(pageNum, pageSize);
         return Result.success(page);
     }
@@ -181,17 +181,17 @@ public class OrderCommentController {
      * @param commentId 评论ID
      * @return 更新后的点赞数
      */
-    @ApiOperation(value = "点赞评论", notes = "对评论进行点赞")
+    @Operation(summary = "点赞评论", description = "对评论进行点赞")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "点赞成功"),
-        @ApiResponse(code = 400, message = "已点赞过该评论"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 404, message = "评论不存在")
+        @ApiResponse(responseCode = "200", description = "点赞成功"),
+        @ApiResponse(responseCode = "400", description = "已点赞过该评论"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "404", description = "评论不存在")
     })
     @PostMapping("/{commentId}/like")
     @PreAuthorize("hasRole('ROLE_USER')")
     public Result<Integer> likeComment(
-            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+            @Parameter(description = "评论ID", required = true) @PathVariable Long commentId) {
         try {
             int likeCount = orderCommentService.likeComment(commentId);
             return Result.success(likeCount, "点赞成功");
@@ -205,17 +205,17 @@ public class OrderCommentController {
      * @param commentId 评论ID
      * @return 更新后的点赞数
      */
-    @ApiOperation(value = "取消点赞评论", notes = "取消对评论的点赞")
+    @Operation(summary = "取消点赞评论", description = "取消对评论的点赞")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "取消点赞成功"),
-        @ApiResponse(code = 400, message = "未点赞过该评论"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 404, message = "评论不存在")
+        @ApiResponse(responseCode = "200", description = "取消点赞成功"),
+        @ApiResponse(responseCode = "400", description = "未点赞过该评论"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "404", description = "评论不存在")
     })
     @DeleteMapping("/{commentId}/like")
     @PreAuthorize("hasRole('ROLE_USER')")
     public Result<Integer> unlikeComment(
-            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+            @Parameter(description = "评论ID", required = true) @PathVariable Long commentId) {
         try {
             int likeCount = orderCommentService.unlikeComment(commentId);
             return Result.success(likeCount, "取消点赞成功");
@@ -229,16 +229,16 @@ public class OrderCommentController {
      * @param commentId 评论ID
      * @return 是否已点赞
      */
-    @ApiOperation(value = "检查是否已点赞", notes = "检查当前用户是否已点赞评论")
+    @Operation(summary = "检查是否已点赞", description = "检查当前用户是否已点赞评论")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "查询成功"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 404, message = "评论不存在")
+        @ApiResponse(responseCode = "200", description = "查询成功"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "404", description = "评论不存在")
     })
     @GetMapping("/{commentId}/liked")
     @PreAuthorize("hasRole('ROLE_USER')")
     public Result<Boolean> isCommentLiked(
-            @ApiParam(value = "评论ID", required = true) @PathVariable Long commentId) {
+            @Parameter(description = "评论ID", required = true) @PathVariable Long commentId) {
         boolean liked = orderCommentService.isCommentLiked(commentId);
         return Result.success(liked);
     }

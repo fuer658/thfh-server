@@ -4,11 +4,11 @@ import com.thfh.model.User;
 import com.thfh.service.UserService;
 import com.thfh.util.ServerUrlUtil;
 import com.thfh.common.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,7 +27,7 @@ import java.util.Collections;
  * 支持自定义存储路径和文件名
  * 支持获取用户文件和删除文件
  */
-@Api(tags = "文件管理")
+@Tag(name = "文件管理")
 @RestController
 @RequestMapping("/api")
 public class FileController {
@@ -199,18 +199,18 @@ public class FileController {
      * @param customFileName 自定义文件名（可选，不包含扩展名）
      * @return 上传结果，包含文件访问URL
      */
-    @ApiOperation(value = "上传通用文件", notes = "上传各种类型的文件，支持自定义存储路径和文件名")
+    @Operation(summary = "上传通用文件", description = "上传各种类型的文件，支持自定义存储路径和文件名")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "上传成功"),
-        @ApiResponse(code = 400, message = "请求参数错误"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 500, message = "服务器内部错误")
+        @ApiResponse(responseCode = "200", description = "上传成功"),
+        @ApiResponse(responseCode = "400", description = "请求参数错误"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     @PostMapping("/upload")
     public Result<Map<String, Object>> uploadFile(
-            @ApiParam(value = "上传的文件", required = true) @RequestParam("file") MultipartFile file,
-            @ApiParam(value = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath,
-            @ApiParam(value = "自定义文件名（可选，不包含扩展名）", required = false) @RequestParam(value = "filename", required = false) String customFileName) {
+            @Parameter(description = "上传的文件", required = true) @RequestParam("file") MultipartFile file,
+            @Parameter(description = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath,
+            @Parameter(description = "自定义文件名（可选，不包含扩展名）", required = false) @RequestParam(value = "filename", required = false) String customFileName) {
         try {
             User currentUser = userService.getCurrentUser();
             if (currentUser == null) {
@@ -238,18 +238,18 @@ public class FileController {
      * @param customFileName 自定义文件名（可选，不包含扩展名）
      * @return 上传结果，包含视频访问URL
      */
-    @ApiOperation(value = "上传视频文件", notes = "专门用于上传视频文件，支持大文件上传，仅支持MP4、MOV、AVI、MKV格式")
+    @Operation(summary = "上传视频文件", description = "专门用于上传视频文件，支持大文件上传，仅支持MP4、MOV、AVI、MKV格式")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "上传成功"),
-        @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 500, message = "服务器内部错误")
+        @ApiResponse(responseCode = "200", description = "上传成功"),
+        @ApiResponse(responseCode = "400", description = "请求参数错误或不支持的文件类型"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     @PostMapping("/upload/video")
     public Result<Map<String, Object>> uploadVideo(
-            @ApiParam(value = "上传的视频文件", required = true) @RequestParam("file") MultipartFile file,
-            @ApiParam(value = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath,
-            @ApiParam(value = "自定义文件名（可选，不包含扩展名）", required = false) @RequestParam(value = "filename", required = false) String customFileName) {
+            @Parameter(description = "上传的视频文件", required = true) @RequestParam("file") MultipartFile file,
+            @Parameter(description = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath,
+            @Parameter(description = "自定义文件名（可选，不包含扩展名）", required = false) @RequestParam(value = "filename", required = false) String customFileName) {
         try {
             User currentUser = userService.getCurrentUser();
             if (currentUser == null) {
@@ -280,10 +280,10 @@ public class FileController {
      * 
      * @return 用户文件列表，包含URL、原始文件名等信息
      */
-    @ApiOperation(value = "获取用户文件列表", notes = "获取当前登录用户上传的所有文件列表")
+    @Operation(summary = "获取用户文件列表", description = "获取当前登录用户上传的所有文件列表")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "获取成功"),
-        @ApiResponse(code = 401, message = "未授权，请先登录")
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录")
     })
     @GetMapping("/files")
     public Result<Map<String, Object>> getUserFiles() {
@@ -308,17 +308,17 @@ public class FileController {
      * @param filePath 文件路径
      * @return 删除结果
      */
-    @ApiOperation(value = "删除文件", notes = "删除指定文件，需要提供文件路径")
+    @Operation(summary = "删除文件", description = "删除指定文件，需要提供文件路径")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "删除成功"),
-        @ApiResponse(code = 400, message = "请求参数错误"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 404, message = "文件不存在"),
-        @ApiResponse(code = 500, message = "服务器内部错误")
+        @ApiResponse(responseCode = "200", description = "删除成功"),
+        @ApiResponse(responseCode = "400", description = "请求参数错误"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "404", description = "文件不存在"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     @DeleteMapping("/files")
     public Result<Map<String, Object>> deleteFile(
-            @ApiParam(value = "文件路径", required = true) @RequestParam("path") String filePath) {
+            @Parameter(description = "文件路径", required = true) @RequestParam("path") String filePath) {
         try {
             User currentUser = userService.getCurrentUser();
             if (currentUser == null) {
@@ -383,17 +383,17 @@ public class FileController {
      * @param customPath 自定义存储路径（可选）
      * @return 上传结果，包含所有图片的访问URL
      */
-    @ApiOperation(value = "批量上传图片", notes = "支持同时上传多张图片，仅支持JPG、PNG、GIF、BMP、WEBP格式，单张图片不超过10MB")
+    @Operation(summary = "批量上传图片", description = "支持同时上传多张图片，仅支持JPG、PNG、GIF、BMP、WEBP格式，单张图片不超过10MB")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "上传成功"),
-        @ApiResponse(code = 400, message = "请求参数错误或不支持的文件类型"),
-        @ApiResponse(code = 401, message = "未授权，请先登录"),
-        @ApiResponse(code = 500, message = "服务器内部错误")
+        @ApiResponse(responseCode = "200", description = "上传成功"),
+        @ApiResponse(responseCode = "400", description = "请求参数错误或不支持的文件类型"),
+        @ApiResponse(responseCode = "401", description = "未授权，请先登录"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     @PostMapping("/upload/images")
     public Result<Map<String, Object>> uploadMultipleImages(
-            @ApiParam(value = "上传的图片文件数组", required = true) @RequestParam("files") MultipartFile[] files,
-            @ApiParam(value = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath) {
+            @Parameter(description = "上传的图片文件数组", required = true) @RequestParam("files") MultipartFile[] files,
+            @Parameter(description = "自定义存储路径（可选）", required = false) @RequestParam(value = "path", required = false) String customPath) {
         try {
             User currentUser = userService.getCurrentUser();
             if (currentUser == null) {

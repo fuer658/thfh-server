@@ -18,9 +18,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -401,7 +401,7 @@ public class PostRecommendationService {
         try {
             Specification<Post> spec = (root, query, cb) -> {
                 // 添加root.fetch关联tags，确保标签被加载
-                if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+                if (root.getModel().getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
                     root.fetch("tags", JoinType.LEFT);
                     query.distinct(true);
                 }

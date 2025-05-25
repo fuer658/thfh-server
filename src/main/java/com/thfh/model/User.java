@@ -1,141 +1,184 @@
 package com.thfh.model;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import javax.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@Getter
+@Setter
 @Entity
 @Table(name = "user")
-@ApiModel(value = "用户实体", description = "存储用户基本信息，包括学员、教员和企业人员")
+@Schema(description = "用户实体 - 存储用户基本信息，包括学员、教员和企业人员")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "用户ID", example = "1")
+    @Schema(description = "用户ID", example = "1")
     private Long id;
 
     @Column(unique = true, nullable = false, length = 50)
-    @ApiModelProperty(value = "用户名", required = true, example = "zhangsan")
+    @Schema(description = "用户名", required = true, example = "zhangsan")
     private String username;
 
     @Column(nullable = false)
-    @ApiModelProperty(value = "密码", required = true, hidden = true)
+    @Schema(description = "密码", required = true, hidden = true)
     private String password;
 
     @Column(length = 100)
-    @ApiModelProperty(value = "真实姓名", example = "张三")
+    @Schema(description = "真实姓名", example = "张三")
     private String realName;
 
-    @Column(length = 100, name = "locate")
-    @ApiModelProperty(value = "用户所在地区", example = "北京市海淀区")
-    private String locate; // 用户所在地区
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    @ApiModelProperty(value = "用户类型", required = true, example = "STUDENT", notes = "STUDENT(学员)、TEACHER(教员)或ENTERPRISE(企业人员)")
-    private UserType userType; // STUDENT(学员)、TEACHER(教员)或ENTERPRISE(企业人员)
-
-    @Column(length = 50)
-    @ApiModelProperty(value = "电话号码", example = "13800138000")
+    @Column(length = 11)
+    @Schema(description = "手机号码", example = "13800138000")
     private String phone;
 
     @Column(length = 100)
-    @ApiModelProperty(value = "电子邮箱", example = "zhangsan@example.com")
+    @Schema(description = "邮箱", example = "zhangsan@example.com")
     private String email;
 
-    @Column(nullable = false)
-    @Convert(converter = GenderConverter.class)
-    @ApiModelProperty(value = "性别", example = "MALE", notes = "默认为UNKNOWN")
-    private Gender gender = Gender.UNKNOWN; // 性别，默认为未知
-
-    @ApiModelProperty(value = "头像URL", example = "http://example.com/avatar.jpg")
+    @Schema(description = "头像URL", example = "https://example.com/avatar.jpg")
     private String avatar;
 
-    @Column(length = 100)
-    @ApiModelProperty(value = "个人介绍", example = "我是一名热爱学习的用户")
-    private String introduction;
-    // 学员特有字段
-    @ApiModelProperty(value = "残疾类型", example = "视力障碍", notes = "学员特有字段")
-    private String disability; // 残疾类型
-    
-    @ApiModelProperty(value = "积分", example = "100", notes = "学员特有字段")
-    private Integer points = 0; // 积分
-    
-    @ApiModelProperty(value = "补签卡数量", example = "5", notes = "学员特有字段")
-    private Integer makeupCards = 0; // 补签卡数量
+    @Schema(description = "用户类型 - ADMIN:管理员, STUDENT:学员, TEACHER:教员, COMPANY:企业", example = "STUDENT")
+    private String userType;
 
-    // 企业人员特有字段
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    @ApiModelProperty(value = "关联的公司", notes = "企业人员特有字段")
-    private Company company; // 关联的公司
+    @Schema(description = "账号状态 - ACTIVE:正常, LOCKED:锁定, DISABLED:禁用", example = "ACTIVE")
+    private String status;
 
-    @Column(nullable = false)
-    @ApiModelProperty(value = "经验值", example = "500")
-    private Integer experience = 0; // 经验值
+    @Schema(description = "创建时间")
+    private LocalDateTime createTime;
 
-    @Column(nullable = false)
-    @ApiModelProperty(value = "用户等级", example = "3")
-    private Integer level = 1; // 用户等级
+    @Schema(description = "更新时间")
+    private LocalDateTime updateTime;
 
-    @Column(nullable = false)
-    @ApiModelProperty(value = "是否启用", example = "true")
-    private Boolean enabled = true;
-
-    @ApiModelProperty(value = "最后登录时间", example = "2023-01-01T12:00:00")
+    @Schema(description = "最后登录时间")
     private LocalDateTime lastLoginTime;
 
-    @Column(nullable = false)
-    @ApiModelProperty(value = "创建时间", example = "2023-01-01T10:00:00")
-    private LocalDateTime createTime = LocalDateTime.now();
+    @Schema(description = "个人简介", example = "热爱学习，积极向上")
+    private String bio;
 
-    @Column(nullable = false)
-    @ApiModelProperty(value = "更新时间", example = "2023-01-01T11:00:00")
-    private LocalDateTime updateTime = LocalDateTime.now();
+    @Schema(description = "性别 - MALE:男, FEMALE:女, OTHER:其他", example = "MALE")
+    private String gender;
 
-    @Column
-    @ApiModelProperty(value = "生日", example = "2000-01-01T00:00:00")
-    private LocalDateTime birthday = LocalDateTime.now();
-    
-    // 添加与JobApplication的一对多关联
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ApiModelProperty(value = "用户的工作申请列表")
-    private List<JobApplication> jobApplications = new ArrayList<>();
-    
-    // 添加与UserInterest的一对多关联
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ApiModelProperty(value = "用户的兴趣爱好列表")
-    private List<UserInterest> userInterests = new ArrayList<>();
-    
-    @Column(length = 45)
-    @ApiModelProperty(value = "最近登录IP", example = "192.168.1.1")
-    private String recentLoginIp;
-    
-    /**
-     * 更新实体的updateTime
-     */
+    @Schema(description = "生日", example = "1990-01-01")
+    private LocalDateTime birthday;
+
+    @Schema(description = "地址", example = "北京市海淀区")
+    private String address;
+
+    @Schema(description = "积分", example = "100")
+    private Integer points;
+
+    @Schema(description = "是否已认证", example = "true")
+    private Boolean verified;
+
+    @Schema(description = "认证类型 - ID:身份证, DISABILITY:残疾证, COMPANY:企业", example = "ID")
+    private String verificationType;
+
+    @Schema(description = "标签 - 用户标签，多个标签以逗号分隔", example = "设计,UI,前端")
+    private String tags;
+
+    @Schema(description = "关注数量 - 用户关注的其他用户数量", example = "10")
+    private Integer followingCount;
+
+    @Schema(description = "粉丝数量 - 关注该用户的其他用户数量", example = "20")
+    private Integer followersCount;
+
+    @Schema(description = "是否是VIP用户", example = "false")
+    private Boolean vip;
+
+    @Schema(description = "VIP到期时间")
+    private LocalDateTime vipExpireTime;
+
+    @Schema(description = "是否已禁言", example = "false")
+    private Boolean muted;
+
+    @Schema(description = "禁言到期时间")
+    private LocalDateTime muteExpireTime;
+
+    @Schema(description = "最后活跃时间")
+    private LocalDateTime lastActiveTime;
+
+    @Schema(description = "是否在线", example = "true")
+    private Boolean online;
+
+    @Schema(description = "设备ID - 用户最后登录的设备ID", example = "device123456")
+    private String deviceId;
+
+    @Schema(description = "推送ID - 用于消息推送的设备标识", example = "push123456")
+    private String pushId;
+
+    @Schema(description = "推送开关 - 是否接收推送消息", example = "true")
+    private Boolean pushEnabled;
+
+    @Schema(description = "隐私设置 - JSON格式的隐私设置", example = "{\"showPhone\":false,\"showEmail\":true}")
+    private String privacySettings;
+
+    @Schema(description = "企业ID - 如果用户类型是企业人员，关联的企业ID", example = "1")
+    private Long companyId;
+
+    @Schema(description = "教员ID - 如果用户是学员，关联的教员ID", example = "2")
+    private Long teacherId;
+
+    @Schema(description = "残疾类型 - 如果用户是残疾人，记录残疾类型", example = "视力障碍")
+    private String disabilityType;
+
+    @Schema(description = "残疾等级 - 如果用户是残疾人，记录残疾等级", example = "一级")
+    private String disabilityLevel;
+
+    @Schema(description = "紧急联系人", example = "李四")
+    private String emergencyContact;
+
+    @Schema(description = "紧急联系人电话", example = "13900139000")
+    private String emergencyPhone;
+
+    @Schema(description = "备注", example = "这是一个备注")
+    private String remark;
+
+    @PrePersist
+    public void prePersist() {
+        if (createTime == null) {
+            createTime = LocalDateTime.now();
+        }
+        if (updateTime == null) {
+            updateTime = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = "ACTIVE";
+        }
+        if (points == null) {
+            points = 0;
+        }
+        if (verified == null) {
+            verified = false;
+        }
+        if (vip == null) {
+            vip = false;
+        }
+        if (muted == null) {
+            muted = false;
+        }
+        if (online == null) {
+            online = false;
+        }
+        if (pushEnabled == null) {
+            pushEnabled = true;
+        }
+        if (followingCount == null) {
+            followingCount = 0;
+        }
+        if (followersCount == null) {
+            followersCount = 0;
+        }
+    }
+
     @PreUpdate
     public void preUpdate() {
-        this.updateTime = LocalDateTime.now();
-    }
-}
-
-/**
- * 性别转换器
- */
-@Converter
-class GenderConverter implements AttributeConverter<Gender, String> {
-    @Override
-    public String convertToDatabaseColumn(Gender gender) {
-        return gender == null ? null : gender.name();
-    }
-
-    @Override
-    public Gender convertToEntityAttribute(String value) {
-        return Gender.fromString(value);
+        updateTime = LocalDateTime.now();
     }
 }

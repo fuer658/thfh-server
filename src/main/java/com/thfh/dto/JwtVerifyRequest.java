@@ -1,6 +1,6 @@
 package com.thfh.dto;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * 用于JWT校验请求的DTO

@@ -164,14 +164,20 @@ public class ChatService {
      * 将消息标记为已读
      * 
      * @param messageId 消息ID
+     * @param userId 当前用户ID（用于验证权限）
      */
     @Transactional
-    public void markMessageAsRead(Long messageId) {
+    public void markMessageAsRead(Long messageId, Long userId) {
         ChatMessage message = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> {
                     log.warn("消息不存在, messageId={}", messageId);
                     return new ResourceNotFoundException("消息不存在");
                 });
+        // 验证权限（只有消息的接收者可以标记为已读）
+        if (!message.getReceiver().getId().equals(userId)) {
+            log.warn("无权限标记消息为已读, messageId={}, userId={}", messageId, userId);
+            throw new BusinessException(ErrorCode.FORBIDDEN, "没有权限标记该消息为已读");
+        }
         if (message.isRead()) {
             log.info("消息已读, messageId={}", messageId);
             return;

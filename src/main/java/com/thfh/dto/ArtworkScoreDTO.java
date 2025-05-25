@@ -1,28 +1,40 @@
 package com.thfh.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Digits;
-import java.math.BigDecimal;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * 作品评分数据传输对象
+ * 作品评分DTO
  */
-@ApiModel(value = "作品评分信息", description = "用于提交作品评分")
+@Data
+@Getter
+@Setter
+@Schema(description = "作品评分DTO - 用户对作品的评分信息")
 public class ArtworkScoreDTO {
-    @Min(value = 0, message = "评分不能小于0")
-    @Max(value = 100, message = "评分不能大于100")
-    @Digits(integer = 3, fraction = 2, message = "评分最多支持3位整数和2位小数")
-    @ApiModelProperty(value = "评分", required = true, notes = "0-100之间，支持小数", example = "85.5")
-    private BigDecimal score;
-
-    public BigDecimal getScore() {
-        return score;
-    }
-
-    public void setScore(BigDecimal score) {
-        this.score = score;
-    }
+    
+    @Schema(description = "评分ID - 作品评分的唯一标识", example = "1")
+    private Long id;
+    
+    @Schema(description = "作品ID", example = "1")
+    private Long artworkId;
+    
+    @Schema(description = "用户ID", example = "1")
+    private Long userId;
+    
+    @Schema(description = "评分", example = "4.5")
+    private Float score;
+    
+    @Schema(description = "评论", example = "这是一个很好的作品")
+    private String comment;
+    
+    @Schema(description = "评分时间", example = "2023-05-20 14:30:00")
+    private String createTime;
+    
+    @Schema(description = "用户名", example = "zhangsan")
+    private String username;
+    
+    @Schema(description = "用户头像", example = "https://example.com/avatar.jpg")
+    private String userAvatar;
 }

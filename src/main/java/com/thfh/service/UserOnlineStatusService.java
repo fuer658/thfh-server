@@ -9,7 +9,7 @@ import com.thfh.model.UserOnlineStatus;
 import com.thfh.repository.FriendRepository;
 import com.thfh.repository.UserOnlineRecordRepository;
 import com.thfh.repository.UserRepository;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * 用户在线状态服务
  * 管理用户的在线状态信息，包括更新状态、查询状态和通知好友
  */
-@Api(tags = "用户在线状态服务")
+@Tag(name = "用户在线状态服务")
 @Service
 @Slf4j
 public class UserOnlineStatusService {

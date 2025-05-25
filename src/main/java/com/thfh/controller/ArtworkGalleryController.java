@@ -3,11 +3,11 @@ package com.thfh.controller;
 import com.thfh.dto.ArtworkGalleryDTO;
 import com.thfh.service.ArtworkGalleryService;
 import com.thfh.common.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 作品图册控制器
  */
-@Api(tags = "作品图册接口")
+@Tag(name = "作品图册接口")
 @RestController
 @RequestMapping("/api/artworks/{artworkId}/gallery")
 public class ArtworkGalleryController {
@@ -29,18 +29,18 @@ public class ArtworkGalleryController {
     /**
      * 添加图册图片
      */
-    @ApiOperation("添加图册图片")
+    @Operation(summary = "添加图册图片")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "添加成功"),
-        @ApiResponse(code = 401, message = "未授权"),
-        @ApiResponse(code = 404, message = "作品不存在")
+        @ApiResponse(responseCode = "200", description = "添加成功"),
+        @ApiResponse(responseCode = "401", description = "未授权"),
+        @ApiResponse(responseCode = "404", description = "作品不存在")
     })
     @PostMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<ArtworkGalleryDTO> addGalleryImage(
-            @ApiParam("作品ID") @PathVariable Long artworkId,
-            @ApiParam("图片文件") @RequestParam("file") MultipartFile file,
-            @ApiParam("图片描述") @RequestParam(value = "description", required = false) String description) {
+            @Parameter(description = "作品ID") @PathVariable Long artworkId,
+            @Parameter(description = "图片文件") @RequestParam("file") MultipartFile file,
+            @Parameter(description = "图片描述") @RequestParam(value = "description", required = false) String description) {
         ArtworkGalleryDTO gallery = artworkGalleryService.addGalleryImage(artworkId, file, description);
         return Result.success(gallery);
     }
@@ -48,14 +48,14 @@ public class ArtworkGalleryController {
     /**
      * 获取图册列表
      */
-    @ApiOperation("获取图册列表")
+    @Operation(summary = "获取图册列表")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "获取成功"),
-        @ApiResponse(code = 404, message = "作品不存在")
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "404", description = "作品不存在")
     })
     @GetMapping
     public Result<List<ArtworkGalleryDTO>> getGalleryList(
-            @ApiParam("作品ID") @PathVariable Long artworkId) {
+            @Parameter(description = "作品ID") @PathVariable Long artworkId) {
         List<ArtworkGalleryDTO> galleries = artworkGalleryService.getGalleryByArtworkId(artworkId);
         return Result.success(galleries);
     }
@@ -63,17 +63,17 @@ public class ArtworkGalleryController {
     /**
      * 删除图册图片
      */
-    @ApiOperation("删除图册图片")
+    @Operation(summary = "删除图册图片")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "删除成功"),
-        @ApiResponse(code = 401, message = "未授权"),
-        @ApiResponse(code = 404, message = "图册不存在")
+        @ApiResponse(responseCode = "200", description = "删除成功"),
+        @ApiResponse(responseCode = "401", description = "未授权"),
+        @ApiResponse(responseCode = "404", description = "图册不存在")
     })
     @DeleteMapping("/{galleryId}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<Void> deleteGalleryImage(
-            @ApiParam("作品ID") @PathVariable Long artworkId,
-            @ApiParam("图册ID") @PathVariable Long galleryId) {
+            @Parameter(description = "作品ID") @PathVariable Long artworkId,
+            @Parameter(description = "图册ID") @PathVariable Long galleryId) {
         artworkGalleryService.deleteGalleryImage(galleryId);
         return Result.success();
     }
@@ -81,18 +81,18 @@ public class ArtworkGalleryController {
     /**
      * 更新图册图片排序
      */
-    @ApiOperation("更新图册图片排序")
+    @Operation(summary = "更新图册图片排序")
     @ApiResponses({
-        @ApiResponse(code = 200, message = "更新成功"),
-        @ApiResponse(code = 401, message = "未授权"),
-        @ApiResponse(code = 404, message = "图册不存在")
+        @ApiResponse(responseCode = "200", description = "更新成功"),
+        @ApiResponse(responseCode = "401", description = "未授权"),
+        @ApiResponse(responseCode = "404", description = "图册不存在")
     })
     @PutMapping("/{galleryId}/sort")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Result<Void> updateGallerySortOrder(
-            @ApiParam("作品ID") @PathVariable Long artworkId,
-            @ApiParam("图册ID") @PathVariable Long galleryId,
-            @ApiParam("新的排序序号") @RequestParam Integer newSortOrder) {
+            @Parameter(description = "作品ID") @PathVariable Long artworkId,
+            @Parameter(description = "图册ID") @PathVariable Long galleryId,
+            @Parameter(description = "新的排序序号") @RequestParam Integer newSortOrder) {
         artworkGalleryService.updateGallerySortOrder(galleryId, newSortOrder);
         return Result.success();
     }

@@ -1,10 +1,9 @@
 package com.thfh.model;
 
 import lombok.Data;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
@@ -14,29 +13,29 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "user_interest")
-@ApiModel(value = "用户兴趣关联", description = "用户与兴趣类型之间的多对多关系")
+@Schema(description = "用户兴趣关联 - 用户与兴趣类型之间的多对多关系")
 public class UserInterest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "ID", example = "1")
+    @Schema(description = "ID", example = "1")
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @ApiModelProperty(value = "关联的用户")
+    @Schema(description = "关联的用户")
     private User user;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @ApiModelProperty(value = "兴趣偏好", example = "PATTERN_DESIGN")
+    @Schema(description = "兴趣偏好", example = "PATTERN_DESIGN")
     private InterestType interestType;
 
     @Column(nullable = false)
-    @ApiModelProperty(value = "创建时间")
+    @Schema(description = "创建时间")
     private LocalDateTime createTime = LocalDateTime.now();
 
     @Column(nullable = false)
-    @ApiModelProperty(value = "更新时间")
+    @Schema(description = "更新时间")
     private LocalDateTime updateTime = LocalDateTime.now();
 
     /**

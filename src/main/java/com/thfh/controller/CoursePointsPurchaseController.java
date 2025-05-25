@@ -4,9 +4,9 @@ import com.thfh.model.CoursePointsPurchase;
 import com.thfh.model.User;
 import com.thfh.service.CoursePointsPurchaseService;
 import com.thfh.service.UserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,7 +27,7 @@ import java.util.HashMap;
  */
 @RestController
 @RequestMapping("/api/course-purchase")
-@Api(tags = "课程积分购买", description = "课程积分购买相关接口")
+@Tag(name = "课程积分购买", description = "课程积分购买相关接口")
 public class CoursePointsPurchaseController {
 
     @Autowired
@@ -40,9 +40,9 @@ public class CoursePointsPurchaseController {
      * 使用积分购买课程
      */
     @PostMapping("/points/{courseId}")
-    @ApiOperation(value = "积分购买课程", notes = "用户使用积分购买指定课程")
+    @Operation(summary = "积分购买课程", description = "用户使用积分购买指定课程")
     public ResponseEntity<CoursePointsPurchase> purchaseCourseWithPoints(
-            @ApiParam(value = "课程ID", required = true) @PathVariable Long courseId) {
+            @Parameter(description = "课程ID", required = true) @PathVariable Long courseId) {
         
         // 使用userService获取当前用户
         User currentUser = userService.getCurrentUser();
@@ -54,10 +54,10 @@ public class CoursePointsPurchaseController {
      * 获取用户购买记录
      */
     @GetMapping("/user/history")
-    @ApiOperation(value = "获取用户购买记录", notes = "分页获取当前用户的课程购买记录")
+    @Operation(summary = "获取用户购买记录", description = "分页获取当前用户的课程购买记录")
     public ResponseEntity<Page<CoursePointsPurchase>> getUserPurchaseHistory(
-            @ApiParam(value = "页码", defaultValue = "0") @RequestParam(defaultValue = "0") int page,
-            @ApiParam(value = "每页条数", defaultValue = "10") @RequestParam(defaultValue = "10") int size) {
+            @Parameter(description = "页码") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") int size) {
         
         // 使用userService获取当前用户
         User currentUser = userService.getCurrentUser();
@@ -70,9 +70,9 @@ public class CoursePointsPurchaseController {
      * 检查用户是否已购买课程
      */
     @GetMapping("/check/{courseId}")
-    @ApiOperation(value = "检查购买状态", notes = "检查当前用户是否已购买指定课程")
+    @Operation(summary = "检查购买状态", description = "检查当前用户是否已购买指定课程")
     public ResponseEntity<Map<String, Boolean>> checkPurchaseStatus(
-            @ApiParam(value = "课程ID", required = true) @PathVariable Long courseId) {
+            @Parameter(description = "课程ID", required = true) @PathVariable Long courseId) {
         
         // 使用userService获取当前用户
         User currentUser = userService.getCurrentUser();
@@ -89,9 +89,9 @@ public class CoursePointsPurchaseController {
      * 获取购买记录详情
      */
     @GetMapping("/{purchaseId}")
-    @ApiOperation(value = "获取购买记录详情", notes = "根据购买记录ID获取详细信息")
+    @Operation(summary = "获取购买记录详情", description = "根据购买记录ID获取详细信息")
     public ResponseEntity<?> getPurchaseDetails(
-            @ApiParam(value = "购买记录ID", required = true) @PathVariable Long purchaseId) {
+            @Parameter(description = "购买记录ID", required = true) @PathVariable Long purchaseId) {
         
         // 使用userService获取当前用户
         User currentUser = userService.getCurrentUser();
@@ -112,9 +112,9 @@ public class CoursePointsPurchaseController {
      */
     @GetMapping("/admin/course/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
-    @ApiOperation(value = "管理员查看课程购买记录", notes = "管理员查看指定课程的所有购买记录")
+    @Operation(summary = "管理员查看课程购买记录", description = "管理员查看指定课程的所有购买记录")
     public ResponseEntity<List<CoursePointsPurchase>> getCoursePurchaseRecords(
-            @ApiParam(value = "课程ID", required = true) @PathVariable Long courseId) {
+            @Parameter(description = "课程ID", required = true) @PathVariable Long courseId) {
         
         List<CoursePointsPurchase> purchases = purchaseService.getCoursePurchases(courseId);
         return ResponseEntity.ok(purchases);
@@ -125,9 +125,9 @@ public class CoursePointsPurchaseController {
      */
     @PostMapping("/admin/refund/{purchaseId}")
     @PreAuthorize("hasRole('ADMIN')")
-    @ApiOperation(value = "处理退款", notes = "管理员处理购买记录的退款")
+    @Operation(summary = "处理退款", description = "管理员处理购买记录的退款")
     public ResponseEntity<CoursePointsPurchase> processRefund(
-            @ApiParam(value = "购买记录ID", required = true) @PathVariable Long purchaseId) {
+            @Parameter(description = "购买记录ID", required = true) @PathVariable Long purchaseId) {
         
         CoursePointsPurchase refundedPurchase = purchaseService.refundPurchase(purchaseId);
         return ResponseEntity.ok(refundedPurchase);

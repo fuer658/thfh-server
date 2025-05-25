@@ -1,19 +1,18 @@
 package com.thfh.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-@ApiModel("黑名单DTO")
+@Schema(description = "黑名单DTO")
 public class BlacklistDTO {
-    @ApiModelProperty("拉黑发起者用户ID")
+    @Schema(description = "拉黑发起者用户ID")
     private Long userId;
 
-    @ApiModelProperty("被拉黑用户ID")
+    @Schema(description = "被拉黑用户ID")
     private Long blockedId;
 
-    @ApiModelProperty("拉黑时间")
+    @Schema(description = "拉黑时间")
     private LocalDateTime createTime;
 
     public Long getUserId() { return userId; }

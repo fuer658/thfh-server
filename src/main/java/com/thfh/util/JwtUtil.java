@@ -5,7 +5,8 @@ import com.thfh.exception.JwtException;
 import com.thfh.service.JwtBlacklistService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -88,11 +89,12 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, long expiration) {
+        SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
         return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .signWith(SignatureAlgorithm.HS512, jwtConfig.getSecret())
+                .claims(claims)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expiration * 1000))
+                .signWith(key)
                 .compact();
     }
 
@@ -189,10 +191,12 @@ public class JwtUtil {
      */
     private Claims extractAllClaims(String token) throws JwtException {
         try {
+            SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
             return Jwts.parser()
-                    .setSigningKey(jwtConfig.getSecret())
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
         } catch (Exception e) {
             throw new JwtException("解析令牌失败: " + e.getMessage(), e);
         }
@@ -219,10 +223,12 @@ public class JwtUtil {
 
     public String getUsernameFromToken(String token) {
         try {
+            SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
             Claims claims = Jwts.parser()
-                    .setSigningKey(jwtConfig.getSecret())
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
             return claims.get(CLAIM_USERNAME, String.class);
         } catch (Exception e) {
             return null;
@@ -237,10 +243,12 @@ public class JwtUtil {
      */
     public Long getUserIdFromToken(String token) {
         try {
+            SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
             Claims claims = Jwts.parser()
-                    .setSigningKey(jwtConfig.getSecret())
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
             return claims.get(CLAIM_USER_ID, Long.class);
         } catch (Exception e) {
             return null;
@@ -252,10 +260,12 @@ public class JwtUtil {
      */
     public boolean isRefreshToken(String token) {
         try {
+            SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
             Claims claims = Jwts.parser()
-                    .setSigningKey(jwtConfig.getSecret())
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
             String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);
             return jwtConfig.getRefreshTokenType().equals(tokenType);
         } catch (Exception e) {
@@ -273,7 +283,11 @@ public class JwtUtil {
                 return false;
             }
             
-            Jwts.parser().setSigningKey(jwtConfig.getSecret()).parseClaimsJws(token);
+            SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
+            Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -290,10 +304,12 @@ public class JwtUtil {
                 return false;
             }
             
+            SecretKey key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
             Claims claims = Jwts.parser()
-                    .setSigningKey(jwtConfig.getSecret())
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
             
             // 验证令牌类型
             String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);

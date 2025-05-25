@@ -1,31 +1,30 @@
 package com.thfh.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-@ApiModel(description = "举报作品返回体")
+@Schema(description = "举报作品返回体")
 public class ArtworkReportResponse {
-    @ApiModelProperty(value = "举报ID")
+    @Schema(description = "举报ID")
     private Long id;
 
-    @ApiModelProperty(value = "作品ID")
+    @Schema(description = "作品ID")
     private Long artworkId;
 
-    @ApiModelProperty(value = "举报人ID")
+    @Schema(description = "举报人ID")
     private Long reporterId;
 
-    @ApiModelProperty(value = "举报原因")
+    @Schema(description = "举报原因")
     private String reason;
 
-    @ApiModelProperty(value = "举报描述")
+    @Schema(description = "举报描述")
     private String description;
 
-    @ApiModelProperty(value = "举报时间")
+    @Schema(description = "举报时间")
     private LocalDateTime createTime;
 
-    @ApiModelProperty(value = "举报状态")
+    @Schema(description = "举报状态")
     private String status;
 
     public Long getId() { return id; }

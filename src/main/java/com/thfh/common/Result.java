@@ -2,12 +2,11 @@ package com.thfh.common;
 
 import com.thfh.exception.ErrorCode;
 import lombok.Data;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
 
 @Data
-@ApiModel(value = "统一响应结果", description = "所有API的统一返回格式")
+@Schema(description = "统一响应结果 - 所有API的统一返回格式")
 public class Result<T> {
     
     public static final int SUCCESS = HttpStatus.OK.value();
@@ -17,16 +16,16 @@ public class Result<T> {
     public static final int NOT_FOUND = HttpStatus.NOT_FOUND.value();
     public static final int FORBIDDEN = HttpStatus.FORBIDDEN.value();
     
-    @ApiModelProperty(value = "状态码", notes = "200-成功，401-未授权，500-错误等", example = "200")
+    @Schema(description = "状态码 - 200-成功，401-未授权，500-错误等", example = "200")
     private Integer code;
     
-    @ApiModelProperty(value = "响应消息", example = "操作成功")
+    @Schema(description = "响应消息", example = "操作成功")
     private String message;
     
-    @ApiModelProperty(value = "响应数据")
+    @Schema(description = "响应数据")
     private T data;
     
-    @ApiModelProperty(value = "时间戳", notes = "请求处理的时间戳", example = "1624007689420")
+    @Schema(description = "时间戳 - 请求处理的时间戳", example = "1624007689420")
     private Long timestamp;
 
     public Result() {

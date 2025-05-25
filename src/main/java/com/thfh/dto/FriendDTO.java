@@ -1,36 +1,35 @@
 package com.thfh.dto;
 
 import com.thfh.model.UserOnlineStatus;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import java.util.Date;
 
-@ApiModel("好友DTO，带用户名")
+@Schema(description = "好友DTO，带用户名")
 @Data
 public class FriendDTO {
-    @ApiModelProperty("主键ID")
+    @Schema(description = "主键ID")
     private Long id;
-    @ApiModelProperty("用户ID")
+    @Schema(description = "用户ID")
     private Long userId;
-    @ApiModelProperty("好友ID")
+    @Schema(description = "好友ID")
     private Long friendId;
-    @ApiModelProperty("好友用户名")
+    @Schema(description = "好友用户名")
     private String friendName;
-    @ApiModelProperty("好友备注")
+    @Schema(description = "好友备注")
     private String remark;
-    @ApiModelProperty("成为好友时间")
+    @Schema(description = "成为好友时间")
     private Date createdAt;
-    @ApiModelProperty("好友头像URL")
+    @Schema(description = "好友头像URL")
     private String avatar;
-    @ApiModelProperty("好友个人简介")
+    @Schema(description = "好友个人简介")
     private String introduction;
-    @ApiModelProperty("好友等级")
+    @Schema(description = "好友等级")
     private Integer level;
-    @ApiModelProperty("好友在线状态")
+    @Schema(description = "好友在线状态")
     private UserOnlineStatus onlineStatus;
-    @ApiModelProperty("好友最后活跃时间")
+    @Schema(description = "好友最后活跃时间")
     private Date lastActiveTime;
-    @ApiModelProperty("好友真实姓名")
+    @Schema(description = "好友真实姓名")
     private String realName;
 } 

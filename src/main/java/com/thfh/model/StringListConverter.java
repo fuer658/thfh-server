@@ -3,11 +3,10 @@ package com.thfh.model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,9 +15,9 @@ import java.util.List;
  * 用于将List<String>与数据库中的JSON字符串相互转换
  */
 @Converter
-@ApiModel(value = "StringListConverter", description = "字符串列表转换器，用于List<String>与JSON字符串互转")
+@Schema(description = "StringListConverter - 字符串列表转换器，用于List<String>与JSON字符串互转")
 public class StringListConverter implements AttributeConverter<List<String>, String> {
-    @ApiModelProperty(value = "Jackson对象映射器", hidden = true)
+    @Schema(description = "Jackson对象映射器", hidden = true)
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**

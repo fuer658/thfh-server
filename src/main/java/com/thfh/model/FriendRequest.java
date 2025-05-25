@@ -1,40 +1,39 @@
 package com.thfh.model;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel("好友请求实体")
+@Schema(description = "好友请求实体")
 @Entity
 @Table(name = "friend_request")
 public class FriendRequest {
-    @ApiModelProperty("主键ID")
+    @Schema(description = "主键ID")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ApiModelProperty("发起人用户ID")
+    @Schema(description = "发起人用户ID")
     @Column(name = "from_user_id", nullable = false)
     private Long fromUserId;
 
-    @ApiModelProperty("接收人用户ID")
+    @Schema(description = "接收人用户ID")
     @Column(name = "to_user_id", nullable = false)
     private Long toUserId;
 
     /**
      * 0: 待处理 1: 同意 2: 拒绝 3: 撤回
      */
-    @ApiModelProperty("请求状态 0:待处理 1:同意 2:拒绝 3:撤回")
+    @Schema(description = "请求状态 0:待处理 1:同意 2:拒绝 3:撤回")
     @Column(nullable = false)
     private Integer status = 0;
 
-    @ApiModelProperty("创建时间")
+    @Schema(description = "创建时间")
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", updatable = false)
     private Date createdAt = new Date();
 
-    @ApiModelProperty("更新时间")
+    @Schema(description = "更新时间")
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at")
     private Date updatedAt = new Date();

@@ -1,17 +1,16 @@
 package com.thfh.model;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel(value = "职位状态枚举", description = "职位的发布状态")
+@Schema(description = "职位状态枚举 - 职位的发布状态")
 public enum JobStatus {
-    @ApiModelProperty(value = "草稿", notes = "职位尚未发布，处于编辑状态")
+    @Schema(description = "草稿 - 职位尚未发布，处于编辑状态")
     DRAFT("草稿"),
     
-    @ApiModelProperty(value = "已发布", notes = "职位已正式发布，可被用户查看")
+    @Schema(description = "已发布 - 职位已正式发布，可被用户查看")
     PUBLISHED("已发布"),
     
-    @ApiModelProperty(value = "已关闭", notes = "职位已关闭，不再接受申请")
+    @Schema(description = "已关闭 - 职位已关闭，不再接受申请")
     CLOSED("已关闭");
 
     private final String description;

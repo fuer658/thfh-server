@@ -7,24 +7,24 @@ import com.thfh.dto.ChatMessageRequest;
 import com.thfh.dto.GetMessagesRequest;
 import com.thfh.dto.MarkReadRequest;
 import com.thfh.service.ChatService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import com.thfh.exception.BusinessException;
+import com.thfh.exception.ErrorCode;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
-import javax.validation.Valid;
-import com.thfh.exception.BusinessException;
-import com.thfh.exception.ErrorCode;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
-@Api(tags = "聊天API")
+@Tag(name = "聊天API")
 @RestController
 @RequestMapping("/api/chat")
 @Validated
@@ -33,19 +33,16 @@ public class ChatController {
 
     private static final String USER_ID_ATTR = "userId";
 
-    private final ChatService chatService;
-
-    public ChatController(ChatService chatService) {
-        this.chatService = chatService;
-    }
+    @Autowired
+    private ChatService chatService;
 
     /**
-     * 发送消息 (REST API)
+     * 发送消息
      */
-    @ApiOperation(value = "发送消息")
+    @Operation(summary = "发送消息")
     @PostMapping("/send")
     public Result<ChatMessageDTO> sendMessage(
-            @ApiParam(value = "消息请求体") @Valid @RequestBody ChatMessageRequest request,
+            @Valid @RequestBody ChatMessageRequest request,
             HttpServletRequest httpRequest) {
         Long senderId = getUserIdFromRequest(httpRequest);
         ChatMessageDTO message = chatService.sendMessage(
@@ -59,30 +56,29 @@ public class ChatController {
     }
 
     /**
-     * 发送消息 (WebSocket)
+     * WebSocket发送消息
      */
-    @MessageMapping("/chat")
+    @MessageMapping("/send")
     @SendToUser("/queue/messages")
     public ChatMessageDTO sendMessageWebSocket(
-            @Payload Map<String, Object> payload,
-            HttpServletRequest request) {
-        Long senderId = getUserIdFromRequest(request);
-        Long receiverId = Long.valueOf(payload.get("receiverId").toString());
-        String content = (String) payload.get("content");
-        String messageType = payload.containsKey("messageType") ?
-                (String) payload.get("messageType") : "TEXT";
-        String mediaUrl = payload.containsKey("mediaUrl") ?
-                (String) payload.get("mediaUrl") : null;
-        return chatService.sendMessage(senderId, receiverId, content, messageType, mediaUrl);
+            @Payload ChatMessageRequest request,
+            HttpServletRequest httpRequest) {
+        Long senderId = getUserIdFromRequest(httpRequest);
+        return chatService.sendMessage(
+                senderId,
+                request.getReceiverId(),
+                request.getContent(),
+                request.getMessageType(),
+                request.getMediaUrl()
+        );
     }
 
     /**
-     * 获取用户的聊天会话列表
+     * 获取用户的所有会话
      */
-    @ApiOperation(value = "获取用户的聊天会话列表")
+    @Operation(summary = "获取用户的所有会话")
     @GetMapping("/conversations")
-    public Result<List<ChatConversationDTO>> getUserConversations(
-            HttpServletRequest request) {
+    public Result<List<ChatConversationDTO>> getUserConversations(HttpServletRequest request) {
         Long userId = getUserIdFromRequest(request);
         List<ChatConversationDTO> conversations = chatService.getUserConversations(userId);
         return Result.success(conversations);
@@ -91,10 +87,10 @@ public class ChatController {
     /**
      * 获取与指定用户的聊天记录
      */
-    @ApiOperation(value = "获取与指定用户的聊天记录")
+    @Operation(summary = "获取与指定用户的聊天记录")
     @PostMapping("/messages")
-    public Result<List<ChatMessageDTO>> getMessages(
-            @ApiParam(value = "请求体") @Valid @RequestBody GetMessagesRequest request,
+    public Result<List<ChatMessageDTO>> getMessagesBetweenUsers(
+            @Valid @RequestBody GetMessagesRequest request,
             HttpServletRequest httpRequest) {
         Long currentUserId = getUserIdFromRequest(httpRequest);
         List<ChatMessageDTO> messages = chatService.getMessagesBetweenUsers(currentUserId, request.getOtherUserId());
@@ -105,22 +101,23 @@ public class ChatController {
     /**
      * 将消息标记为已读
      */
-    @ApiOperation(value = "将消息标记为已读")
+    @Operation(summary = "将消息标记为已读")
     @PostMapping("/read/{messageId}")
     public Result<Void> markMessageAsRead(
-            @ApiParam(value = "消息ID") @PathVariable Long messageId) {
-
-        chatService.markMessageAsRead(messageId);
+            @Parameter(description = "消息ID") @PathVariable Long messageId,
+            HttpServletRequest request) {
+        Long userId = getUserIdFromRequest(request);
+        chatService.markMessageAsRead(messageId, userId);
         return Result.success(null);
     }
 
     /**
      * 将与指定用户的所有消息标记为已读
      */
-    @ApiOperation(value = "将与指定用户的所有消息标记为已读")
+    @Operation(summary = "将与指定用户的所有消息标记为已读")
     @PostMapping("/read-all")
     public Result<Void> markAllMessagesAsRead(
-            @ApiParam(value = "请求体") @Valid @RequestBody MarkReadRequest request,
+            @Valid @RequestBody MarkReadRequest request,
             HttpServletRequest httpRequest) {
         Long currentUserId = getUserIdFromRequest(httpRequest);
         chatService.markAllMessagesAsRead(currentUserId, request.getOtherUserId());
@@ -130,31 +127,18 @@ public class ChatController {
     /**
      * 删除指定消息
      */
-    @ApiOperation(value = "删除指定消息")
+    @Operation(summary = "删除指定消息")
     @DeleteMapping("/message/{messageId}")
-    public Result<Boolean> deleteMessage(
-            @ApiParam(value = "消息ID") @PathVariable Long messageId,
-            HttpServletRequest httpRequest) {
-        Long currentUserId = getUserIdFromRequest(httpRequest);
-        boolean success = chatService.deleteMessage(messageId, currentUserId);
-        return Result.success(success);
+    public Result<Void> deleteMessage(
+            @Parameter(description = "消息ID") @PathVariable Long messageId,
+            HttpServletRequest request) {
+        Long userId = getUserIdFromRequest(request);
+        chatService.deleteMessage(messageId, userId);
+        return Result.success(null);
     }
 
     /**
-     * 删除与指定用户的所有聊天记录
-     */
-    @ApiOperation(value = "删除与指定用户的所有聊天记录")
-    @DeleteMapping("/messages/{otherUserId}")
-    public Result<Integer> deleteAllMessages(
-            @ApiParam(value = "对方用户ID") @PathVariable Long otherUserId,
-            HttpServletRequest httpRequest) {
-        Long currentUserId = getUserIdFromRequest(httpRequest);
-        int deletedCount = chatService.deleteAllMessagesBetweenUsers(currentUserId, otherUserId);
-        return Result.success(deletedCount);
-    }
-
-    /**
-     * 从 request 获取 userId，若无则抛出业务异常
+     * 从请求中获取用户ID
      */
     private Long getUserIdFromRequest(HttpServletRequest request) {
         Object userIdObj = request.getAttribute(USER_ID_ATTR);

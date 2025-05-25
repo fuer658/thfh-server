@@ -21,8 +21,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +33,7 @@ import com.thfh.dto.PostReportRequest;
 import com.thfh.repository.PostReportRepository;
 import com.thfh.model.PostReport;
 import java.time.LocalDateTime;
-import javax.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.JoinType;
 
 @Slf4j
 
@@ -190,7 +190,7 @@ public class PostService {
     public Post getPost(Long postId) {
         Specification<Post> spec = (root, query, cb) -> {
             // 添加root.fetch关联tags，确保标签被加载
-            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+            if (root.getModel().getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
                 root.fetch("tags", JoinType.LEFT);
                 // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
                 query.distinct(true);
@@ -235,7 +235,7 @@ public class PostService {
     public Page<Post> getUserPosts(Long userId, Pageable pageable) {
         Specification<Post> spec = (root, query, cb) -> {
             // 添加root.fetch关联tags，确保标签被加载
-            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+            if (root.getModel().getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
                 root.fetch("tags", JoinType.LEFT);
                 // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
                 query.distinct(true);
@@ -565,7 +565,7 @@ public class PostService {
     public Page<PostDTO> getAllPosts(String title, String userName, Pageable pageable) {
         Specification<Post> spec = (root, query, cb) -> {
             // 添加root.fetch关联tags，确保标签被加载
-            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+            if (root.getModel().getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
                 root.fetch("tags", JoinType.LEFT);
                 // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
                 query.distinct(true);
@@ -611,7 +611,7 @@ public class PostService {
         
         Specification<Post> spec = (root, query, cb) -> {
             // 添加root.fetch关联tags，确保标签被加载
-            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+            if (root.getModel().getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
                 root.fetch("tags", JoinType.LEFT);
                 // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
                 query.distinct(true);
@@ -752,7 +752,7 @@ public class PostService {
     public Page<Post> findPostsByTag(Long tagId, Pageable pageable) {
         Specification<Post> spec = (root, query, cb) -> {
             // 添加root.fetch关联tags，确保标签被加载
-            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+            if (root.getModel().getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
                 root.fetch("tags", JoinType.LEFT);
                 // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
                 query.distinct(true);
@@ -1209,7 +1209,7 @@ public class PostService {
         
         Specification<Post> spec = (root, query, cb) -> {
             // 添加root.fetch关联tags，确保标签被加载
-            if (root.getModel().getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY) {
+            if (root.getModel().getPersistenceType() == jakarta.persistence.metamodel.Type.PersistenceType.ENTITY) {
                 root.fetch("tags", JoinType.LEFT);
                 // 避免出现"query specified join fetching, but the owner of the fetched association was not present in the select list"
                 query.distinct(true);

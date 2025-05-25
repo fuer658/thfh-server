@@ -11,8 +11,8 @@ import com.thfh.dto.FriendDTO;
 import com.thfh.model.UserOnlineRecord;
 import com.thfh.model.UserOnlineStatus;
 import com.thfh.repository.UserOnlineRecordRepository;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-@Api(tags = "好友业务逻辑")
+@Tag(name = "好友业务逻辑")
 @Service
 public class FriendService {
     private final FriendRepository friendRepository;
@@ -43,7 +43,7 @@ public class FriendService {
     /**
      * 发送好友请求
      */
-    @ApiOperation("发送好友请求")
+    @Operation(summary = "发送好友请求")
     public String sendFriendRequest(Long fromUserId, Long toUserId) {
         if (fromUserId.equals(toUserId)) {
             return "不能添加自己为好友";
@@ -70,7 +70,7 @@ public class FriendService {
     /**
      * 处理好友请求
      */
-    @ApiOperation("处理好友请求（同意/拒绝）")
+    @Operation(summary = "处理好友请求（同意/拒绝）")
     @Transactional
     public String handleFriendRequest(Long requestId, boolean accept) {
         FriendRequest request = friendRequestRepository.findById(requestId).orElse(null);
@@ -101,7 +101,7 @@ public class FriendService {
     /**
      * 查询好友列表
      */
-    @ApiOperation("查询好友列表")
+    @Operation(summary = "查询好友列表")
     public List<FriendDTO> listFriends(Long userId) {
         List<Friend> friends = friendRepository.findByUserId(userId);
         return friends.stream().map(this::toFriendDTO).collect(Collectors.toList());
@@ -110,7 +110,7 @@ public class FriendService {
     /**
      * 删除好友
      */
-    @ApiOperation("删除好友")
+    @Operation(summary = "删除好友")
     @Transactional
     public String deleteFriend(Long userId, Long friendId) {
         friendRepository.deleteByUserIdAndFriendId(userId, friendId);
@@ -221,7 +221,7 @@ public class FriendService {
     /**
      * 判断两用户是否为好友
      */
-    @ApiOperation("判断两用户是否为好友")
+    @Operation(summary = "判断两用户是否为好友")
     public boolean isFriend(Long userId, Long friendId) {
         return friendRepository.findByUserIdAndFriendId(userId, friendId) != null;
     }

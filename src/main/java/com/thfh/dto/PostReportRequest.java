@@ -1,18 +1,17 @@
 package com.thfh.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
-@ApiModel(description = "举报动态请求体")
+@Schema(description = "举报动态请求体")
 public class PostReportRequest {
 
-    @ApiModelProperty(value = "举报原因", required = true, example = "垃圾广告/违法信息/人身攻击等")
+    @Schema(description = "举报原因", required = true, example = "垃圾广告/违法信息/人身攻击等")
     @NotBlank(message = "举报原因不能为空")
     private String reason;
 
-    @ApiModelProperty(value = "举报描述", required = false, example = "详细描述举报内容")
+    @Schema(description = "举报描述", required = false, example = "详细描述举报内容")
     private String description;
 
     public String getReason() {

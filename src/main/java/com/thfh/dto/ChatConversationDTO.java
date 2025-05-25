@@ -1,8 +1,12 @@
 package com.thfh.dto;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Data
+@Getter
+@Setter
 public class ChatConversationDTO {
     private Long userId;
     private String username;
@@ -12,4 +16,4 @@ public class ChatConversationDTO {
     private boolean hasUnread;
     private int unreadCount;
     private String messageType;
-} 
+}

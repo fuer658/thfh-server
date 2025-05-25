@@ -1,79 +1,95 @@
 package com.thfh.model;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * 用户上传文件实体类
- * 用于记录用户上传的文件信息
+ * 用户上传文件实体
  */
 @Data
+@Getter
+@Setter
 @Entity
 @Table(name = "user_upload")
-@ApiModel(value = "用户上传文件", description = "记录用户上传的文件信息")
+@Schema(description = "用户上传文件实体 - 存储用户上传的各类文件信息")
 public class UserUpload {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "上传文件ID", example = "1")
+    @Schema(description = "上传ID", example = "1")
     private Long id;
     
-    @Column(nullable = false)
-    @ApiModelProperty(value = "上传用户ID", example = "1", required = true)
-    private Long userId; // 上传用户ID
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @Schema(description = "上传用户")
+    private User user;
     
-    @Column(nullable = false, length = 255)
-    @ApiModelProperty(value = "文件名称", example = "document.pdf", required = true)
-    private String fileName; // 文件名称
+    @Schema(description = "文件名", example = "profile.jpg")
+    private String fileName;
     
-    @Column(nullable = false, length = 500)
-    @ApiModelProperty(value = "文件存储路径", example = "/uploads/documents/document.pdf", required = true)
-    private String filePath; // 文件存储路径
+    @Schema(description = "文件路径 - 文件在服务器上的存储路径", example = "/uploads/images/2023/05/20/profile.jpg")
+    private String filePath;
     
-    @Column(nullable = false, length = 255)
-    @ApiModelProperty(value = "文件访问URL", example = "https://example.com/uploads/document.pdf", required = true)
-    private String url; // 文件访问URL
+    @Schema(description = "文件URL", example = "https://example.com/uploads/images/2023/05/20/profile.jpg")
+    private String fileUrl;
     
-    @Column(nullable = false, length = 50)
-    @ApiModelProperty(value = "文件类型", example = "DOCUMENT", required = true, notes = "如IMAGE, VIDEO, DOCUMENT等")
-    private String fileType; // 文件类型：IMAGE, VIDEO, DOCUMENT等
+    @Schema(description = "文件类型", example = "IMAGE")
+    private String fileType;
     
-    @Column(length = 100)
-    @ApiModelProperty(value = "MIME类型", example = "application/pdf")
-    private String mimeType; // MIME类型
+    @Schema(description = "文件大小(字节)", example = "1024000")
+    private Long fileSize;
     
-    @Column(nullable = false)
-    @ApiModelProperty(value = "文件大小(字节)", example = "1024000", required = true)
-    private Long fileSize; // 文件大小(字节)
+    @Schema(description = "MIME类型", example = "image/jpeg")
+    private String mimeType;
     
-    @Column(length = 500)
-    @ApiModelProperty(value = "文件描述", example = "这是一份重要的文档")
-    private String description; // 文件描述
+    @Schema(description = "MD5哈希值", example = "a1b2c3d4e5f6g7h8i9j0")
+    private String md5;
     
-    @Column(length = 100)
-    @ApiModelProperty(value = "自定义分类", example = "学习资料")
-    private String category; // 自定义分类
+    @Schema(description = "上传时间")
+    private LocalDateTime uploadTime;
     
-    @Column(nullable = false)
-    @ApiModelProperty(value = "上传时间", example = "2023-01-01T10:00:00", required = true)
-    private LocalDateTime uploadTime = LocalDateTime.now(); // 上传时间
+    @Schema(description = "最后访问时间")
+    private LocalDateTime lastAccessTime;
     
-    @Column(nullable = false)
-    @ApiModelProperty(value = "是否私有", example = "false", notes = "true表示仅上传者可访问，false表示公开")
-    private Boolean isPrivate = false; // 是否私有
+    @Schema(description = "访问次数", example = "10")
+    private Integer accessCount;
     
-    @Column(nullable = false)
-    @ApiModelProperty(value = "是否可用", example = "true", notes = "false表示已被禁用或删除")
-    private Boolean isEnabled = true; // 是否可用
+    @Schema(description = "是否公开", example = "true")
+    private Boolean isPublic;
+    
+    @Schema(description = "关联业务类型", example = "AVATAR")
+    private String businessType;
+    
+    @Schema(description = "关联业务ID", example = "1")
+    private Long businessId;
+    
+    @Schema(description = "状态", example = "ACTIVE")
+    private String status;
+    
+    @Schema(description = "备注", example = "用户头像")
+    private String remark;
     
     @PrePersist
     public void prePersist() {
         if (uploadTime == null) {
             uploadTime = LocalDateTime.now();
         }
+        if (lastAccessTime == null) {
+            lastAccessTime = uploadTime;
+        }
+        if (accessCount == null) {
+            accessCount = 0;
+        }
+        if (isPublic == null) {
+            isPublic = false;
+        }
+        if (status == null) {
+            status = "ACTIVE";
+        }
     }
-} 
+}
